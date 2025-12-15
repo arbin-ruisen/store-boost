@@ -120,6 +120,7 @@ buffers_range_ref(BufferSequence const& buffers)
     return detail::buffers_range_adaptor<
         BufferSequence const&>(buffers);
 }
+/** @} */
 
 } // beast
 } // boost

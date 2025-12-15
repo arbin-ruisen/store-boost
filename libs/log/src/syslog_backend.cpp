@@ -1,5 +1,5 @@
 /*
- *          Copyright Andrey Semashev 2007 - 2020.
+ *          Copyright Andrey Semashev 2007 - 2018.
  * Distributed under the Boost Software License, Version 1.0.
  *    (See accompanying file LICENSE_1_0.txt or copy at
  *          http://www.boost.org/LICENSE_1_0.txt)
@@ -13,22 +13,19 @@
  *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
-#include <boost/log/detail/config.hpp>
-
 #ifndef BOOST_LOG_WITHOUT_SYSLOG
 
+#include <boost/log/detail/config.hpp>
 #include <ctime>
-#include <memory>
 #include <algorithm>
 #include <stdexcept>
 #include <boost/limits.hpp>
 #include <boost/assert.hpp>
-#include <boost/core/snprintf.hpp>
 #include <boost/smart_ptr/weak_ptr.hpp>
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/smart_ptr/make_shared_object.hpp>
 #include <boost/throw_exception.hpp>
-#if !defined(BOOST_LOG_WITHOUT_ASIO)
+#if !defined(BOOST_LOG_NO_ASIO)
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/socket_base.hpp>
 #include <boost/asio/io_context.hpp>
@@ -42,10 +39,13 @@
 #include <boost/log/sinks/syslog_backend.hpp>
 #include <boost/log/sinks/syslog_constants.hpp>
 #include <boost/log/detail/singleton.hpp>
+#include <boost/log/detail/snprintf.hpp>
 #include <boost/log/exceptions.hpp>
 #if !defined(BOOST_LOG_NO_THREADS)
-#include <mutex>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
 #endif
+#include "unique_ptr.hpp"
 
 #ifdef BOOST_LOG_USE_NATIVE_SYSLOG
 #include <syslog.h>
@@ -90,7 +90,7 @@ struct syslog_backend::implementation
 #ifdef BOOST_LOG_USE_NATIVE_SYSLOG
     struct native;
 #endif // BOOST_LOG_USE_NATIVE_SYSLOG
-#if !defined(BOOST_LOG_WITHOUT_ASIO)
+#if !defined(BOOST_LOG_NO_ASIO)
     struct udp_socket_based;
 #endif
 
@@ -124,35 +124,20 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
     //! Syslog service initializer (implemented as a weak singleton)
 #if !defined(BOOST_LOG_NO_THREADS)
     class native_syslog_initializer :
-        private log::aux::lazy_singleton< native_syslog_initializer, std::mutex >
+        private log::aux::lazy_singleton< native_syslog_initializer, mutex >
 #else
     class native_syslog_initializer
 #endif
     {
 #if !defined(BOOST_LOG_NO_THREADS)
-        friend class log::aux::lazy_singleton< native_syslog_initializer, std::mutex >;
-        typedef log::aux::lazy_singleton< native_syslog_initializer, std::mutex > mutex_holder;
+        friend class log::aux::lazy_singleton< native_syslog_initializer, mutex >;
+        typedef log::aux::lazy_singleton< native_syslog_initializer, mutex > mutex_holder;
 #endif
 
-    private:
-        /*!
-         * \brief Application identification string
-         *
-         * \note We have to keep it as an immutable member because some syslog implementations (e.g. glibc)
-         *       do not deep-copy the ident string to internal storage when \c openlog is called
-         *       and instead save a pointer to the user-provided string. This means the user-provided
-         *       string needs to remain accessible for the whole duration of logging.
-         *
-         *       https://github.com/boostorg/log/issues/97
-         *       https://sourceware.org/bugzilla/show_bug.cgi?id=25442
-         */
-        const std::string m_Ident;
-
     public:
-        native_syslog_initializer(std::string const& ident, int facility) :
-            m_Ident(ident)
+        native_syslog_initializer(std::string const& ident, int facility)
         {
-            ::openlog((m_Ident.empty() ? static_cast< const char* >(NULL) : m_Ident.c_str()), 0, facility);
+            ::openlog((ident.empty() ? static_cast< const char* >(NULL) : ident.c_str()), 0, facility);
         }
         ~native_syslog_initializer()
         {
@@ -162,7 +147,7 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
         static shared_ptr< native_syslog_initializer > get_instance(std::string const& ident, int facility)
         {
 #if !defined(BOOST_LOG_NO_THREADS)
-            std::lock_guard< std::mutex > lock(mutex_holder::get());
+            lock_guard< mutex > lock(mutex_holder::get());
 #endif
             static weak_ptr< native_syslog_initializer > instance;
             shared_ptr< native_syslog_initializer > p(instance.lock());
@@ -173,9 +158,6 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
             }
             return p;
         }
-
-        BOOST_DELETED_FUNCTION(native_syslog_initializer(native_syslog_initializer const&))
-        BOOST_DELETED_FUNCTION(native_syslog_initializer& operator= (native_syslog_initializer const&))
     };
 
 } // namespace
@@ -194,7 +176,7 @@ struct syslog_backend::implementation::native :
     }
 
     //! The method sends the formatted message to the syslog host
-    void send(syslog::level lev, string_type const& formatted_message) BOOST_OVERRIDE
+    void send(syslog::level lev, string_type const& formatted_message)
     {
         int native_level;
         switch (lev)
@@ -303,7 +285,7 @@ private:
 //  Socket-based implementation
 ////////////////////////////////////////////////////////////////////////////////
 
-#if !defined(BOOST_LOG_WITHOUT_ASIO)
+#if !defined(BOOST_LOG_NO_ASIO)
 
 BOOST_LOG_ANONYMOUS_NAMESPACE {
 
@@ -353,7 +335,7 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
 
 #if !defined(BOOST_LOG_NO_THREADS)
         //! A synchronization primitive to protect the host name resolver
-        std::mutex m_Mutex;
+        mutex m_Mutex;
         //! The resolver is used to acquire connection endpoints
         asio::ip::udp::resolver m_HostNameResolver;
 #endif // !defined(BOOST_LOG_NO_THREADS)
@@ -391,7 +373,7 @@ BOOST_LOG_ANONYMOUS_NAMESPACE {
 
         // The packet size is mandated in RFC3164, plus one for the terminating zero
         char packet[1025];
-        int n = boost::core::snprintf
+        int n = boost::log::aux::snprintf
         (
             packet,
             sizeof(packet),
@@ -422,7 +404,7 @@ struct syslog_backend::implementation::udp_socket_based :
     //! Pointer to the list of sockets
     shared_ptr< syslog_udp_service > m_pService;
     //! Pointer to the socket being used
-    std::unique_ptr< syslog_udp_socket > m_pSocket;
+    log::aux::unique_ptr< syslog_udp_socket > m_pSocket;
     //! The target host to send packets to
     asio::ip::udp::endpoint m_TargetHost;
 
@@ -447,11 +429,11 @@ struct syslog_backend::implementation::udp_socket_based :
     }
 
     //! The method sends the formatted message to the syslog host
-    void send(syslog::level lev, string_type const& formatted_message) BOOST_OVERRIDE
+    void send(syslog::level lev, string_type const& formatted_message)
     {
         if (!m_pSocket.get())
         {
-            asio::ip::udp::endpoint any_local_address(m_Protocol, 0u);
+            asio::ip::udp::endpoint any_local_address;
             m_pSocket.reset(new syslog_udp_socket(m_pService->m_IOContext, m_Protocol, any_local_address));
         }
 
@@ -463,7 +445,7 @@ struct syslog_backend::implementation::udp_socket_based :
     }
 };
 
-#endif // !defined(BOOST_LOG_WITHOUT_ASIO)
+#endif // !defined(BOOST_LOG_NO_ASIO)
 
 ////////////////////////////////////////////////////////////////////////////////
 //  Sink backend implementation
@@ -506,25 +488,23 @@ BOOST_LOG_API void syslog_backend::construct(syslog::facility fac, syslog::impl_
     }
 #endif // BOOST_LOG_USE_NATIVE_SYSLOG
 
-#if !defined(BOOST_LOG_WITHOUT_ASIO)
+#if !defined(BOOST_LOG_NO_ASIO)
     typedef implementation::udp_socket_based udp_socket_based_impl;
-    asio::ip::udp protocol = asio::ip::udp::v4();
     switch (ip_version)
     {
     case v4:
+        m_pImpl = new udp_socket_based_impl(fac, asio::ip::udp::v4());
         break;
     case v6:
-        protocol = asio::ip::udp::v6();
+        m_pImpl = new udp_socket_based_impl(fac, asio::ip::udp::v6());
         break;
     default:
         BOOST_LOG_THROW_DESCR(setup_error, "Incorrect IP version specified");
     }
-
-    m_pImpl = new udp_socket_based_impl(fac, protocol);
 #endif
 }
 
-#if !defined(BOOST_LOG_WITHOUT_ASIO)
+#if !defined(BOOST_LOG_NO_ASIO)
 
 //! The method sets the local address which log records will be sent from.
 BOOST_LOG_API void syslog_backend::set_local_address(std::string const& addr, unsigned short port)
@@ -533,15 +513,14 @@ BOOST_LOG_API void syslog_backend::set_local_address(std::string const& addr, un
     typedef implementation::udp_socket_based udp_socket_based_impl;
     if (udp_socket_based_impl* impl = dynamic_cast< udp_socket_based_impl* >(m_pImpl))
     {
-        char service_name[std::numeric_limits< unsigned int >::digits10 + 3];
-        boost::core::snprintf(service_name, sizeof(service_name), "%u", static_cast< unsigned int >(port));
+        char service_name[std::numeric_limits< int >::digits10 + 3];
+        boost::log::aux::snprintf(service_name, sizeof(service_name), "%d", static_cast< int >(port));
 
         asio::ip::udp::endpoint local_address;
         {
-            std::lock_guard< std::mutex > lock(impl->m_pService->m_Mutex);
+            lock_guard< mutex > lock(impl->m_pService->m_Mutex);
             asio::ip::udp::resolver::results_type results = impl->m_pService->m_HostNameResolver.resolve
             (
-                impl->m_Protocol,
                 addr,
                 service_name,
                 asio::ip::resolver_base::address_configured | asio::ip::resolver_base::passive
@@ -554,8 +533,8 @@ BOOST_LOG_API void syslog_backend::set_local_address(std::string const& addr, un
     }
 #else
     // Boost.ASIO requires threads for the host name resolver,
-    // so without threads we simply assume the string already contains an IP address
-    set_local_address(asio::ip::make_address(addr), port);
+    // so without threads we simply assume the string already contains IP address
+    set_local_address(boost::asio::ip::address::from_string(addr), port);
 #endif // !defined(BOOST_LOG_NO_THREADS)
 }
 //! The method sets the local address which log records will be sent from.
@@ -564,9 +543,6 @@ BOOST_LOG_API void syslog_backend::set_local_address(boost::asio::ip::address co
     typedef implementation::udp_socket_based udp_socket_based_impl;
     if (udp_socket_based_impl* impl = dynamic_cast< udp_socket_based_impl* >(m_pImpl))
     {
-        if ((impl->m_Protocol == asio::ip::udp::v4() && !addr.is_v4()) || (impl->m_Protocol == asio::ip::udp::v6() && !addr.is_v6()))
-            BOOST_LOG_THROW_DESCR(setup_error, "Incorrect IP version specified in the local address");
-
         impl->m_pSocket.reset(new syslog_udp_socket(
             impl->m_pService->m_IOContext, impl->m_Protocol, asio::ip::udp::endpoint(addr, port)));
     }
@@ -579,15 +555,14 @@ BOOST_LOG_API void syslog_backend::set_target_address(std::string const& addr, u
     typedef implementation::udp_socket_based udp_socket_based_impl;
     if (udp_socket_based_impl* impl = dynamic_cast< udp_socket_based_impl* >(m_pImpl))
     {
-        char service_name[std::numeric_limits< unsigned int >::digits10 + 3];
-        boost::core::snprintf(service_name, sizeof(service_name), "%u", static_cast< unsigned int >(port));
+        char service_name[std::numeric_limits< int >::digits10 + 3];
+        boost::log::aux::snprintf(service_name, sizeof(service_name), "%d", static_cast< int >(port));
 
         asio::ip::udp::endpoint remote_address;
         {
-            std::lock_guard< std::mutex > lock(impl->m_pService->m_Mutex);
+            lock_guard< mutex > lock(impl->m_pService->m_Mutex);
             asio::ip::udp::resolver::results_type results = impl->m_pService->m_HostNameResolver.resolve
             (
-                impl->m_Protocol,
                 addr,
                 service_name,
                 asio::ip::resolver_query_base::address_configured
@@ -600,8 +575,8 @@ BOOST_LOG_API void syslog_backend::set_target_address(std::string const& addr, u
     }
 #else
     // Boost.ASIO requires threads for the host name resolver,
-    // so without threads we simply assume the string already contains an IP address
-    set_target_address(asio::ip::make_address(addr), port);
+    // so without threads we simply assume the string already contains IP address
+    set_target_address(boost::asio::ip::address::from_string(addr), port);
 #endif // !defined(BOOST_LOG_NO_THREADS)
 }
 //! The method sets the address of the remote host where log records will be sent to.
@@ -610,14 +585,11 @@ BOOST_LOG_API void syslog_backend::set_target_address(boost::asio::ip::address c
     typedef implementation::udp_socket_based udp_socket_based_impl;
     if (udp_socket_based_impl* impl = dynamic_cast< udp_socket_based_impl* >(m_pImpl))
     {
-        if ((impl->m_Protocol == asio::ip::udp::v4() && !addr.is_v4()) || (impl->m_Protocol == asio::ip::udp::v6() && !addr.is_v6()))
-            BOOST_LOG_THROW_DESCR(setup_error, "Incorrect IP version specified in the target address");
-
         impl->m_TargetHost = asio::ip::udp::endpoint(addr, port);
     }
 }
 
-#endif // !defined(BOOST_LOG_WITHOUT_ASIO)
+#endif // !defined(BOOST_LOG_NO_ASIO)
 
 } // namespace sinks
 

@@ -32,7 +32,6 @@
 #include <boost/random/uniform_int.hpp>
 #include <boost/random/uniform_smallint.hpp>
 #include <boost/random/discrete_distribution.hpp>
-#include <boost/mpl/list.hpp>
 #include <sstream>
 
 typedef boost::mpl::list <
@@ -215,11 +214,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(discrete_distributions, distribution_type, other_d
    distribution_type d2;
    ss >> d2;
    BOOST_CHECK(d == d2);
-   //
-   // The number of digits in the independent_bits_engine must be low enough that we don't overflow
-   // when converting to a double (see other_distributions declared above).
-   //
-   boost::random::independent_bits_engine<boost::random::mt19937, std::numeric_limits<boost::multiprecision::uint1024_t>::digits - 2, boost::multiprecision::uint1024_t > big_random;
+
+   boost::random::independent_bits_engine<boost::random::mt19937, std::numeric_limits<boost::multiprecision::uint1024_t>::digits, boost::multiprecision::uint1024_t > big_random;
    for(unsigned i = 0; i < 200; ++i)
    {
       result_type r = d(big_random);

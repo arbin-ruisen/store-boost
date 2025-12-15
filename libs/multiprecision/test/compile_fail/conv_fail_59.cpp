@@ -10,6 +10,5 @@ using namespace boost::multiprecision;
 int main()
 {
    cpp_int i(1), j(3);
-   void*   p = i * j;
-   (void)p; // warning suppression.
+   void* p = i * j;
 }

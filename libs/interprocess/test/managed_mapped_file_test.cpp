@@ -8,12 +8,13 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/container/vector.hpp>
+#include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <cstdio>
 #include <string>
@@ -21,83 +22,53 @@
 
 using namespace boost::interprocess;
 
-template <class CharT>
-struct filename_traits;
-
-template <>
-struct filename_traits<char>
+inline std::string get_filename()
 {
+   std::string ret (ipcdetail::get_temporary_path());
+   ret += "/";
+   ret += test::get_process_id_name();
+   return ret;
+}
 
-   static const char* get()
-   {  return filename.c_str();  }
-
-   static std::string filename;
-};
-
-std::string filename_traits<char>::filename = get_filename();
-
-
-#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
-
-template <>
-struct filename_traits<wchar_t>
-{
-
-   static const wchar_t* get()
-   {  return filename.c_str();  }
-
-   static std::wstring filename;
-};
-
-std::wstring filename_traits<wchar_t>::filename = get_wfilename();
-
-#endif   //#ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
-
-template<class CharT>
-int test_managed_mapped_file()
+int main ()
 {
    const int FileSize          = 65536*10;
-   const CharT *FileName = filename_traits<CharT>::get();
+   std::string filename(get_filename());
+   const char *FileName = filename.c_str();
 
    //STL compatible allocator object for memory-mapped file
    typedef allocator<int, managed_mapped_file::segment_manager>
       allocator_int_t;
    //A vector that uses that allocator
-   typedef boost::container::vector<int, allocator_int_t> MyVect;
+   typedef boost::interprocess::vector<int, allocator_int_t> MyVect;
 
    {
       //Remove the file it is already created
       file_mapping::remove(FileName);
 
       const int max              = 100;
-      void *array[std::size_t(max)];
+      void *array[max];
       //Named allocate capable shared memory allocator
       managed_mapped_file mfile(create_only, FileName, FileSize);
 
-      std::size_t i;
+      int i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[std::ptrdiff_t(i)] = mfile.allocate(i+1u);
+         array[i] = mfile.allocate(i+1);
       }
 
       //Deallocate allocated memory
       for(i = 0; i < max; ++i){
-         mfile.deallocate(array[std::ptrdiff_t(i)]);
+         mfile.deallocate(array[i]);
       }
    }
 
    {
       //Remove the file it is already created
       file_mapping::remove(FileName);
-      //Named allocate capable memory mapped file managed memory class
-      managed_mapped_file tmp(create_only, FileName, FileSize);
-   }
-   {
-      //Remove the file it is already created
-      file_mapping::remove(FileName);
 
-      //Now re-create it with create or open
-      managed_mapped_file mfile(open_or_create, FileName, FileSize);
+      //Named allocate capable memory mapped file managed memory class
+      managed_mapped_file mfile(create_only, FileName, FileSize);
 
       //Construct the STL-like allocator with the segment manager
       const allocator_int_t myallocator (mfile.get_segment_manager());
@@ -129,15 +100,7 @@ int test_managed_mapped_file()
       if(!mfile_vect)
          return -1;
    }
-   {
-      //Map preexisting file again in memory
-      managed_mapped_file mfile(open_or_create, FileName, FileSize);
 
-      //Check vector is still there
-      MyVect *mfile_vect = mfile.find<MyVect>("MyVector").first;
-      if(!mfile_vect)
-         return -1;
-   }
    {
       {
          //Map preexisting file again in copy-on-write
@@ -168,7 +131,7 @@ int test_managed_mapped_file()
       }
    }
    {
-      //Map preexisting file again in read-only
+      //Map preexisting file again in copy-on-write
       managed_mapped_file mfile(open_read_only, FileName);
 
       //Check vector is still there
@@ -264,19 +227,6 @@ int test_managed_mapped_file()
    return 0;
 }
 
-int main ()
-{
-   int r;
-   r = test_managed_mapped_file<char>();
-   if(r) return r;
-   #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
-   r = test_managed_mapped_file<wchar_t>();
-   if(r) return r;
-   #endif
-   return 0;
-}
-
-
 #else //#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
 
 int main()
@@ -285,3 +235,5 @@ int main()
 }
 
 #endif//#if defined(BOOST_INTERPROCESS_MAPPED_FILES)
+
+#include <boost/interprocess/detail/config_end.hpp>

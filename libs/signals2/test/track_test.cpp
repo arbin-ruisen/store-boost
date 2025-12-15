@@ -10,15 +10,12 @@
 // For more information, see http://www.boost.org
 
 #include <memory>
-#include <boost/core/ref.hpp>
 #include <boost/optional.hpp>
+#include <boost/ref.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/signals2.hpp>
-#define BOOST_TEST_MODULE track_test
-#include <boost/test/included/unit_test.hpp>
-#include <boost/bind/bind.hpp>
-
-using namespace boost::placeholders;
+#include <boost/bind.hpp>
 
 struct swallow {
   typedef int result_type;
@@ -54,7 +51,7 @@ static int myfunc(int i, double z)
   return i;
 }
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char*[])
 {
   typedef boost::signals2::signal<int (int), max_or_default<int> > sig_type;
   sig_type s1;
@@ -164,4 +161,6 @@ BOOST_AUTO_TEST_CASE(test_main)
   BOOST_CHECK(s1(5) == 0);
   BOOST_CHECK(s1(5) == 0);
 #endif
+
+  return 0;
 }

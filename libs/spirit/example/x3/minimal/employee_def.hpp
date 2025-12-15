@@ -7,6 +7,7 @@
 #if !defined(BOOST_SPIRIT_X3_MINIMAL_EMPLOYEE_DEF_HPP)
 #define BOOST_SPIRIT_X3_MINIMAL_EMPLOYEE_DEF_HPP
 
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/home/x3.hpp>
 
 #include "ast.hpp"

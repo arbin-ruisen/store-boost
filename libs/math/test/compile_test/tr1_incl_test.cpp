@@ -6,7 +6,6 @@
 // Basic sanity check that header <boost/math/tr1.hpp>
 // #includes all the files that it needs to.
 //
-#ifndef BOOST_MATH_STANDALONE
 #include <boost/math/tr1.hpp>
 //
 // Note this header includes no other headers, this is
@@ -365,4 +364,3 @@ void compile_and_link_test()
    check_result<double>(boost::math::tr1::trunc(i));
 
 }
-#endif

@@ -8,10 +8,6 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#if defined(__clang__)
-# pragma clang diagnostic ignored "-Wstring-plus-int"
-#endif
-
 #include <boost/core/lightweight_test.hpp>
 
 int main()

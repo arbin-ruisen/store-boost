@@ -1,8 +1,6 @@
 /*=============================================================================
     Copyright (c) 2001-2014 Joel de Guzman
     Copyright (c) 2001-2011 Hartmut Kaiser
-    Copyright (c) 2017 wanghan02
-    Copyright (c) 2024 Nana Sakisaka
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -13,7 +11,6 @@
 #include <boost/spirit/home/x3/core/parser.hpp>
 #include <boost/spirit/home/x3/support/traits/container_traits.hpp>
 #include <boost/spirit/home/x3/support/traits/attribute_of.hpp>
-#include <boost/spirit/home/x3/support/expectation.hpp>
 #include <boost/spirit/home/x3/core/detail/parse_into_container.hpp>
 
 namespace boost { namespace spirit { namespace x3
@@ -23,8 +20,9 @@ namespace boost { namespace spirit { namespace x3
     {
         typedef binary_parser<Left, Right, list<Left, Right>> base_type;
         static bool const handles_container = true;
+        static bool const has_attribute = true;
 
-        constexpr list(Left const& left, Right const& right)
+        list(Left const& left, Right const& right)
           : base_type(left, right) {}
 
         template <typename Iterator, typename Context
@@ -45,12 +43,12 @@ namespace boost { namespace spirit { namespace x3
                 first = iter;
             }
 
-            return !has_expectation_failure(context);
+            return true;
         }
     };
 
     template <typename Left, typename Right>
-    constexpr list<
+    inline list<
         typename extension::as_parser<Left>::value_type
       , typename extension::as_parser<Right>::value_type>
     operator%(Left const& left, Right const& right)
@@ -65,10 +63,6 @@ namespace boost { namespace spirit { namespace x3 { namespace traits
     struct attribute_of<x3::list<Left, Right>, Context>
         : traits::build_container<
             typename attribute_of<Left, Context>::type> {};
-
-    template <typename Left, typename Right, typename Context>
-    struct has_attribute<x3::list<Left, Right>, Context>
-        : has_attribute<Left, Context> {};
 }}}}
 
 #endif

@@ -7,7 +7,7 @@
 //
 #include <boost/gil.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <cstddef>
 #include <ctime>
@@ -438,7 +438,9 @@ void test_transform(std::size_t trials) {
     //std::cout << "Non-GIL: "<<measure_time(transform_nongil_t<View1,View2,F>(view(im1),view(im2),F()),trials) << std::endl;
 }
 
-void test_performance()
+BOOST_AUTO_TEST_SUITE(GIL_Tests)
+
+BOOST_AUTO_TEST_CASE(performance_test)
 {
 #ifdef NDEBUG
     std::size_t num_trials=1000;
@@ -511,10 +513,4 @@ void test_performance()
     std::cout<<std::endl;
 }
 
-int main()
-{
-
-    test_performance();
-
-    return ::boost::report_errors();
-}
+BOOST_AUTO_TEST_SUITE_END()

@@ -21,6 +21,7 @@
 // #define BOOST_SPIRIT_LEXERTL_DEBUG
 // #define BOOST_SPIRIT_DEBUG
 
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/lex_lexertl.hpp>
 

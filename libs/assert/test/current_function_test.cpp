@@ -27,13 +27,14 @@ void message(char const * file, long line, char const * func, char const * msg)
     using std::printf;
 #endif
 
-    printf("%s(%ld): in function '%s': %s\n", file, line, func, msg);
+    printf("%s(%ld): %s in function '%s'\n", file, line, msg, func);
 }
 
 #define MESSAGE(msg) message(__FILE__, __LINE__, BOOST_CURRENT_FUNCTION, msg)
 
 int main()
 {
-    MESSAGE("testing BOOST_CURRENT_FUNCTION");
+    MESSAGE("assertion failed");
+
     return 0;
 }

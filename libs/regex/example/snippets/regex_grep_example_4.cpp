@@ -17,7 +17,7 @@
   *                using a C++ Builder closure as a callback.
   */
 
-#if defined(__BORLANDC__) && !defined(__clang__)
+#ifdef __BORLANDC__
 
 #include <boost/regex.hpp>
 #include <string>
@@ -140,7 +140,7 @@ int main(int argc, const char** argv)
    return 0;
 }
 
-#else  // __BORLANDC__ && !defined(__clang__)
+#else  // __BORLANDC__
 
 int main()
 {

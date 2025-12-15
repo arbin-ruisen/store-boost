@@ -3,13 +3,14 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying 
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/config/warning_disable.hpp>
+#include <boost/detail/lightweight_test.hpp>
+
 #include <boost/spirit/include/lex_lexertl.hpp>
 #include <boost/spirit/include/lex_lexertl_position_token.hpp>
-
-#include <boost/core/lightweight_test.hpp>
-#include <boost/phoenix/object.hpp>
-#include <boost/phoenix/operator.hpp>
-#include <boost/phoenix/stl/container.hpp>
+#include <boost/spirit/include/phoenix_object.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_container.hpp>
 
 namespace lex = boost::spirit::lex;
 namespace phoenix = boost::phoenix;
@@ -99,12 +100,12 @@ template <typename Token>
 inline bool 
 test_token_ids(int const* ids, std::vector<Token> const& tokens)
 {
-    for (std::size_t i = 0, len = tokens.size(); i < len; ++i)
+    BOOST_FOREACH(Token const& t, tokens)
     {
         if (*ids == -1)
             return false;           // reached end of expected data
 
-        if (tokens[i].id() != static_cast<std::size_t>(*ids))        // token id must match
+        if (t.id() != static_cast<std::size_t>(*ids))        // token id must match
             return false;
 
         ++ids;
@@ -118,12 +119,12 @@ template <typename Token>
 inline bool 
 test_token_states(std::size_t const* states, std::vector<Token> const& tokens)
 {
-    for (std::size_t i = 0, len = tokens.size(); i < len; ++i)
+    BOOST_FOREACH(Token const& t, tokens)
     {
         if (*states == std::size_t(-1))
             return false;           // reached end of expected data
 
-        if (tokens[i].state() != *states)            // token state must match
+        if (t.state() != *states)            // token state must match
             return false;
 
         ++states;
@@ -143,7 +144,7 @@ inline bool
 test_token_positions(Iterator begin, position_type const* positions, 
     std::vector<Token> const& tokens)
 {
-    for (std::size_t i = 0, len = tokens.size(); i < len; ++i)
+    BOOST_FOREACH(Token const& t, tokens)
     {
         if (positions->begin == std::size_t(-1) && 
             positions->end == std::size_t(-1))
@@ -151,7 +152,7 @@ test_token_positions(Iterator begin, position_type const* positions,
             return false;           // reached end of expected data
         }
 
-        boost::iterator_range<Iterator> matched = tokens[i].matched();
+        boost::iterator_range<Iterator> matched = t.matched();
         std::size_t start = std::distance(begin, matched.begin());
         std::size_t end = std::distance(begin, matched.end());
 

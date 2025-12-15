@@ -20,12 +20,13 @@
 #define BOOST_TEST_MODULE current_function_support
 
 #include <boost/current_function.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/type_traits/is_array.hpp>
 
 template< typename T >
 void check(T& param)
 {
-    static_assert(boost::is_array< T >::value, "T must be an array");
+    BOOST_STATIC_ASSERT(boost::is_array< T >::value);
 }
 
 int main(int, char*[])

@@ -48,7 +48,6 @@ local doxygen_params =
                         BOOST_LOG_NO_VTABLE= \\
                         BOOST_SYMBOL_VISIBLE= \\
                         BOOST_FORCEINLINE=inline \\
-                        BOOST_INLINE_VARIABLE=inline \\
                         BOOST_STATIC_ASSERT(x)= \\
                         BOOST_STATIC_ASSERT_MSG(x,y)= \\
                         BOOST_STATIC_CONSTANT(x,y)=\"static constexpr x y\" \\
@@ -86,57 +85,57 @@ local doxygen_params =
 
 local top_level_includes =
     [ glob
-        ../include/boost/log/*.hpp
+        ../../../boost/log/*.hpp
     ] ;
 
 local core_includes =
     [ glob
-        ../include/boost/log/core/*.hpp
+        ../../../boost/log/core/*.hpp
     ] ;
 
 local attributes_includes =
     [ glob
-        ../include/boost/log/attributes/*.hpp
+        ../../../boost/log/attributes/*.hpp
     ] ;
 
 local expressions_includes =
     [ glob
-        ../include/boost/log/expressions/*.hpp
-        ../include/boost/log/expressions/predicates/*.hpp
-        ../include/boost/log/expressions/formatters/*.hpp
+        ../../../boost/log/expressions/*.hpp
+        ../../../boost/log/expressions/predicates/*.hpp
+        ../../../boost/log/expressions/formatters/*.hpp
     ] ;
 
 local sources_includes =
     [ glob
-        ../include/boost/log/sources/*.hpp
+        ../../../boost/log/sources/*.hpp
     ] ;
 
 local sinks_includes =
     [ set.difference
         # Document all these files...
         [ glob
-            ../include/boost/log/sinks/*.hpp
+            ../../../boost/log/sinks/*.hpp
         ]
     :
         # ...except these
         [ glob
-            ../include/boost/log/sinks/nt6_event_log*.hpp
+            ../../../boost/log/sinks/nt6_event_log*.hpp
         ]
     ] ;
 
 local utility_includes =
     [ glob
-        ../include/boost/log/utility/*.hpp
-        ../include/boost/log/utility/ipc/*.hpp
-        ../include/boost/log/utility/setup/*.hpp
-        ../include/boost/log/utility/type_dispatch/*.hpp
-        ../include/boost/log/utility/functional/*.hpp
-        ../include/boost/log/utility/manipulators/*.hpp
+        ../../../boost/log/utility/*.hpp
+        ../../../boost/log/utility/ipc/*.hpp
+        ../../../boost/log/utility/setup/*.hpp
+        ../../../boost/log/utility/type_dispatch/*.hpp
+        ../../../boost/log/utility/functional/*.hpp
+        ../../../boost/log/utility/manipulators/*.hpp
     ] ;
 
 local support_includes =
     [ glob
-        ../include/boost/log/support/*.hpp
+        ../../../boost/log/support/*.hpp
     ] ;
 
 
@@ -151,6 +150,7 @@ rule gen-references ( target : source : properties * )
 }
 actions gen-references
 {
+#    echo "*** Executing " $(NAME:E=xsltproc) -o "$(TARGET)" "$(STYLESHEET)" "$(>)"
     $(NAME:E=xsltproc) -o "$(TARGET)" "$(STYLESHEET)" "$(>)"
 }
 
@@ -262,18 +262,16 @@ boostbook log
     :
         log_doc
     :
-        <dependency>"html/images/log"
-        <xsl:param>"boost.root=../../../.."
-        <xsl:param>"boost.libraries=../../../libs/libraries.htm"
-        <xsl:param>"nav.layout=none"
-        <xsl:param>"boost.image=Boost"
-        <xsl:param>"navig.graphics=1"
-        <xsl:param>"toc.max.depth=2"
-        <xsl:param>"toc.section.depth=2"
-        <xsl:param>"chunk.section.depth=2"
-        <xsl:param>"boost.compact.function=0"
-        <format>pdf:<xsl:param>"boost.url.prefix=http://www.boost.org/doc/libs/release/libs/log/doc/html"
-        <format>pdf:<xsl:param>"img.src.path=$(images_location)/"
+        <dependency>html/images/log
+        <xsl:param>boost.root=../../../..
+        <xsl:param>boost.libraries=../../../libs/libraries.htm
+        <xsl:param>nav.layout=none
+        <xsl:param>boost.image=Boost
+        <xsl:param>navig.graphics=1
+        <xsl:param>chunk.section.depth=2
+        <xsl:param>boost.compact.function=0
+        <format>pdf:<xsl:param>boost.url.prefix=http://www.boost.org/doc/libs/release/libs/log/doc/html
+        <format>pdf:<xsl:param>img.src.path=$(images_location)/
     ;
 
 install html/images/log : [ glob *.png ] ;

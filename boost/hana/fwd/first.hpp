@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::first`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Returns the first element of a pair.
     //! @ingroup group-Product
     //!
@@ -42,8 +42,8 @@ namespace boost { namespace hana {
         constexpr decltype(auto) operator()(Pair&& pair) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr first_t first{};
+    constexpr first_t first{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_FIRST_HPP

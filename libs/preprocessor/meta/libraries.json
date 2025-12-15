@@ -10,8 +10,6 @@
         "Preprocessor"
     ],
     "maintainers": [
-        "Paul Mensonides <pmenso57 -at- comcast.net>",
-        "Edward Diener <eld -at- tropicsoft.com>"
-    ],
-    "cxxstd": "03"
+        "Paul Mensonides <pmenso57 -at- comcast.net>"
+    ]
 }

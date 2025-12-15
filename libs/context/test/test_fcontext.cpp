@@ -17,20 +17,11 @@
 
 #include <boost/array.hpp>
 #include <boost/assert.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/unit_test.hpp>
 #include <boost/utility.hpp>
 
 #include <boost/context/detail/config.hpp>
 #include <boost/context/detail/fcontext.hpp>
-
-#if defined(BOOST_CONTEXT_USE_MAP_STACK)
-extern "C" {
-#include <sys/mman.h>
-}
-#endif
-
-#define BOOST_CHECK(x) BOOST_TEST(x)
-#define BOOST_CHECK_EQUAL(a, b) BOOST_TEST_EQ(a, b)
 
 template< std::size_t Max, std::size_t Default, std::size_t Min >
 class simple_stack_allocator
@@ -50,17 +41,8 @@ public:
         BOOST_ASSERT( minimum_stacksize() <= size);
         BOOST_ASSERT( maximum_stacksize() >= size);
 
-#if defined(BOOST_CONTEXT_USE_MAP_STACK)
-        void * limit = ::mmap( 0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_STACK, -1, 0);
-        if ( limit == MAP_FAILED) {
-            throw std::bad_alloc();
-        }
-#else
-        void * limit = std::malloc( size);
-        if ( ! limit) {
-            throw std::bad_alloc();
-        }
-#endif
+        void * limit = malloc( size);
+        if ( ! limit) throw std::bad_alloc();
 
         return static_cast< char * >( limit) + size;
     }
@@ -72,11 +54,7 @@ public:
         BOOST_ASSERT( maximum_stacksize() >= size);
 
         void * limit = static_cast< char * >( vp) - size;
-#if defined(BOOST_CONTEXT_USE_MAP_STACK)
-	::munmap( vp, size);
-#else
         free( limit);
-#endif
     }
 };
 
@@ -354,20 +332,21 @@ void test_snprintf() {
 	alloc.deallocate( sp, stack_allocator::default_stacksize() );
 }
 
-int main()
-{
-    test_setup();
-    test_start();
-    test_jump();
-    test_result();
-    test_arg();
-    test_transfer();
-    test_exception();
-    test_fp();
-    test_stacked();
-    test_ontop();
-    test_sscanf();
-    test_snprintf();
+boost::unit_test::test_suite * init_unit_test_suite( int, char* []) {
+    boost::unit_test::test_suite * test =
+        BOOST_TEST_SUITE("Boost.Context: fcontext test suite");
+    test->add( BOOST_TEST_CASE( & test_setup) );
+    test->add( BOOST_TEST_CASE( & test_start) );
+    test->add( BOOST_TEST_CASE( & test_jump) );
+    test->add( BOOST_TEST_CASE( & test_result) );
+    test->add( BOOST_TEST_CASE( & test_arg) );
+    test->add( BOOST_TEST_CASE( & test_transfer) );
+    test->add( BOOST_TEST_CASE( & test_exception) );
+    test->add( BOOST_TEST_CASE( & test_fp) );
+    test->add( BOOST_TEST_CASE( & test_stacked) );
+    test->add( BOOST_TEST_CASE( & test_ontop) );
+    test->add( BOOST_TEST_CASE( & test_sscanf) );
+    test->add( BOOST_TEST_CASE( & test_snprintf) );
 
-    return boost::report_errors();
+    return test;
 }

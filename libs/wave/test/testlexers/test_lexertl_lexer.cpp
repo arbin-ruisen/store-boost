@@ -9,10 +9,8 @@
 
 //  system headers
 #include <string>
-#include <limits>
-#if defined(TESTLEXERS_TIMING)
 #include <iostream>
-#endif
+#include <limits>
 
 #include <boost/wave/wave_config.hpp>
 #undef BOOST_WAVE_SEPARATE_LEXER_INSTANTIATION
@@ -24,7 +22,7 @@
 
 //  include the lexertl lexer related stuff
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>                      // token type
-#include <list_includes/lexertl/lexertl_lexer.hpp>  // lexer type
+#include <libs/wave/samples/list_includes/lexertl/lexertl_lexer.hpp>  // lexer type
 
 typedef boost::wave::cpplexer::lex_token<> token_type;
 typedef boost::wave::cpplexer::lexertl::lex_iterator<token_type> lexer_type;
@@ -50,7 +48,7 @@ main(int argc, char *argv[])
         token_type::string_type instr(data->token);
 
         lexer_type it = lexer_type(instr.begin(), instr.end(), pos, 
-                                   boost::wave::support_cpp2a);
+            boost::wave::support_option_long_long);
         lexer_type end = lexer_type();
 
         // verify the correct outcome of the tokenization
@@ -90,3 +88,4 @@ main(int argc, char *argv[])
 
     return boost::report_errors();
 }
+

@@ -17,7 +17,6 @@
 #include <algorithm> //std::equal
 #include <vector>
 #include <iostream>
-#include <typeinfo>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -112,41 +111,41 @@ bool test_insert_with_expand_bwd()
    typedef typename VectorWithExpandBwdAllocator::value_type value_type;
    typedef typename boost::interprocess::ipcdetail::remove_volatile<value_type>::type non_volatile_value_type;
    typedef std::vector<non_volatile_value_type> Vect;
-   const std::size_t MemorySize = 1000;
+   const int MemorySize = 1000;
 
    //Distance old and new buffer
-   const std::size_t Offset[]      =
+   const int Offset[]      =
       {  350,  250,  150,  150,
          150,  50,   50,   50    };
    //Insert position
-   const std::size_t Position[]    =
+   const int Position[]    =
       {  100,  100,  100,  100,
          100,  100,  100,  100   };
    //Initial vector size
-   const std::size_t InitialSize[] =
+   const int InitialSize[] =
       {  200,  200,  200,  200,
          200,  200,  200,  200   };
    //Size of the data to insert
-   const std::size_t InsertSize[]  =
+   const int InsertSize[]  =
       {  100,  100,  100,  200,
          300,  25,   100,  200   };
    //Number of tests
-   const std::size_t Iterations    = sizeof(InsertSize)/sizeof(std::size_t);
+   const int Iterations    = sizeof(InsertSize)/sizeof(int);
 
-   for(std::size_t iteration = 0; iteration < Iterations; ++iteration)
+   for(int iteration = 0; iteration < Iterations; ++iteration)
    {
       value_type *memory = new value_type[MemorySize];
-      BOOST_INTERPROCESS_TRY {
+      try {
          std::vector<non_volatile_value_type> initial_data;
          initial_data.resize(InitialSize[iteration]);
-         for(std::size_t i = 0; i < InitialSize[iteration]; ++i){
-            initial_data[i] = non_volatile_value_type((int)i);
+         for(int i = 0; i < InitialSize[iteration]; ++i){
+            initial_data[i] = i;
          }
 
          Vect data_to_insert;
          data_to_insert.resize(InsertSize[iteration]);
-         for(std::size_t i = 0; i < InsertSize[iteration]; ++i){
-            data_to_insert[i] = value_type(-(int)i);
+         for(int i = 0; i < InsertSize[iteration]; ++i){
+            data_to_insert[i] = -i;
          }
 
          expand_bwd_test_allocator<value_type> alloc
@@ -154,9 +153,9 @@ bool test_insert_with_expand_bwd()
          VectorWithExpandBwdAllocator vector(alloc);
          vector.insert( vector.begin()
                      , initial_data.begin(), initial_data.end());
-         vector.insert( vector.begin() + std::ptrdiff_t(Position[iteration])
+         vector.insert( vector.begin() + Position[iteration]
                      , data_to_insert.begin(), data_to_insert.end());
-         initial_data.insert(initial_data.begin() + std::ptrdiff_t(Position[iteration])
+         initial_data.insert(initial_data.begin() + Position[iteration]
                            , data_to_insert.begin(), data_to_insert.end());
          //Now check that values are equal
          if(!CheckEqualVector(vector, initial_data)){
@@ -166,10 +165,10 @@ bool test_insert_with_expand_bwd()
             return false;
          }
       }
-      BOOST_INTERPROCESS_CATCH(...){
+      catch(...){
          delete [](const_cast<non_volatile_value_type*>(memory));
-         BOOST_INTERPROCESS_RETHROW
-      } BOOST_INTERPROCESS_CATCH_END
+         throw;
+      }
       delete [](const_cast<non_volatile_value_type*>(memory));
    }
 
@@ -183,29 +182,29 @@ bool test_assign_with_expand_bwd()
 {
    typedef typename VectorWithExpandBwdAllocator::value_type value_type;
    typedef typename boost::interprocess::ipcdetail::remove_volatile<value_type>::type non_volatile_value_type;
-   const std::size_t MemorySize = 200;
+   const int MemorySize = 200;
 
-   const std::size_t Offset[]      = { 50, 50, 50};
-   const std::size_t InitialSize[] = { 25, 25, 25};
-   const std::size_t InsertSize[]  = { 15, 35, 55};
-   const std::size_t Iterations    = sizeof(InsertSize)/sizeof(std::size_t);
+   const int Offset[]      = { 50, 50, 50};
+   const int InitialSize[] = { 25, 25, 25};
+   const int InsertSize[]  = { 15, 35, 55};
+   const int Iterations    = sizeof(InsertSize)/sizeof(int);
 
-   for(std::size_t iteration = 0; iteration <Iterations; ++iteration)
+   for(int iteration = 0; iteration <Iterations; ++iteration)
    {
       value_type *memory = new value_type[MemorySize];
-      BOOST_INTERPROCESS_TRY {
+      try {
          //Create initial data
          std::vector<non_volatile_value_type> initial_data;
          initial_data.resize(InitialSize[iteration]);
-         for(std::size_t i = 0; i < InitialSize[iteration]; ++i){
-            initial_data[i] = non_volatile_value_type((int)i);
+         for(int i = 0; i < InitialSize[iteration]; ++i){
+            initial_data[i] = i;
          }
 
          //Create data to insert
          std::vector<non_volatile_value_type> data_to_insert;
          data_to_insert.resize(InsertSize[iteration]);
-         for(std::size_t i = 0; i < InsertSize[iteration]; ++i){
-            data_to_insert[i] = value_type(-(int)i);
+         for(int i = 0; i < InsertSize[iteration]; ++i){
+            data_to_insert[i] = -i;
          }
 
          //Insert initial data to the vector to test
@@ -227,10 +226,10 @@ bool test_assign_with_expand_bwd()
             return false;
          }
       }
-      BOOST_INTERPROCESS_CATCH(...){
+      catch(...){
          delete [](const_cast<typename boost::interprocess::ipcdetail::remove_volatile<value_type>::type*>(memory));
-         BOOST_INTERPROCESS_RETHROW
-      } BOOST_INTERPROCESS_CATCH_END
+         throw;
+      }
       delete [](const_cast<typename boost::interprocess::ipcdetail::remove_volatile<value_type>::type*>(memory));
    }
 

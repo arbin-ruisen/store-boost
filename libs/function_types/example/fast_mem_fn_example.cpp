@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <functional>
 
-#include <boost/timer/timer.hpp>
+#include <boost/timer.hpp>
 #include <boost/mem_fn.hpp>
 
 #include "fast_mem_fn.hpp"
@@ -91,28 +91,28 @@ template<typename F> void do_test(test_vector & v, F criterion)
 int main()
 {
   test_vector v;
-  boost::timer::cpu_timer t;
+  boost::timer t;
   double time1, time2;
 
   std::cout << 
       "Test case: sorting " << N << " objects.\n\n"
-      "Criterion accessor called with | elapsed seconds\n"
+      "Criterion accessor called with | elasped seconds\n"
       "-------------------------------|----------------" << std::endl;
 
   setup_test(v);
-  t.start();
+  t.restart();
 #if !BOOST_WORKAROUND(BOOST_MSVC, < 1400)
   do_test(v, BOOST_EXAMPLE_FAST_MEM_FN(& test::id));
 #else // MSVC<8 does not like the implementation of the deduction macro:
   do_test(v, ::example::fast_mem_fn< int (test::*)() const, & test::id >());
 #endif
-  time1 = t.elapsed().wall * 1e-9;
+  time1 = t.elapsed();
   std::cout << "fast_mem_fn                    | " << time1 << std::endl;
 
   setup_test(v);
-  t.start();
+  t.restart();
   do_test(v, boost::mem_fn(& test::id));
-  time2 = t.elapsed().wall * 1e-9;
+  time2 = t.elapsed();
   std::cout << "mem_fn                         | " << time2 << std::endl;
 
   std::cout << '\n' << (time2/time1-1)*100 << "% speedup" << std::endl;

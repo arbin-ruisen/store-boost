@@ -29,19 +29,15 @@ git submodule update --init --depth 20 --jobs 4 \
     libs/assert \
     libs/config \
     libs/core \
-    libs/describe \
     libs/endian \
     libs/filesystem \
     libs/intrusive \
     libs/locale \
     libs/optional \
-    libs/scope \
     libs/smart_ptr \
     libs/static_assert \
-    libs/static_string \
     libs/system \
     libs/throw_exception \
-    libs/tokenizer \
     libs/type_traits \
     libs/utility \
     libs/winapi \
@@ -81,14 +77,11 @@ git submodule update --init --depth 20 --jobs 4 \
     libs/range \
     libs/ratio \
     libs/rational \
-    libs/regex \
     libs/thread \
     libs/tuple \
     libs/type_index \
     libs/typeof \
-    libs/unordered \
-    libs/variant2 \
-    libs/json
+    libs/unordered
 
 echo Submodule update complete
 

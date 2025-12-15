@@ -14,15 +14,15 @@
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/core/detail/buffers_ref.hpp>
 #include <boost/beast/core/detail/clamp.hpp>
-#include <boost/beast/core/detail/static_string.hpp>
 #include <boost/beast/core/detail/temporary_buffer.hpp>
-#include <boost/beast/core/static_string.hpp>
 #include <boost/beast/http/verb.hpp>
 #include <boost/beast/http/rfc7230.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/chunk_encode.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/throw_exception.hpp>
+#include <stdexcept>
+#include <string>
 
 namespace boost {
 namespace beast {
@@ -382,6 +382,7 @@ basic_fields(basic_fields&& other, Allocator const& alloc)
     if(this->get() != other.get())
     {
         copy_all(other);
+        other.clear_all();
     }
     else
     {
@@ -432,12 +433,15 @@ template<class Allocator>
 auto
 basic_fields<Allocator>::
 operator=(basic_fields&& other) noexcept(
-    pocma::value && std::is_nothrow_move_assignable<Allocator>::value)
-    -> basic_fields&
+    alloc_traits::propagate_on_container_move_assignment::value)
+      -> basic_fields&
 {
+    static_assert(is_nothrow_move_assignable<Allocator>::value,
+        "Allocator must be noexcept assignable.");
     if(this == &other)
         return *this;
-    move_assign(other, pocma{});
+    move_assign(other, std::integral_constant<bool,
+        alloc_traits:: propagate_on_container_move_assignment::value>{});
     return *this;
 }
 
@@ -447,7 +451,8 @@ basic_fields<Allocator>::
 operator=(basic_fields const& other) ->
     basic_fields&
 {
-    copy_assign(other, pocca{});
+    copy_assign(other, std::integral_constant<bool,
+        alloc_traits::propagate_on_container_copy_assignment::value>{});
     return *this;
 }
 
@@ -537,7 +542,7 @@ template<class Allocator>
 inline
 void
 basic_fields<Allocator>::
-insert(field name, string_view value)
+insert(field name, string_param const& value)
 {
     BOOST_ASSERT(name != field::unknown);
     insert(name, to_string(name), value);
@@ -546,55 +551,62 @@ insert(field name, string_view value)
 template<class Allocator>
 void
 basic_fields<Allocator>::
-insert(string_view sname, string_view value)
+insert(string_view sname, string_param const& value)
 {
-    insert(
-        string_to_field(sname), sname, value);
-}
-
-template<class Allocator>
-void
-basic_fields<Allocator>::
-insert(
-    field name,
-    string_view sname,
-    string_view value,
-    error_code& ec)
-{
-    ec = {};
-    auto* e = try_create_new_element(name, sname, value, ec);
-    if(ec.failed())
-        return;
-    insert_element(*e);
+    auto const name =
+        string_to_field(sname);
+    insert(name, sname, value);
 }
 
 template<class Allocator>
 void
 basic_fields<Allocator>::
 insert(field name,
-    string_view sname, string_view value)
+    string_view sname, string_param const& value)
 {
-    insert_element(
-        new_element(name, sname, value));
+    auto& e = new_element(name, sname,
+        static_cast<string_view>(value));
+    auto const before =
+        set_.upper_bound(sname, key_compare{});
+    if(before == set_.begin())
+    {
+        BOOST_ASSERT(count(sname) == 0);
+        set_.insert_before(before, e);
+        list_.push_back(e);
+        return;
+    }
+    auto const last = std::prev(before);
+    // VFALCO is it worth comparing `field name` first?
+    if(! beast::iequals(sname, last->name_string()))
+    {
+        BOOST_ASSERT(count(sname) == 0);
+        set_.insert_before(before, e);
+        list_.push_back(e);
+        return;
+    }
+    // keep duplicate fields together in the list
+    set_.insert_before(before, e);
+    list_.insert(++list_.iterator_to(*last), e);
 }
 
 template<class Allocator>
 void
 basic_fields<Allocator>::
-set(field name, string_view value)
+set(field name, string_param const& value)
 {
     BOOST_ASSERT(name != field::unknown);
-    set_element(
-        new_element(name, to_string(name), value));
+    set_element(new_element(name, to_string(name),
+        static_cast<string_view>(value)));
 }
 
 template<class Allocator>
 void
 basic_fields<Allocator>::
-set(string_view sname, string_view value)
+set(string_view sname, string_param const& value)
 {
     set_element(new_element(
-        string_to_field(sname), sname, value));
+        string_to_field(sname), sname,
+            static_cast<string_view>(value)));
 }
 
 template<class Allocator>
@@ -605,7 +617,7 @@ erase(const_iterator pos) ->
 {
     auto next = pos;
     auto& e = *next++;
-    set_.erase(set_.iterator_to(e));
+    set_.erase(e);
     list_.erase(pos);
     delete_element(const_cast<element&>(e));
     return next;
@@ -641,7 +653,8 @@ void
 basic_fields<Allocator>::
 swap(basic_fields<Allocator>& other)
 {
-    swap(other, pocs{});
+    swap(other, std::integral_constant<bool,
+        alloc_traits::propagate_on_container_swap::value>{});
 }
 
 template<class Allocator>
@@ -919,11 +932,7 @@ set_content_length_impl(
     if(! value)
         erase(field::content_length);
     else
-    {
-        auto s = to_static_string(*value);
-        set(field::content_length,
-            to_string_view(s));
-    }
+        set(field::content_length, *value);
 }
 
 template<class Allocator>
@@ -947,22 +956,18 @@ set_keep_alive_impl(
 template<class Allocator>
 auto
 basic_fields<Allocator>::
-try_create_new_element(
-    field name,
-    string_view sname,
-    string_view value,
-    error_code& ec) -> element*
+new_element(field name,
+    string_view sname, string_view value) ->
+        element&
 {
-    if(sname.size() > max_name_size)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, error::header_field_name_too_large);
-        return nullptr;
-    }
-    if(value.size() > max_value_size)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, error::header_field_value_too_large);
-        return nullptr;
-    }
+    if(sname.size() + 2 >
+            (std::numeric_limits<off_t>::max)())
+        BOOST_THROW_EXCEPTION(std::length_error{
+            "field name too large"});
+    if(value.size() + 2 >
+            (std::numeric_limits<off_t>::max)())
+        BOOST_THROW_EXCEPTION(std::length_error{
+            "field value too large"});
     value = detail::trim(value);
     std::uint16_t const off =
         static_cast<off_t>(sname.size() + 2);
@@ -972,50 +977,7 @@ try_create_new_element(
     auto const p = alloc_traits::allocate(a,
         (sizeof(element) + off + len + 2 + sizeof(align_type) - 1) /
             sizeof(align_type));
-    return ::new(p) element(name, sname, value);
-}
-
-template<class Allocator>
-auto
-basic_fields<Allocator>::
-new_element(
-    field name,
-    string_view sname,
-    string_view value) -> element&
-{
-    error_code ec;
-    auto* e = try_create_new_element(name, sname, value, ec);
-    if(ec.failed())
-        BOOST_THROW_EXCEPTION(system_error{ec});
-    return *e;
-}
-
-template<class Allocator>
-void
-basic_fields<Allocator>::
-insert_element(element& e)
-{
-    auto const before =
-        set_.upper_bound(e.name_string(), key_compare{});
-    if(before == set_.begin())
-    {
-        BOOST_ASSERT(count(e.name_string()) == 0);
-        set_.insert_before(before, e);
-        list_.push_back(e);
-        return;
-    }
-    auto const last = std::prev(before);
-    // VFALCO is it worth comparing `field name` first?
-    if(! beast::iequals(e.name_string(), last->name_string()))
-    {
-        BOOST_ASSERT(count(e.name_string()) == 0);
-        set_.insert_before(before, e);
-        list_.push_back(e);
-        return;
-    }
-    // keep duplicate fields together in the list
-    set_.insert_before(before, e);
-    list_.insert(++list_.iterator_to(*last), e);
+    return *(::new(p) element(name, sname, value));
 }
 
 template<class Allocator>
@@ -1158,13 +1120,13 @@ basic_fields<Allocator>::
 move_assign(basic_fields& other, std::true_type)
 {
     clear_all();
-    this->get() = std::move(other.get());
     set_ = std::move(other.set_);
     list_ = std::move(other.list_);
     method_ = other.method_;
     target_or_reason_ = other.target_or_reason_;
     other.method_ = {};
     other.target_or_reason_ = {};
+    this->get() = other.get();
 }
 
 template<class Allocator>
@@ -1177,6 +1139,7 @@ move_assign(basic_fields& other, std::false_type)
     if(this->get() != other.get())
     {
         copy_all(other);
+        other.clear_all();
     }
     else
     {

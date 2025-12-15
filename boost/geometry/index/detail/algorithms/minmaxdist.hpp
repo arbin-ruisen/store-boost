@@ -4,10 +4,6 @@
 //
 // Copyright (c) 2011-2014 Adam Wulkiewicz, Lodz, Poland.
 //
-// This file was modified by Oracle on 2020.
-// Modifications copyright (c) 2020 Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-//
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -17,8 +13,6 @@
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/comparable_distance.hpp>
-
-#include <boost/geometry/core/static_assert.hpp>
 
 #include <boost/geometry/index/detail/algorithms/diff_abs.hpp>
 #include <boost/geometry/index/detail/algorithms/sum_for_indexable.hpp>
@@ -34,12 +28,12 @@ template <
     size_t DimensionIndex>
 struct smallest_for_indexable_dimension<Point, BoxIndexable, box_tag, minmaxdist_tag, DimensionIndex>
 {
-    using result_type = typename geometry::default_comparable_distance_result<Point, BoxIndexable>::type;
+    typedef typename geometry::default_comparable_distance_result<Point, BoxIndexable>::type result_type;
 
     inline static result_type apply(Point const& pt, BoxIndexable const& i, result_type const& maxd)
     {
-        using point_coord_t = coordinate_type_t<Point>;
-        using indexable_coord_t = coordinate_type_t<BoxIndexable>;
+        typedef typename coordinate_type<Point>::type point_coord_t;
+        typedef typename coordinate_type<BoxIndexable>::type indexable_coord_t;
 
         point_coord_t pt_c = geometry::get<DimensionIndex>(pt);
         indexable_coord_t ind_c_min = geometry::get<geometry::min_corner, DimensionIndex>(i);
@@ -56,7 +50,7 @@ struct smallest_for_indexable_dimension<Point, BoxIndexable, box_tag, minmaxdist
             closer_comp = detail::diff_abs(pt_c, ind_c_min); // unsigned values protection
         else
             closer_comp = ind_c_max - pt_c;
-
+        
         result_type further_comp = 0;
         if ( ind_c_avg <= pt_c )
             further_comp = pt_c - ind_c_min;
@@ -70,9 +64,10 @@ struct smallest_for_indexable_dimension<Point, BoxIndexable, box_tag, minmaxdist
 template <typename Point, typename Indexable, typename IndexableTag>
 struct minmaxdist_impl
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Indexable type.",
-        Point, Indexable, IndexableTag);
+    BOOST_MPL_ASSERT_MSG(
+        (false),
+        NOT_IMPLEMENTED_FOR_THIS_INDEXABLE_TAG_TYPE,
+        (minmaxdist_impl));
 };
 
 template <typename Point, typename Indexable>
@@ -112,12 +107,11 @@ template <typename Point, typename Indexable>
 typename geometry::default_comparable_distance_result<Point, Indexable>::type
 minmaxdist(Point const& pt, Indexable const& i)
 {
-    return detail::minmaxdist_impl
-        <
-            Point,
-            Indexable,
-            tag_t<Indexable>
-        >::apply(pt, i);
+    return detail::minmaxdist_impl<
+        Point,
+        Indexable,
+        typename tag<Indexable>::type
+    >::apply(pt, i);
 }
 
 }}}} // namespace boost::geometry::index::detail

@@ -11,6 +11,7 @@
 /////////////////////////////////////////////////////////////////////////////
 //[doc_bucket_traits
 #include <boost/intrusive/unordered_set.hpp>
+#include <boost/functional/hash.hpp>
 #include <vector>
 
 using namespace boost::intrusive;
@@ -27,9 +28,7 @@ class MyClass : public unordered_set_base_hook<>
    friend bool operator==(const MyClass &l, const MyClass &r)
       {  return l.int_ == r.int_;   }
    friend std::size_t hash_value(const MyClass &v)
-   {  //Use your favorite hash function, like boost::hash or std::hash
-      return std::size_t(v.int_);
-   }
+      {  return boost::hash_value(v.int_); }
 };
 
 //Define the base hook option

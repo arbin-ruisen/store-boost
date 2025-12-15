@@ -5,11 +5,10 @@
         "Peter Dimov"
     ],
     "maintainers": [
-        "Peter Dimov <pdimov -at- gmail.com>"
+        "Peter Dimov <pdimov -at- pdimov.com>"
     ],
     "description": "A never-valueless, strong guarantee implementation of std::variant.",
     "category": [
         "Containers", "Data"
-    ],
-    "cxxstd": "11"
+    ]
 }

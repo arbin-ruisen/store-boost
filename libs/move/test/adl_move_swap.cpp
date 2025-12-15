@@ -8,6 +8,7 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/move/detail/config_begin.hpp>
 #include <boost/move/adl_move_swap.hpp>
 #include <boost/move/core.hpp>
 #include <boost/core/lightweight_test.hpp>
@@ -165,3 +166,4 @@ int main()
    }
    return ::boost::report_errors();
 }
+#include <boost/move/detail/config_end.hpp>

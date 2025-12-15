@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Ronald Garcia <garcia -at- osl.iu.edu>"
-    ],
-    "cxxstd": "03"
+    ]
 }

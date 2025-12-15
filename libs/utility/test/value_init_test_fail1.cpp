@@ -13,7 +13,7 @@
 
 #include "boost/utility/value_init.hpp"
 
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 #pragma hdrstop
 #endif
 

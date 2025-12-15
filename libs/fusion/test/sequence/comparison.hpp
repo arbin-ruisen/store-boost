@@ -8,20 +8,6 @@
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/fusion/sequence/comparison.hpp>
 
-struct not_a_fusion_container {};
-template <typename T>
-inline bool operator==(not_a_fusion_container, T const&) { return true; }
-template <typename T>
-inline bool operator!=(not_a_fusion_container, T const&) { return true; }
-template <typename T>
-inline bool operator<(not_a_fusion_container, T const&) { return true; }
-template <typename T>
-inline bool operator<=(not_a_fusion_container, T const&) { return true; }
-template <typename T>
-inline bool operator>(not_a_fusion_container, T const&) { return true; }
-template <typename T>
-inline bool operator>=(not_a_fusion_container, T const&) { return true; }
-
 void
 equality_test()
 {
@@ -42,9 +28,6 @@ equality_test()
     BOOST_TEST(!(v1 == v5));
     BOOST_TEST(v5 != v1);
     BOOST_TEST(!(v5 == v1));
-
-    BOOST_TEST(not_a_fusion_container() == v1);
-    BOOST_TEST(not_a_fusion_container() != v1);
 }
 
 void
@@ -68,11 +51,6 @@ ordering_test()
     FUSION_SEQUENCE<int, char, bool> v5(5, 'a', true);
     v1 >= v5;
 #endif
-
-    BOOST_TEST(not_a_fusion_container() > v1);
-    BOOST_TEST(not_a_fusion_container() >= v1);
-    BOOST_TEST(not_a_fusion_container() < v1);
-    BOOST_TEST(not_a_fusion_container() <= v1);
 }
 
 

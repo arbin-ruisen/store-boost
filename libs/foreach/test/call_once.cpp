@@ -9,7 +9,7 @@
 */
 
 #include <vector>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/foreach.hpp>
 
 // counter
@@ -27,14 +27,14 @@ std::vector<int> const &get_vector()
 ///////////////////////////////////////////////////////////////////////////////
 // test_main
 //   
-int main()
+int test_main( int, char*[] )
 {
     BOOST_FOREACH(int i, get_vector())
     {
         ((void)i); // no-op
     }
 
-    BOOST_TEST(1 == counter);
+    BOOST_CHECK(1 == counter);
 
-    return boost::report_errors();
+    return 0;
 }

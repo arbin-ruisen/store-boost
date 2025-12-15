@@ -11,12 +11,15 @@
 #define BOOST_BEAST_HTTP_WRITE_HPP
 
 #include <boost/beast/core/detail/config.hpp>
+#include <boost/beast/core/buffers_cat.hpp>
+#include <boost/beast/core/buffers_suffix.hpp>
+#include <boost/beast/core/multi_buffer.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/serializer.hpp>
 #include <boost/beast/http/type_traits.hpp>
 #include <boost/beast/http/detail/chunk_encode.hpp>
 #include <boost/beast/core/error.hpp>
-#include <boost/beast/core/stream_traits.hpp>
+#include <boost/beast/core/string.hpp>
 #include <boost/asio/async_result.hpp>
 #include <iosfwd>
 #include <limits>
@@ -156,38 +159,22 @@ write_some(
         std::size_t bytes_transferred   // the number of bytes written to the stream
     );
     @endcode
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
     manner equivalent to using `net::post`.
-
-    @par Per-Operation Cancellation
-
-    This asynchronous operation supports cancellation for the following
-    net::cancellation_type values:
-
-    @li @c net::cancellation_type::terminal
-
-    if the `stream` also supports terminal cancellation, `terminal`
-    cancellation leaves the stream in an undefined state, so that only
-    closing it is guaranteed to succeed.
 
     @see serializer
 */
 template<
     class AsyncWriteStream,
     bool isRequest, class Body, class Fields,
-    BOOST_BEAST_ASYNC_TPARAM2 WriteHandler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>>
+    class WriteHandler>
 BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
 async_write_some(
     AsyncWriteStream& stream,
     serializer<isRequest, Body, Fields>& sr,
-    WriteHandler&& handler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>{});
+    WriteHandler&& handler);
 
 //------------------------------------------------------------------------------
 
@@ -295,41 +282,25 @@ write_header(
         std::size_t bytes_transferred   // the number of bytes written to the stream
     );
     @endcode
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
     manner equivalent to using `net::post`.
 
     @note The implementation will call @ref serializer::split with
     the value `true` on the serializer passed in.
 
-    @par Per-Operation Cancellation
-
-    This asynchronous operation supports cancellation for the following
-    net::cancellation_type values:
-
-    @li @c net::cancellation_type::terminal
-
-    if the `stream` also supports terminal cancellation, `terminal`
-    cancellation leaves the stream in an undefined state, so that only
-    closing it is guaranteed to succeed.
-
     @see serializer
 */
 template<
     class AsyncWriteStream,
     bool isRequest, class Body, class Fields,
-    BOOST_BEAST_ASYNC_TPARAM2 WriteHandler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>>
+    class WriteHandler>
 BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
 async_write_header(
     AsyncWriteStream& stream,
     serializer<isRequest, Body, Fields>& sr,
-    WriteHandler&& handler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>{});
+    WriteHandler&& handler);
 
 //------------------------------------------------------------------------------
 
@@ -431,38 +402,22 @@ write(
         std::size_t bytes_transferred   // the number of bytes written to the stream
     );
     @endcode
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
     manner equivalent to using `net::post`.
-
-    @par Per-Operation Cancellation
-
-    This asynchronous operation supports cancellation for the following
-    net::cancellation_type values:
-
-    @li @c net::cancellation_type::terminal
-
-    if the `stream` also supports terminal cancellation, `terminal`
-    cancellation leaves the stream in an undefined state, so that only
-    closing it is guaranteed to succeed.
 
     @see serializer
 */
 template<
     class AsyncWriteStream,
     bool isRequest, class Body, class Fields,
-    BOOST_BEAST_ASYNC_TPARAM2 WriteHandler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>>
+    class WriteHandler>
 BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
 async_write(
     AsyncWriteStream& stream,
     serializer<isRequest, Body, Fields>& sr,
-    WriteHandler&& handler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>{});
+    WriteHandler&& handler);
 
 //------------------------------------------------------------------------------
 
@@ -668,43 +623,28 @@ write(
         std::size_t bytes_transferred   // the number of bytes written to the stream
     );
     @endcode
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
     manner equivalent to using `net::post`.
-
-    @par Per-Operation Cancellation
-
-    This asynchronous operation supports cancellation for the following
-    net::cancellation_type values:
-
-    @li @c net::cancellation_type::terminal
-
-    if the `stream` also supports terminal cancellation, `terminal`
-    cancellation leaves the stream in an undefined state, so that only
-    closing it is guaranteed to succeed.
 
     @see message
 */
 template<
     class AsyncWriteStream,
     bool isRequest, class Body, class Fields,
-    BOOST_BEAST_ASYNC_TPARAM2 WriteHandler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>>
+    class WriteHandler>
+#if BOOST_BEAST_DOXYGEN
 BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
+#else
+typename std::enable_if<
+    is_mutable_body_writer<Body>::value,
+    BOOST_BEAST_ASYNC_RESULT2(WriteHandler)>::type
+#endif
 async_write(
     AsyncWriteStream& stream,
     message<isRequest, Body, Fields>& msg,
-    WriteHandler&& handler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>{}
-#ifndef BOOST_BEAST_DOXYGEN
-    , typename std::enable_if<
-        is_mutable_body_writer<Body>::value>::type* = 0
-#endif
-    );
+    WriteHandler&& handler);
 
 /** Write a complete message to a stream asynchronously.
 
@@ -742,44 +682,28 @@ async_write(
         std::size_t bytes_transferred   // the number of bytes written to the stream
     );
     @endcode
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
     manner equivalent to using `net::post`.
-
-    @par Per-Operation Cancellation
-
-    This asynchronous operation supports cancellation for the following
-    net::cancellation_type values:
-
-    @li @c net::cancellation_type::terminal
-
-    if the `stream` also supports terminal cancellation, `terminal`
-    cancellation leaves the stream in an undefined state, so that only
-    closing it is guaranteed to succeed.
 
     @see message
 */
 template<
     class AsyncWriteStream,
     bool isRequest, class Body, class Fields,
-    BOOST_BEAST_ASYNC_TPARAM2 WriteHandler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>>
+    class WriteHandler>
+#if BOOST_BEAST_DOXYGEN
 BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
+#else
+typename std::enable_if<
+    ! is_mutable_body_writer<Body>::value,
+    BOOST_BEAST_ASYNC_RESULT2(WriteHandler)>::type
+#endif
 async_write(
     AsyncWriteStream& stream,
     message<isRequest, Body, Fields> const& msg,
-    WriteHandler&& handler =
-        net::default_completion_token_t<
-            executor_type<AsyncWriteStream>>{}
-#ifndef BOOST_BEAST_DOXYGEN
-    , typename std::enable_if<
-        ! is_mutable_body_writer<Body>::value>::type* = 0
-#endif
-    );
-
+    WriteHandler&& handler);
 
 //------------------------------------------------------------------------------
 

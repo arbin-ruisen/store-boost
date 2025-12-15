@@ -15,13 +15,16 @@
 // #define BOOST_LOG_DYN_LINK 1
 
 #include <stdexcept>
-#include <thread>
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <functional>
+#include <boost/ref.hpp>
+#include <boost/bind.hpp>
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/compat/latch.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/barrier.hpp>
 
 #include <boost/log/common.hpp>
 #include <boost/log/expressions.hpp>
@@ -48,13 +51,13 @@ enum
 BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(test_lg, src::logger_mt)
 
 //! This function is executed in multiple threads
-void thread_fun(boost::compat::latch& latch)
+void thread_fun(boost::barrier& bar)
 {
     // Wait until all threads are created
-    latch.arrive_and_wait();
+    bar.wait();
 
     // Here we go. First, identify the thread.
-    BOOST_LOG_SCOPED_THREAD_TAG("ThreadID", std::this_thread::get_id());
+    BOOST_LOG_SCOPED_THREAD_TAG("ThreadID", boost::this_thread::get_id());
 
     // Now, do some logging
     for (unsigned int i = 0; i < LOG_RECORDS_TO_WRITE; ++i)
@@ -85,7 +88,7 @@ int main(int argc, char* argv[])
         shared_ptr< sink_t > sink(new sink_t(
             boost::make_shared< backend_t >(),
             // We'll apply record ordering to ensure that records from different threads go sequentially in the file
-            keywords::order = logging::make_attr_ordering< unsigned int >("RecordID", std::less< unsigned int >())));
+            keywords::order = logging::make_attr_ordering("RecordID", std::less< unsigned int >())));
 
         sink->locked_backend()->add_stream(strm);
 
@@ -94,7 +97,7 @@ int main(int argc, char* argv[])
             expr::format("%1%: [%2%] [%3%] - %4%")
                 % expr::attr< unsigned int >("RecordID")
                 % expr::attr< boost::posix_time::ptime >("TimeStamp")
-                % expr::attr< std::thread::id >("ThreadID")
+                % expr::attr< boost::thread::id >("ThreadID")
                 % expr::smessage
         );
 
@@ -106,14 +109,13 @@ int main(int argc, char* argv[])
         logging::core::get()->add_global_attribute("RecordID", attrs::counter< unsigned int >());
 
         // Create logging threads
-        boost::compat::latch latch(THREAD_COUNT);
-        std::thread threads[THREAD_COUNT];
+        boost::barrier bar(THREAD_COUNT);
+        boost::thread_group threads;
         for (unsigned int i = 0; i < THREAD_COUNT; ++i)
-            threads[i] = std::thread([&latch]() { thread_fun(latch); });
+            threads.create_thread(boost::bind(&thread_fun, boost::ref(bar)));
 
         // Wait until all action ends
-        for (unsigned int i = 0; i < THREAD_COUNT; ++i)
-            threads[i].join();
+        threads.join_all();
 
         // Flush all buffered records
         sink->stop();

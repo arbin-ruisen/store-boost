@@ -8,8 +8,9 @@
 #ifndef BOOST_GIL_IO_MAKE_WRITER_HPP
 #define BOOST_GIL_IO_MAKE_WRITER_HPP
 
-#include <boost/gil/detail/mp11.hpp>
 #include <boost/gil/io/get_writer.hpp>
+
+#include <boost/mpl/and.hpp>
 
 #include <type_traits>
 
@@ -20,7 +21,7 @@ inline
 auto make_writer(String const& file_name, image_write_info<FormatTag> const& info,
     typename std::enable_if
     <
-        mp11::mp_and
+        mpl::and_
         <
             detail::is_supported_path_spec<String>,
             is_format_tag<FormatTag>
@@ -34,10 +35,14 @@ auto make_writer(String const& file_name, image_write_info<FormatTag> const& inf
     return typename get_writer<String, FormatTag>::type(device, info);
 }
 
-template <typename FormatTag>
+template< typename FormatTag >
 inline
-auto make_writer(std::wstring const& file_name, image_write_info<FormatTag> const& info)
-    -> typename get_writer<std::wstring, FormatTag>::type
+typename get_writer< std::wstring
+                   , FormatTag
+                   >::type
+make_writer( const std::wstring&                  file_name
+           , const image_write_info< FormatTag >& info
+           )
 {
     const char* str = detail::convert_to_native_string( file_name );
 
@@ -56,20 +61,28 @@ auto make_writer(std::wstring const& file_name, image_write_info<FormatTag> cons
                                      );
 }
 
-template <typename FormatTag>
+#ifdef BOOST_GIL_IO_ADD_FS_PATH_SUPPORT
+template< typename FormatTag >
 inline
-auto make_writer(detail::filesystem::path const& path, image_write_info<FormatTag> const& info)
-    -> typename get_writer<std::wstring, FormatTag>::type
+typename get_writer< std::wstring
+                   , FormatTag
+                   >::type
+make_writer( const filesystem::path&              path
+           , const image_write_info< FormatTag >& info
+           )
 {
-    return make_writer(path.wstring(), info);
+    return make_writer( path.wstring()
+                      , info
+                      );
 }
+#endif // BOOST_GIL_IO_ADD_FS_PATH_SUPPORT
 
 template <typename Device, typename FormatTag>
 inline
 auto make_writer(Device& file, image_write_info<FormatTag> const& info,
     typename std::enable_if
     <
-        mp11::mp_and
+        mpl::and_
         <
             typename detail::is_adaptable_output_device<FormatTag, Device>::type,
             is_format_tag<FormatTag>
@@ -88,7 +101,7 @@ inline
 auto make_writer(String const& file_name, FormatTag const&,
     typename std::enable_if
     <
-        mp11::mp_and
+        mpl::and_
         <
             detail::is_supported_path_spec<String>,
             is_format_tag<FormatTag>
@@ -99,30 +112,42 @@ auto make_writer(String const& file_name, FormatTag const&,
     return make_writer(file_name, image_write_info<FormatTag>());
 }
 
-template <typename FormatTag>
+template< typename FormatTag >
 inline
-auto make_writer(std::wstring const &file_name, FormatTag const&)
-    -> typename get_writer<std::wstring, FormatTag>::type
+typename get_writer< std::wstring
+                   , FormatTag
+                   >::type
+make_writer( const std::wstring& file_name
+           , const FormatTag&
+           )
 {
     return make_writer( file_name
                       , image_write_info< FormatTag >()
                       );
 }
 
-template <typename FormatTag>
+#ifdef BOOST_GIL_IO_ADD_FS_PATH_SUPPORT
+template< typename FormatTag >
 inline
-auto make_writer(detail::filesystem::path const& path, FormatTag const& tag)
-    -> typename get_writer<std::wstring, FormatTag>::type
+typename get_writer< std::wstring
+                   , FormatTag
+                   >::type
+make_writer( const filesystem::path& path
+           , const FormatTag&        tag
+           )
 {
-    return make_writer(path.wstring(), tag);
+    return make_writer( path.wstring()
+                      , tag
+                      );
 }
+#endif // BOOST_GIL_IO_ADD_FS_PATH_SUPPORT
 
 template <typename Device, typename FormatTag>
 inline
 auto make_writer(Device& file, FormatTag const&,
     typename std::enable_if
     <
-        mp11::mp_and
+        mpl::and_
         <
             typename detail::is_adaptable_output_device<FormatTag, Device>::type,
             is_format_tag<FormatTag>

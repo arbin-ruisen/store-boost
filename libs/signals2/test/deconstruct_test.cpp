@@ -11,8 +11,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/signals2/deconstruct.hpp>
 #include <boost/signals2/deconstruct_ptr.hpp>
-#define BOOST_TEST_MODULE deconstruct_test
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/minimal.hpp>
 
 class X: public boost::signals2::postconstructible {
 public:
@@ -167,8 +166,9 @@ void deconstruct_test()
   }
 }
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char*[])
 {
   deconstruct_ptr_test();
   deconstruct_test();
+  return 0;
 }

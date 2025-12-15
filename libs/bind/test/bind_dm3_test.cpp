@@ -17,18 +17,20 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#if defined(BOOST_GCC) && BOOST_GCC >= 130000 && BOOST_GCC < 150000
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=113256
-# pragma GCC diagnostic ignored "-Wdangling-reference"
+#include <boost/bind.hpp>
+
+#if defined(BOOST_MSVC) && (BOOST_MSVC < 1300)
+#pragma warning(push, 3)
 #endif
 
-#include <boost/bind/bind.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <iostream>
+
+#if defined(BOOST_MSVC) && (BOOST_MSVC < 1300)
+#pragma warning(pop)
+#endif
+
+#include <boost/detail/lightweight_test.hpp>
 #include <utility>
-
-using namespace boost::placeholders;
-
-//
 
 int main()
 {

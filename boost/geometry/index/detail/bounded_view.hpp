@@ -5,8 +5,8 @@
 //
 // Copyright (c) 2014-2015 Adam Wulkiewicz, Lodz, Poland.
 //
-// This file was modified by Oracle on 2019-2020.
-// Modifications copyright (c) 2019-2020 Oracle and/or its affiliates.
+// This file was modified by Oracle on 2019.
+// Modifications copyright (c) 2019 Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
@@ -16,12 +16,11 @@
 #ifndef BOOST_GEOMETRY_INDEX_DETAIL_BOUNDED_VIEW_HPP
 #define BOOST_GEOMETRY_INDEX_DETAIL_BOUNDED_VIEW_HPP
 
+#include <boost/mpl/assert.hpp>
 
 #include <boost/geometry/algorithms/envelope.hpp>
-#include <boost/geometry/core/static_assert.hpp>
-#include <boost/geometry/strategies/default_strategy.hpp>
-#include <boost/geometry/strategies/index/services.hpp>
 
+#include <boost/geometry/strategies/index.hpp>
 
 namespace boost { namespace geometry {
 
@@ -31,7 +30,7 @@ namespace index { namespace detail {
 template <typename Geometry, typename BoundingGeometry, typename Strategy>
 struct bounded_view_base_cs_tag
 {
-    using type = typename Strategy::cs_tag;
+    typedef typename Strategy::cs_tag type;
 };
 
 template <typename Geometry, typename BoundingGeometry>
@@ -45,8 +44,8 @@ template
     typename Geometry,
     typename BoundingGeometry,
     typename Strategy,
-    typename Tag = geometry::tag_t<Geometry>,
-    typename BoundingTag = geometry::tag_t<BoundingGeometry>,
+    typename Tag = typename geometry::tag<Geometry>::type,
+    typename BoundingTag = typename geometry::tag<BoundingGeometry>::type,
     typename CSTag = typename bounded_view_base_cs_tag
                         <
                             Geometry, BoundingGeometry, Strategy
@@ -54,9 +53,10 @@ template
 >
 struct bounded_view_base
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for these Geometries.",
-        Geometry, BoundingGeometry, Strategy, Tag, BoundingTag, CSTag);
+    BOOST_MPL_ASSERT_MSG(
+        (false),
+        NOT_IMPLEMENTED_FOR_THOSE_GEOMETRIES,
+        (types<Tag, BoundingTag, CSTag>));
 };
 
 
@@ -66,12 +66,12 @@ template <typename Segment, typename Box, typename Strategy>
 struct bounded_view_base<Segment, Box, Strategy, segment_tag, box_tag, cartesian_tag>
 {
 public:
-    using coordinate_type = geometry::coordinate_type_t<Box>;
+    typedef typename geometry::coordinate_type<Box>::type coordinate_type;
 
     bounded_view_base(Segment const& segment, Strategy const& )
         : m_segment(segment)
     {}
-
+    
     template <std::size_t Dimension>
     inline coordinate_type get_min() const
     {
@@ -95,11 +95,24 @@ private:
 template <typename Segment, typename Box, typename Strategy, typename CSTag>
 struct bounded_view_base<Segment, Box, Strategy, segment_tag, box_tag, CSTag>
 {
-    using coordinate_type = geometry::coordinate_type_t<Box>;
+    template <typename S>
+    inline void envelope(Segment const& segment, S const& strategy)
+    {
+        geometry::envelope(segment, m_box,
+                           strategy.get_envelope_segment_strategy());
+    }
+
+    inline void envelope(Segment const& segment, default_strategy const& )
+    {
+        geometry::envelope(segment, m_box);
+    }
+
+public:
+    typedef typename geometry::coordinate_type<Box>::type coordinate_type;
 
     bounded_view_base(Segment const& segment, Strategy const& strategy)
     {
-        geometry::envelope(segment, m_box, strategy);
+        envelope(segment, strategy);
     }
 
     template <std::size_t Dimension>
@@ -124,7 +137,7 @@ template <typename BoxIn, typename Box, typename Strategy, typename CSTag>
 struct bounded_view_base<BoxIn, Box, Strategy, box_tag, box_tag, CSTag>
 {
 public:
-    using coordinate_type = geometry::coordinate_type_t<Box>;
+    typedef typename geometry::coordinate_type<Box>::type coordinate_type;
 
     bounded_view_base(BoxIn const& box, Strategy const& )
         : m_box(box)
@@ -154,7 +167,7 @@ template <typename Point, typename Box, typename Strategy, typename CSTag>
 struct bounded_view_base<Point, Box, Strategy, point_tag, box_tag, CSTag>
 {
 public:
-    using coordinate_type = geometry::coordinate_type_t<Box>;
+    typedef typename geometry::coordinate_type<Box>::type coordinate_type;
 
     bounded_view_base(Point const& point, Strategy const& )
         : m_point(point)
@@ -182,8 +195,8 @@ private:
 template <typename Geometry,
           typename BoundingGeometry,
           typename Strategy,
-          typename Tag = geometry::tag_t<Geometry>,
-          typename BoundingTag = geometry::tag_t<BoundingGeometry>>
+          typename Tag = typename geometry::tag<Geometry>::type,
+          typename BoundingTag = typename geometry::tag<BoundingGeometry>::type>
 struct bounded_view
     : bounded_view_base<Geometry, BoundingGeometry, Strategy>
 {
@@ -203,10 +216,10 @@ struct bounded_view<Geometry, BoundingGeometry, default_strategy, Tag, BoundingT
         <
             Geometry,
             BoundingGeometry,
-            typename strategies::index::services::default_strategy<Geometry>::type
+            typename strategy::index::services::default_strategy<Geometry>::type
         >
 {
-    typedef typename strategies::index::services::default_strategy
+    typedef typename strategy::index::services::default_strategy
         <
             Geometry
         >::type strategy_type;
@@ -235,13 +248,13 @@ namespace traits
 template <typename Geometry, typename Box, typename Strategy, typename Tag>
 struct tag< index::detail::bounded_view<Geometry, Box, Strategy, Tag, box_tag> >
 {
-    using type = box_tag;
+    typedef box_tag type;
 };
 
 template <typename Geometry, typename Box, typename Strategy, typename Tag>
 struct point_type< index::detail::bounded_view<Geometry, Box, Strategy, Tag, box_tag> >
 {
-    using type = point_type_t<Box>;
+    typedef typename point_type<Box>::type type;
 };
 
 template <typename Geometry, typename Box, typename Strategy, typename Tag, std::size_t Dimension>
@@ -249,7 +262,7 @@ struct indexed_access<index::detail::bounded_view<Geometry, Box, Strategy, Tag, 
                       min_corner, Dimension>
 {
     typedef index::detail::bounded_view<Geometry, Box, Strategy, Tag, box_tag> box_type;
-    using coordinate_type = geometry::coordinate_type_t<Box>;
+    typedef typename geometry::coordinate_type<Box>::type coordinate_type;
 
     static inline coordinate_type get(box_type const& b)
     {
@@ -267,7 +280,7 @@ struct indexed_access<index::detail::bounded_view<Geometry, Box, Strategy, Tag, 
                       max_corner, Dimension>
 {
     typedef index::detail::bounded_view<Geometry, Box, Strategy, Tag, box_tag> box_type;
-    using coordinate_type = geometry::coordinate_type_t<Box>;
+    typedef typename geometry::coordinate_type<Box>::type coordinate_type;
 
     static inline coordinate_type get(box_type const& b)
     {

@@ -39,6 +39,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 template struct boost::wave::cpplexer::lexertl::new_lexer_gen<
-    std::string::iterator>;
+    BOOST_WAVE_STRINGTYPE::iterator>;
 
 #endif // BOOST_WAVE_SEPARATE_LEXER_INSTANTIATION != 0

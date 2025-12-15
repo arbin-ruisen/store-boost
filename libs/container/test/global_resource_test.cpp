@@ -10,6 +10,7 @@
 #include <boost/container/pmr/global_resource.hpp>
 #include <boost/container/pmr/memory_resource.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <boost/core/no_exceptions_support.hpp>
 
 #include "derived_from_memory_resource.hpp"
 
@@ -85,23 +86,20 @@ void test_null_memory_resource()
 {
    //Make sure it throw or returns null
    memory_resource *mr = null_memory_resource();
-   BOOST_TEST(mr != 0);
-
    #if !defined(BOOST_NO_EXCEPTIONS)
    bool bad_allocexception_thrown = false;
-
-   BOOST_CONTAINER_TRY{
+   try{
       mr->allocate(1, 1);
    }
-   BOOST_CONTAINER_CATCH(std::bad_alloc&) {
+   catch(std::bad_alloc&) {
       bad_allocexception_thrown = true;
    }
-   BOOST_CONTAINER_CATCH(...) {
+   catch(...) {
    }
-   BOOST_CONTAINER_CATCH_END
-
    BOOST_TEST(bad_allocexception_thrown == true);
-   #endif   //BOOST_NO_EXCEPTIONS
+   #else
+   BOOST_TEST(0 == mr->allocate(1, 1));
+   #endif
 }
 
 void test_default_resource()

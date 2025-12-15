@@ -256,22 +256,15 @@ public:
             std::size_t bytes_transferred // number of bytes transferred
         );
         @endcode        
-        If the handler has an associated immediate executor,
-        an immediate completion will be dispatched to it.
-        Otherwise, the handler will not be invoked from within
-        this function. Invocation of the handler will be performed
-        by dispatching to the immediate executor. If no
-        immediate executor is specified, this is equivalent
-        to using `net::post`.    */
-    template<
-        class MutableBufferSequence,
-        BOOST_BEAST_ASYNC_TPARAM2 ReadHandler =
-            net::default_completion_token_t<executor_type>>
+        Regardless of whether the asynchronous operation completes
+        immediately or not, the handler will not be invoked from within
+        this function. Invocation of the handler will be performed in a
+        manner equivalent to using `net::post`.
+    */
+    template<class MutableBufferSequence, class ReadHandler>
     BOOST_BEAST_ASYNC_RESULT2(ReadHandler)
-    async_read_some(
-        MutableBufferSequence const& buffers,
-        ReadHandler&& handler =
-            net::default_completion_token_t<executor_type>{});
+    async_read_some(MutableBufferSequence const& buffers,
+        ReadHandler&& handler);
 
     /** Write some data to the stream.
 
@@ -337,22 +330,15 @@ public:
             std::size_t bytes_transferred // number of bytes transferred
         );
         @endcode
-        If the handler has an associated immediate executor,
-        an immediate completion will be dispatched to it.
-        Otherwise, the handler will not be invoked from within
-        this function. Invocation of the handler will be performed
-        by dispatching to the immediate executor. If no
-        immediate executor is specified, this is equivalent
-        to using `net::post`.    */
-    template<
-        class ConstBufferSequence,
-        BOOST_BEAST_ASYNC_TPARAM2 WriteHandler =
-            net::default_completion_token_t<executor_type>>
+        Regardless of whether the asynchronous operation completes
+        immediately or not, the handler will not be invoked from within
+        this function. Invocation of the handler will be performed in a
+        manner equivalent to using `net::post`.
+    */
+    template<class ConstBufferSequence, class WriteHandler>
     BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
-    async_write_some(
-        ConstBufferSequence const& buffers,
-        WriteHandler&& handler =
-            net::default_completion_token_t<executor_type>{});
+    async_write_some(ConstBufferSequence const& buffers,
+        WriteHandler&& handler);
 };
 
 } // beast

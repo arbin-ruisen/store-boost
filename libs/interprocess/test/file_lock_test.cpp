@@ -7,10 +7,12 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/file_mapping.hpp>
-#include "util.hpp"
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "mutex_test_template.hpp"
 #include "sharable_mutex_test_template.hpp"
 #include "get_process_id_name.hpp"
@@ -18,6 +20,14 @@
 #include <cstdio> //std::remove
 
 using namespace boost::interprocess;
+
+inline std::string get_filename()
+{
+   std::string ret (ipcdetail::get_temporary_path());
+   ret += "/";
+   ret += test::get_process_id_name();
+   return ret;
+}
 
 //This wrapper is necessary to have a default constructor
 //in generic mutex_test_template functions
@@ -39,27 +49,16 @@ int main ()
       if(!file){
          return 1;
       }
+      file_lock flock(get_filename().c_str());
       {
-         file_lock flock(get_filename().c_str());
-         {
-         scoped_lock<file_lock> sl(flock);
-         }
-         {
-         scoped_lock<file_lock> sl(flock, try_to_lock);
-         }
-         {
-         scoped_lock<file_lock> sl(flock, test::ptime_delay_ms(1));
-         }
-         {
-         scoped_lock<file_lock> sl(flock, test::boost_systemclock_delay_ms(1));
-         }
-         {
-         scoped_lock<file_lock> sl(flock, test::std_systemclock_delay_ms(1));
-         }
+      scoped_lock<file_lock> sl(flock);
       }
-      #if defined(BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES)
-      file_lock flock(get_wfilename().c_str());
-      #endif
+      {
+      scoped_lock<file_lock> sl(flock, try_to_lock);
+      }
+      {
+      scoped_lock<file_lock> sl(flock, test::delay(1));
+      }
    }
    {
       //Now test move semantics
@@ -70,7 +69,7 @@ int main ()
       mapping.swap(move_assign);
    }
 
-   test::test_all_lock<file_lock_lock_test_wrapper>();
+   //test::test_all_lock<file_lock_lock_test_wrapper>();
    //test::test_all_mutex<file_lock_lock_test_wrapper>();
    //test::test_all_sharable_mutex<file_lock_lock_test_wrapper>();
    std::remove(get_filename().c_str());
@@ -78,3 +77,4 @@ int main ()
    return 0;
 }
 
+#include <boost/interprocess/detail/config_end.hpp>

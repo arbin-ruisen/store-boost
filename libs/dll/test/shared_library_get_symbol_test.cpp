@@ -1,6 +1,6 @@
 // Copyright 2011-2012 Renato Tegon Forti.
 // Copyright 2014 Renato Tegon Forti, Antony Polukhin.
-// Copyright Antony Polukhin, 2015-2025.
+// Copyright 2015-2019 Antony Polukhin.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -11,8 +11,7 @@
 #include "../example/b2_workarounds.hpp"
 #include <boost/dll.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <functional>
-#include <memory>
+#include <boost/function.hpp>
 #include <boost/fusion/container.hpp>
 // lib functions
 
@@ -21,7 +20,7 @@ typedef void  (say_hello_func)  ();
 typedef int   (increment)       (int);
 
 typedef boost::fusion::vector<std::vector<int>, std::vector<int>, std::vector<int>, const std::vector<int>*, std::vector<int>* > do_share_res_t;
-typedef std::shared_ptr<do_share_res_t> (do_share_t)(
+typedef boost::shared_ptr<do_share_res_t> (do_share_t)(
             std::vector<int> v1,
             std::vector<int>& v2,
             const std::vector<int>& v3,
@@ -36,39 +35,31 @@ void refcountable_test(boost::dll::fs::path shared_library_path) {
     std::vector<int> v(1000);
 
     {
-        std::function<say_hello_func> sz2
-            = import_symbol<say_hello_func>(shared_library_path, "say_hello");
+        boost::function<say_hello_func> sz2
+            = import<say_hello_func>(shared_library_path, "say_hello");
 
         sz2();
         sz2();
         sz2();
     }
 
-
-#if defined(__GNUC__) && __GNUC__ >= 4 && defined(__ELF__)
     {
-        const int the_answer = import_symbol<int(int)>(shared_library_path, "protected_function")(0);
-        BOOST_TEST_EQ(the_answer, 42);
-    }
-#endif
-
-    {
-        std::function<std::size_t(const std::vector<int>&)> sz
+        boost::function<std::size_t(const std::vector<int>&)> sz
             = import_alias<std::size_t(const std::vector<int>&)>(shared_library_path, "foo_bar");
         BOOST_TEST(sz(v) == 1000);
     }
 
 
     {
-        std::function<do_share_t> f;
+        boost::function<do_share_t> f;
 
         {
-            std::function<do_share_t> f2 = import_alias<do_share_t>(shared_library_path, "do_share");
+            boost::function<do_share_t> f2 = import_alias<do_share_t>(shared_library_path, "do_share");
             f = f2;
         }
 
         std::vector<int> v1(1, 1), v2(2, 2), v3(3, 3), v4(4, 4), v5(1000, 5);
-        auto res = f(v1, v2, v3, &v4, &v5);
+        boost::shared_ptr<do_share_res_t> res = f(v1, v2, v3, &v4, &v5);
 
         BOOST_TEST(at_c<0>(*res).size() == 1); BOOST_TEST(at_c<0>(*res).front() == 1);
         BOOST_TEST(at_c<1>(*res).size() == 2); BOOST_TEST(at_c<1>(*res).front() == 2);
@@ -83,22 +74,22 @@ void refcountable_test(boost::dll::fs::path shared_library_path) {
     }
 
     {
-        auto i = import_symbol<int>(shared_library_path, "integer_g");
+        boost::shared_ptr<int> i = import<int>(shared_library_path, "integer_g");
         BOOST_TEST(*i == 100);
 
-        decltype(i) i2;
+        boost::shared_ptr<int> i2;
         i.swap(i2);
         BOOST_TEST(*i2 == 100);
     }
 
     {
-        std::function<int&()> f = import_alias<int&()>(shared_library_path, "ref_returning_function");
+        boost::function<int&()> f = import_alias<int&()>(shared_library_path, "ref_returning_function");
         BOOST_TEST(f() == 0);
 
         f() = 10;
         BOOST_TEST(f() == 10);
         
-        std::function<int&()> f1 = import_alias<int&()>(shared_library_path, "ref_returning_function");
+        boost::function<int&()> f1 = import_alias<int&()>(shared_library_path, "ref_returning_function");
         BOOST_TEST(f1() == 10);
 
         f1() += 10;
@@ -106,19 +97,19 @@ void refcountable_test(boost::dll::fs::path shared_library_path) {
     }
 
     {
-        auto i = import_symbol<const int>(shared_library_path, "const_integer_g");
+        boost::shared_ptr<const int> i = import<const int>(shared_library_path, "const_integer_g");
         BOOST_TEST(*i == 777);
 
-        auto i2 = i;
+        boost::shared_ptr<const int> i2 = i;
         i.reset();
         BOOST_TEST(*i2 == 777);
     }
 
     {
-        auto s = import_alias<std::string>(shared_library_path, "info");
+        boost::shared_ptr<std::string> s = import_alias<std::string>(shared_library_path, "info");
         BOOST_TEST(*s == "I am a std::string from the test_library (Think of me as of 'Hello world'. Long 'Hello world').");
 
-        decltype(s) s2;
+        boost::shared_ptr<std::string> s2;
         s.swap(s2);
         BOOST_TEST(*s2 == "I am a std::string from the test_library (Think of me as of 'Hello world'. Long 'Hello world').");
     }
@@ -158,7 +149,7 @@ int main(int argc, char* argv[]) {
 
     BOOST_TEST(sl.get<const int>("const_integer_g") == 777);
 
-    std::function<int(int)> inc = sl.get<int(int)>("increment");
+    boost::function<int(int)> inc = sl.get<int(int)>("increment");
     BOOST_TEST(inc(1) == 2);
     BOOST_TEST(inc(2) == 3);
     BOOST_TEST(inc(3) == 4);
@@ -171,7 +162,7 @@ int main(int argc, char* argv[]) {
 
 
     // Checking aliases
-    std::function<std::size_t(const std::vector<int>&)> sz 
+    boost::function<std::size_t(const std::vector<int>&)> sz 
         = sl.get_alias<std::size_t(const std::vector<int>&)>("foo_bar");
 
     std::vector<int> v(10);
@@ -189,11 +180,13 @@ int main(int argc, char* argv[]) {
         BOOST_TEST(val == 15);   
     }
 
-    int& ref_to_internal_integer = sl.get<int&>("reference_to_internal_integer");
-    BOOST_TEST(ref_to_internal_integer == 0xFF0000);
+    int& reference_to_internal_integer = sl.get<int&>("reference_to_internal_integer");
+    BOOST_TEST(reference_to_internal_integer == 0xFF0000);
 
-    int&& rvalue_ref_to_internal_integer = sl.get<int&&>("rvalue_reference_to_internal_integer");
-    BOOST_TEST(rvalue_ref_to_internal_integer == 0xFF0000);
+#ifndef BOOST_NO_RVALUE_REFERENCES
+    int&& rvalue_reference_to_internal_integer = sl.get<int&&>("rvalue_reference_to_internal_integer");
+    BOOST_TEST(rvalue_reference_to_internal_integer == 0xFF0000);
+#endif
 
     return boost::report_errors();
 }

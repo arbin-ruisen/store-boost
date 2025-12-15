@@ -10,6 +10,5 @@
     ],
     "maintainers": [
         "Jan Gaspar <jano_gaspar -at- yahoo.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

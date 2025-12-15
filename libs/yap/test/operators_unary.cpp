@@ -5,7 +5,7 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 #include <boost/yap/expression.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 #include <sstream>
 
@@ -24,7 +24,7 @@ namespace yap = boost::yap;
 namespace bh = boost::hana;
 
 
-int main()
+int test_main(int, char * [])
 {
     {
         term<uint32_t> x{{2u}};
@@ -44,9 +44,9 @@ int main()
                 bh::tuple<term_cref<uint32_t>>>
                 term_const_ref_expr = +cx;
 
-            BOOST_TEST(evaluate(term_expr) == 1u);
-            BOOST_TEST(evaluate(term_ref_expr) == 2u);
-            BOOST_TEST(evaluate(term_const_ref_expr) == 3u);
+            BOOST_CHECK(evaluate(term_expr) == 1u);
+            BOOST_CHECK(evaluate(term_ref_expr) == 2u);
+            BOOST_CHECK(evaluate(term_const_ref_expr) == 3u);
         }
 
         {
@@ -61,9 +61,9 @@ int main()
                 bh::tuple<term_cref<uint32_t>>>
                 term_const_ref_expr = -cx;
 
-            BOOST_TEST(evaluate(term_expr) == 0u - 1u);
-            BOOST_TEST(evaluate(term_ref_expr) == 0u - 2u);
-            BOOST_TEST(evaluate(term_const_ref_expr) == 0u - 3u);
+            BOOST_CHECK(evaluate(term_expr) == 0u - 1u);
+            BOOST_CHECK(evaluate(term_ref_expr) == 0u - 2u);
+            BOOST_CHECK(evaluate(term_const_ref_expr) == 0u - 3u);
         }
 
         {
@@ -80,9 +80,9 @@ int main()
                 bh::tuple<term_cref<uint32_t>>>
                 term_const_ref_expr = ~cx;
 
-            BOOST_TEST(evaluate(term_expr) == 0xfffffffe);
-            BOOST_TEST(evaluate(term_ref_expr) == 0xfffffffd);
-            BOOST_TEST(evaluate(term_const_ref_expr) == 0xfffffffc);
+            BOOST_CHECK(evaluate(term_expr) == 0xfffffffe);
+            BOOST_CHECK(evaluate(term_ref_expr) == 0xfffffffd);
+            BOOST_CHECK(evaluate(term_const_ref_expr) == 0xfffffffc);
         }
 
         {
@@ -99,9 +99,9 @@ int main()
                 bh::tuple<term_cref<uint32_t>>>
                 term_const_ref_expr = !cx;
 
-            BOOST_TEST(evaluate(term_expr) == false);
-            BOOST_TEST(evaluate(term_ref_expr) == false);
-            BOOST_TEST(evaluate(term_const_ref_expr) == false);
+            BOOST_CHECK(evaluate(term_expr) == false);
+            BOOST_CHECK(evaluate(term_ref_expr) == false);
+            BOOST_CHECK(evaluate(term_const_ref_expr) == false);
         }
 
         {
@@ -117,8 +117,8 @@ int main()
                 term_const_ref_expr = ++cx;
             (void)term_const_ref_expr;
 
-            BOOST_TEST(evaluate(term_expr) == 2u);
-            BOOST_TEST(evaluate(term_ref_expr) == 3u);
+            BOOST_CHECK(evaluate(term_expr) == 2u);
+            BOOST_CHECK(evaluate(term_ref_expr) == 3u);
         }
     }
 
@@ -141,9 +141,9 @@ int main()
                 bh::tuple<term_cref<uint32_t &>>>
                 term_const_ref_expr = &cx;
 
-            BOOST_TEST(evaluate(term_expr) == &i);
-            BOOST_TEST(evaluate(term_ref_expr) == &j);
-            BOOST_TEST(evaluate(term_const_ref_expr) == &k);
+            BOOST_CHECK(evaluate(term_expr) == &i);
+            BOOST_CHECK(evaluate(term_ref_expr) == &j);
+            BOOST_CHECK(evaluate(term_const_ref_expr) == &k);
         }
 
         {
@@ -164,11 +164,11 @@ int main()
                 bh::tuple<term_cref<uint32_t *>>>
                 term_const_ref_expr = *cx;
 
-            BOOST_TEST(evaluate(term_expr) == i);
-            BOOST_TEST(evaluate(term_ref_expr) == j);
-            BOOST_TEST(evaluate(term_const_ref_expr) == k);
+            BOOST_CHECK(evaluate(term_expr) == i);
+            BOOST_CHECK(evaluate(term_ref_expr) == j);
+            BOOST_CHECK(evaluate(term_const_ref_expr) == k);
         }
     }
 
-    return boost::report_errors();
+    return 0;
 }

@@ -21,7 +21,7 @@
 template<typename DegreeOrRadian>
 struct martian
 {
-    using units = DegreeOrRadian;
+    typedef DegreeOrRadian units;
 };
 
 // 2: give it also a family
@@ -35,11 +35,27 @@ namespace boost { namespace geometry { namespace traits
 template <typename DegreeOrRadian>
 struct cs_tag<martian<DegreeOrRadian> >
 {
-    using type = martian_tag;
+    typedef martian_tag type;
 };
 
 }}} // namespaces
 
+
+// NOTE: if the next steps would not be here,
+// compiling a distance function call with martian coordinates
+// would result in a MPL assertion
+
+// 4: so register a distance strategy as its default strategy
+namespace boost { namespace geometry { namespace strategy { namespace distance { namespace services
+{
+
+template <typename Point1, typename Point2>
+struct default_strategy<point_tag, point_tag, Point1, Point2, martian_tag, martian_tag>
+{
+    typedef haversine<double> type;
+};
+
+}}}}} // namespaces
 
 // 5: not worked out. To implement a specific distance strategy for Mars,
 //    e.g. with the Mars radius given by default,
@@ -51,37 +67,36 @@ struct cs_tag<martian<DegreeOrRadian> >
 
 int main()
 {
-    using mars_point = boost::geometry::model::point
+    typedef boost::geometry::model::point
         <
             double, 2, martian<boost::geometry::degree>
-        >;
+        > mars_point;
 
     // Declare two points
     // (Source: http://nssdc.gsfc.nasa.gov/planetary/mars_mileage_guide.html)
     // (Other sources: Wiki and Google give slightly different coordinates, resulting
     //  in other distance, 20 km off)
-    mars_point const viking1(-48.23, 22.54); // Viking 1 landing site in Chryse Planitia
-    mars_point const pathfinder(-33.55, 19.33); // Pathfinder landing site in Ares Vallis
+    mars_point viking1(-48.23, 22.54); // Viking 1 landing site in Chryse Planitia
+    mars_point pathfinder(-33.55, 19.33); // Pathfinder landing site in Ares Vallis
 
-    // To calculate distance, declare and construct a strategy with Mars mean radius, in KM
+    double d = boost::geometry::distance(viking1, pathfinder); // Distance in radians on unit-sphere
+
+    // Using the Mars mean radius
     // (Source: http://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html)
-    boost::geometry::strategies::distance::spherical<> const spherical(3389.5);
-
-    double d = boost::geometry::distance(viking1, pathfinder, spherical);
-
     std::cout << "Distance between Viking1 and Pathfinder landing sites: "
-        << d << " km" << std::endl;
+        << d * 3389.5 << " km" << std::endl;
 
     // We would get 832.616 here, same order as the 835 (rounded on 5 km) listed
     // on the mentioned site
 
-    // The distance can be calculated more accurately by an Ellipsoidal approach,
+#ifdef OPTIONALLY_ELLIPSOIDAL
+    // Optionally the distance can be calculated more accurate by an Ellipsoidal approach,
     // giving 834.444 km
-    boost::geometry::srs::spheroid<double> spheroid(3396.2, 3376.2);
-    boost::geometry::strategy::distance::geographic<> const ellipsoidal(spheroid);
-
-    d = boost::geometry::distance(viking1, pathfinder, ellipsoidal);
+    d = boost::geometry::distance(viking1, pathfinder,
+        boost::geometry::strategy::distance::andoyer<mars_point>
+            (boost::geometry::srs::spheroid<double>(3396.2, 3376.2)));
     std::cout << "Ellipsoidal distance: " << d << " km" << std::endl;
+#endif
 
     return 0;
 }

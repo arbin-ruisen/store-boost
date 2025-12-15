@@ -7,7 +7,6 @@
 //  accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/config.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -38,10 +37,6 @@ public:
         unblocked_count_mutex(unblocked_count_mutex_),
         finish_mutex(finish_mutex_)
     {}
-
-#if !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
-    locking_thread(locking_thread const&) = default;
-#endif
 
     void operator()()
     {
@@ -89,10 +84,6 @@ public:
         unblocked_mutex(unblocked_mutex_),unblocked_count(unblocked_count_)
     {}
 
-#if !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
-    simple_writing_thread(simple_writing_thread const&) = default;
-#endif
-
     void operator()()
     {
         boost::unique_lock<boost::shared_mutex>  lk(rwm);
@@ -123,10 +114,6 @@ public:
         rwm(rwm_),finish_mutex(finish_mutex_),
         unblocked_mutex(unblocked_mutex_),unblocked_count(unblocked_count_)
     {}
-
-#if !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
-    simple_reading_thread(simple_reading_thread const&) = default;
-#endif
 
     void operator()()
     {

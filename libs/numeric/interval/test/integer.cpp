@@ -17,7 +17,7 @@ typedef boost::numeric::interval<float> I;
 int main() {
   I x, y;
   x = 4 - (2 * y + 1) / 3;
-# ifdef BOOST_BORLANDC
+# ifdef __BORLANDC__
   ::detail::ignore_warnings();
 # endif
   return 0;

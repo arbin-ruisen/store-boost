@@ -9,8 +9,9 @@
 #
 # /* See http://www.boost.org for most recent version. */
 #
+# if BOOST_PP_VARIADICS
 # include <boost/preprocessor/punctuation.hpp>
-# include "test.h"
+# include <libs/preprocessor/test/test.h>
 
 # define A_TUPLE (*,#,zz)
 # define A_TUPLE2 (*,#,(zz,44,(e7)))
@@ -26,6 +27,7 @@
 # define DATA2 4 * (5 + 3)
 # define DATA3 4 * (5 + 3) * (2 + 1)
 # define DATA4 (5 + 3) * (2 + 1) * 4
+  
   
 // is_begin_parens
 
@@ -48,3 +50,5 @@ BEGIN BOOST_PP_REMOVE_PARENS(DATA) == 17 END
 BEGIN BOOST_PP_REMOVE_PARENS(DATA2)== 32 END
 BEGIN BOOST_PP_REMOVE_PARENS(DATA3)== 96 END
 BEGIN BOOST_PP_REMOVE_PARENS(DATA4)== 41 END
+
+#endif

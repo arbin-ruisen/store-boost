@@ -28,7 +28,7 @@ inline double tgamma(double x)
 { return gamma(x); }
 inline long double tgamma(long double x)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
    return gamma((double)x); 
 #else
    return gammal(x); 
@@ -40,7 +40,7 @@ inline double lgamma(double x)
 { return lgam(x); }
 inline long double lgamma(long double x)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
    return lgam((double)x); 
 #else
    return lgaml(x); 
@@ -52,7 +52,7 @@ inline double gamma_q(double x, double y)
 { return igamc(x, y); }
 inline long double gamma_q(long double x, long double y)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
    return igamc((double)x, (double)y); 
 #else
    return igamcl(x, y); 
@@ -64,7 +64,7 @@ inline double gamma_p(double x, double y)
 { return igam(x, y); }
 inline long double gamma_p(long double x, long double y)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
    return igam((double)x, (double)y); 
 #else
    return igaml(x, y); 

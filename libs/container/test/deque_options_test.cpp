@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 #include <boost/container/deque.hpp>
+#include <boost/container/allocator.hpp>
 #include <boost/core/lightweight_test.hpp>
 
 using namespace boost::container;

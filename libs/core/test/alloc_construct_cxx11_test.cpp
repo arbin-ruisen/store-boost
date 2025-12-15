@@ -10,10 +10,6 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/core/alloc_construct.hpp>
 #include <boost/core/lightweight_test.hpp>
 
-#if defined(_MSC_VER)
-# pragma warning(disable: 4100) // unreferenced parameter 'ptr'
-#endif
-
 class type {
 public:
     explicit type(int x)
@@ -72,7 +68,6 @@ int main()
     BOOST_TEST_EQ(p->value(), 2);
     boost::alloc_destroy(a, p);
     BOOST_TEST_EQ(type::count, 0);
-    a.deallocate(p, 1);
     return boost::report_errors();
 }
 #else

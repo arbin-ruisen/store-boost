@@ -12,9 +12,7 @@
 
 //  system headers
 #include <string>
-#if defined(TESTLEXERS_TIMING)
 #include <iostream>
-#endif
 #include <limits>
 
 #include <boost/wave/wave_config.hpp>
@@ -26,8 +24,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 //  include the Xpressive lexer related stuff
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>                  // token type
-#include <token_statistics/xlex/xlex_lexer.hpp> // lexer type
-#include <token_statistics/xlex_iterator.hpp>   // iterator
+#include <libs/wave/samples/token_statistics/xlex/xlex_lexer.hpp> // lexer type
 
 typedef boost::wave::cpplexer::lex_token<> token_type;
 typedef boost::wave::cpplexer::xlex::xlex_iterator<token_type> lexer_type;
@@ -57,7 +54,7 @@ main(int argc, char *argv[])
         token_type::string_type instr(data->token);
 
         lexer_type it = lexer_type(instr.begin(), instr.end(), pos, 
-                                   boost::wave::support_cpp2a);
+            boost::wave::support_option_long_long);
         lexer_type end = lexer_type();
 
         // verify the correct outcome of the tokenisation
@@ -92,3 +89,4 @@ main(int argc, char *argv[])
 
     return boost::report_errors();
 }
+

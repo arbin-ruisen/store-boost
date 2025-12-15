@@ -84,5 +84,8 @@ int test_main(int, char* [])
 {
     test_all<double>();
 
+#ifdef HAVE_TTMATH
+    test_all<ttmath_big>();
+#endif
     return 0;
 }

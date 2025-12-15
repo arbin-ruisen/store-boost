@@ -1,7 +1,6 @@
 // Boost.Bimap
 //
 // Copyright (c) 2006-2007 Matias Capeletto
-// Copyright (c) 2024 Joaquin M Lopez Munoz
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt or copy at
@@ -9,7 +8,7 @@
 
 //  VC++ 8.0 warns on usage of certain Standard Library and API functions that
 //  can be cause buffer overruns or other possible security issues if misused.
-//  See https://web.archive.org/web/20071014014301/http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
+//  See http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
 //  But the wording of the warning is misleading and unsettling, there are no
 //  portable alternative functions, and VC++ 8.0's own libraries use the
 //  functions in question. So turn off the warnings.
@@ -18,8 +17,8 @@
 
 #include <boost/config.hpp>
 
-#include <boost/core/ignore_unused.hpp>
-#include <boost/core/lightweight_test.hpp>
+// Boost.Test
+#include <boost/test/minimal.hpp>
 
 // Boost.Bimap
 #include <boost/bimap/support/lambda.hpp>
@@ -29,7 +28,6 @@
 #include <boost/bimap/vector_of.hpp>
 #include <boost/bimap/unconstrained_set_of.hpp>
 
-#include "strong_type.hpp"
 
 void test_bimap_operator_bracket()
 {
@@ -45,7 +43,7 @@ void test_bimap_operator_bracket()
         b.insert( bm::value_type(2,"2") );
         b.insert( bm::value_type(3,"3") );
 
-        BOOST_TEST( b.left.at(1) == "1" );
+        BOOST_CHECK( b.left.at(1) == "1" );
 
         // Out of range test
         {
@@ -55,14 +53,13 @@ void test_bimap_operator_bracket()
             {
                 bool comp;
                 comp = b.left.at(2) < "banana";
-                boost::ignore_unused(comp);
             }
             catch( std::out_of_range & )
             {
                 value_not_found_test_passed = true;
             }
 
-            BOOST_TEST( value_not_found_test_passed );
+            BOOST_CHECK( value_not_found_test_passed );
         }
     }
 
@@ -79,14 +76,13 @@ void test_bimap_operator_bracket()
             {
                 bool comp;
                 comp = b.left.at(1) < "banana";
-                boost::ignore_unused(comp);
             }
             catch( std::out_of_range & )
             {
                 value_not_found_test_passed = true;
             }
 
-            BOOST_TEST( value_not_found_test_passed );
+            BOOST_CHECK( value_not_found_test_passed );
 
         }
 
@@ -99,24 +95,23 @@ void test_bimap_operator_bracket()
                 const bm & cb(b);
                 bool comp;
                 comp = cb.left.at(1) < "banana";
-                boost::ignore_unused(comp);
             }
             catch( std::out_of_range & )
             {
                 value_not_found_test_passed = true;
             }
 
-            BOOST_TEST( value_not_found_test_passed );
+            BOOST_CHECK( value_not_found_test_passed );
         }
 
-        BOOST_TEST( b.left[1]    == "" );
-        BOOST_TEST( b.left.at(1) == "" );
+        BOOST_CHECK( b.left[1]    == "" );
+        BOOST_CHECK( b.left.at(1) == "" );
         b.left[2] = "two";
-        BOOST_TEST( b.left.at(2) == "two" );
+        BOOST_CHECK( b.left.at(2) == "two" );
         b.left[2] = "<<two>>";
-        BOOST_TEST( b.left.at(2) == "<<two>>" );
+        BOOST_CHECK( b.left.at(2) == "<<two>>" );
         b.left.at(2) = "two";
-        BOOST_TEST( b.left.at(2) == "two" );
+        BOOST_CHECK( b.left.at(2) == "two" );
 
     }
 
@@ -133,13 +128,12 @@ void test_bimap_operator_bracket()
             {
                 bool comp;
                 comp = b.right.at("banana") < 1;
-                boost::ignore_unused(comp);
             }
             catch( std::out_of_range & )
             {
                 value_not_found_test_passed = true;
             }
-            BOOST_TEST( value_not_found_test_passed );
+            BOOST_CHECK( value_not_found_test_passed );
         }
 
         // Out of range test (const version)
@@ -151,24 +145,23 @@ void test_bimap_operator_bracket()
                 const bm & cb(b);
                 bool comp;
                 comp = cb.right.at("banana") < 1;
-                boost::ignore_unused(comp);
             }
             catch( std::out_of_range & )
             {
                 value_not_found_test_passed = true;
             }
 
-            BOOST_TEST( value_not_found_test_passed );
+            BOOST_CHECK( value_not_found_test_passed );
         }
 
         b.right["one"];
-        BOOST_TEST( b.size() == 1 );
+        BOOST_CHECK( b.size() == 1 );
         b.right["two"] = 2;
-        BOOST_TEST( b.right.at("two") == 2 );
+        BOOST_CHECK( b.right.at("two") == 2 );
         b.right["two"] = -2;
-        BOOST_TEST( b.right.at("two") == -2 );
+        BOOST_CHECK( b.right.at("two") == -2 );
         b.right.at("two") = 2;
-        BOOST_TEST( b.right.at("two") == 2 );
+        BOOST_CHECK( b.right.at("two") == 2 );
     }
 
     // Mutable data test (3)
@@ -180,59 +173,21 @@ void test_bimap_operator_bracket()
         bm b;
 
         b.right["one"];
-        BOOST_TEST( b.size() == 1 );
+        BOOST_CHECK( b.size() == 1 );
         b.right["two"] = 2;
-        BOOST_TEST( b.right.at("two") == 2 );
+        BOOST_CHECK( b.right.at("two") == 2 );
         b.right["two"] = -2;
-        BOOST_TEST( b.right.at("two") == -2 );
+        BOOST_CHECK( b.right.at("two") == -2 );
         b.right.at("two") = 2;
-        BOOST_TEST( b.right.at("two") == 2 );
+        BOOST_CHECK( b.right.at("two") == 2 );
     }
 
-    // Heterogeneous access test (1)
-    {
-        typedef bimap
-        <
-          set_of<int, std::less< strong<int> > >,
-          list_of<std::string>
-        > bm;
-
-        bm b;
-
-        b.left[1] = "0";
-        b.left[semistrong<int>(1)] = "1";
-        BOOST_TEST( b.left.at(strong<int>(1)) == "1");
-        b.left.at(strong<int>(1)) = "2";
-        BOOST_TEST( b.left.at(strong<int>(1)) == "2");
-    }
-
-    // Heterogeneous access test (2)
-    {
-        typedef bimap
-        <
-          list_of<int>,
-          unordered_set_of
-          <
-            std::string,
-            boost::hash< strong<std::string> >,
-            std::equal_to< strong<std::string> >
-          >
-        > bm;
-
-        bm b;
-
-        b.right["1"]=0;
-        b.right[semistrong<std::string>("1")] = 1;
-        BOOST_TEST( b.right.at(strong<std::string>("1")) == 1);
-        b.right.at(strong<std::string>("1")) = 2;
-        BOOST_TEST( b.right.at(strong<std::string>("1")) == 2);
-    }
 }
 
-int main()
+int test_main( int, char* [] )
 {
     test_bimap_operator_bracket();
 
-    return boost::report_errors();
+    return 0;
 }
 

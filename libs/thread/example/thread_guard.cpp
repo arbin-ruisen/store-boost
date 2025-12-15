@@ -20,7 +20,6 @@ struct func
     int& i;
 
     func(int& i_):i(i_){}
-    func(func const& other):i(other.i){}
 
     void operator()()
     {

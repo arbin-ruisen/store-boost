@@ -9,6 +9,8 @@
 import testing ;
 import os ;
 
+use-project boost : $(BOOST_ROOT) ;
+
 local EIGEN_ROOT = [ os.environ EIGEN_ROOT ] ;
 
 project

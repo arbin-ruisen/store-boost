@@ -10,6 +10,5 @@
     ],
     "maintainers": [
         "Daryle Walker <darylew -at- hotmail.com>"
-    ],
-    "cxxstd": "11"
+    ]
 }

@@ -5,10 +5,6 @@
 //
 // Copyright (c) 2011-2013 Adam Wulkiewicz, Lodz, Poland.
 //
-// This file was modified by Oracle on 2019.
-// Modifications copyright (c) 2019 Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-//
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -49,8 +45,6 @@ void test_rtree_value_exceptions(Parameters const& parameters = Parameters())
         throwing_value::set_max_calls(i);
 
         BOOST_CHECK_THROW( tree.insert(input.begin(), input.end()), throwing_value_copy_exception );
-
-        BOOST_CHECK(bgi::detail::rtree::utilities::are_counts_ok(tree, false));
     }
 
     for ( size_t i = 0 ; i < 20 ; i += 1 )
@@ -74,8 +68,6 @@ void test_rtree_value_exceptions(Parameters const& parameters = Parameters())
         throwing_value::set_max_calls(i);
 
         BOOST_CHECK_THROW( tree.remove(input.begin(), input.end()), throwing_value_copy_exception );
-
-        BOOST_CHECK(bgi::detail::rtree::utilities::are_counts_ok(tree, false));
     }
 
     for ( size_t i = 0 ; i < 20 ; i += 2 )
@@ -107,8 +99,6 @@ void test_rtree_value_exceptions(Parameters const& parameters = Parameters())
         throwing_value::set_max_calls(i);
 
         BOOST_CHECK_THROW(tree2 = tree, throwing_value_copy_exception );
-
-        BOOST_CHECK(tree2.empty());
     }
 }
 
@@ -131,15 +121,13 @@ void test_rtree_elements_exceptions(Parameters const& parameters = Parameters())
     {
         throwing_varray_settings::reset_calls_counter();
         throwing_varray_settings::set_max_calls(10000);
-
+        
         Tree tree(parameters);
 
         throwing_varray_settings::reset_calls_counter();
         throwing_varray_settings::set_max_calls(i);
 
         BOOST_CHECK_THROW( tree.insert(input.begin(), input.end()), throwing_varray_exception );
-
-        BOOST_CHECK(bgi::detail::rtree::utilities::are_counts_ok(tree, false));
     }
 
     for ( size_t i = 0 ; i < 100 ; i += 2 )
@@ -154,7 +142,7 @@ void test_rtree_elements_exceptions(Parameters const& parameters = Parameters())
         BOOST_CHECK_EQUAL(throwing_nodes_stats::internal_nodes_count(), 0u);
         BOOST_CHECK_EQUAL(throwing_nodes_stats::leafs_count(), 0u);
     }
-
+    
     for ( size_t i = 0 ; i < 50 ; i += 2 )
     {
         throwing_varray_settings::reset_calls_counter();
@@ -168,10 +156,8 @@ void test_rtree_elements_exceptions(Parameters const& parameters = Parameters())
         throwing_varray_settings::set_max_calls(i);
 
         BOOST_CHECK_THROW( tree.remove(input.begin(), input.end()), throwing_varray_exception );
-
-        BOOST_CHECK(bgi::detail::rtree::utilities::are_counts_ok(tree, false));
     }
-
+    
     for ( size_t i = 0 ; i < 50 ; i += 2 )
     {
         throwing_varray_settings::reset_calls_counter();
@@ -201,8 +187,6 @@ void test_rtree_elements_exceptions(Parameters const& parameters = Parameters())
         throwing_varray_settings::set_max_calls(i);
 
         BOOST_CHECK_THROW(tree2 = tree, throwing_varray_exception );
-
-        BOOST_CHECK(tree2.empty());
     }
 }
 

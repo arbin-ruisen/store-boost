@@ -1,6 +1,5 @@
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/spirit/home/x3.hpp>
-
-#include <boost/core/lightweight_test.hpp>
 #include <boost/fusion/include/vector.hpp>
 #include <boost/fusion/include/make_vector.hpp>
 #include <boost/fusion/include/equal_to.hpp>

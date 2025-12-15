@@ -3,22 +3,7 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef SYCL_LANGUAGE_VERSION
 #include <pch_light.hpp>
-#else
-#define BOOST_MATH_PROMOTE_DOUBLE_POLICY false
-#include "sycl/sycl.hpp"
-#include <boost/math/tools/config.hpp>
-#endif
-
-#ifdef __clang__
-#  pragma clang diagnostic push 
-#  pragma clang diagnostic ignored "-Wliteral-range"
-#elif defined(__GNUC__)
-#  pragma GCC diagnostic push 
-#  pragma GCC diagnostic ignored "-Woverflow"
-#endif
-
 #include "test_ibeta.hpp"
 
 #if !defined(TEST_FLOAT) && !defined(TEST_DOUBLE) && !defined(TEST_LDOUBLE) && !defined(TEST_REAL_CONCEPT)
@@ -101,23 +86,6 @@ void expected_results()
       largest_type,                     // test type(s)
       "(?i).*medium.*",                     // test data group
       ".*", 300, 80);  // test function
-   if (std::numeric_limits<double>::max_exponent < std::numeric_limits<long double>::max_exponent)
-   {
-      add_expected_result(
-         "[^|]*",                          // compiler
-         "[^|]*",                          // stdlib
-         "[^|]*",                          // platform
-         largest_type,                     // test type(s)
-         "(?i).*Very Large.*",             // test data group
-         ".*", 2000000, 200000);           // test function
-      add_expected_result(
-         "[^|]*",                          // compiler
-         "[^|]*",                          // stdlib
-         ".*",                             // platform
-         largest_type,                     // test type(s)
-         "(?i).*Asymptotically.*",         // test data group
-         ".*", 900000000, 90000000);       // test function
-   }
    //
    // Deficiencies in pow function really kick in here for
    // large arguments.  Note also that the tests here get
@@ -127,43 +95,19 @@ void expected_results()
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
-      "Mac OS",                         // platform
-      largest_type,                     // test type(s)
-      "(?i).*Very Large.*",             // test data group
-      ".*", 20000000, 2000000);         // test function
-   add_expected_result(
-      "[^|]*",                          // compiler
-      "[^|]*",                          // stdlib
-      "Mac OS",                          // platform
-      largest_type,                     // test type(s)
-      "(?i).*Asymptotically Large.*",   // test data group
-      ".*", 900000000, 80000000);       // test function
-   add_expected_result(
-      "[^|]*",                          // compiler
-      "[^|]*",                          // stdlib
       "linux|Mac OS",                          // platform
       largest_type,                     // test type(s)
       "(?i).*large.*",                      // test data group
       ".*", 200000, 10000);                 // test function
-   if (std::numeric_limits<long double>::digits == 64)
-   {
-      // 80-bit long double, errors spill over:
-      add_expected_result(
-         "[^|]*",                          // compiler
-         "[^|]*",                          // stdlib
-         ".*",                             // platform
-         "double",                         // test type(s)
-         "(?i).*Asymptotically.*",         // test data group
-         ".*", 500000, 50000);             // test function
-      add_expected_result(
-         "[^|]*",                          // compiler
-         "[^|]*",                          // stdlib
-         ".*",                             // platform
-         "double",                         // test type(s)
-         "(?i).*large.*",                  // test data group
-         ".*", 200, 20);                   // test function
-   }
-
+#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
+   add_expected_result(
+      "[^|]*",                          // compiler
+      "[^|]*",                          // stdlib
+      "linux|Mac OS|Sun.*",             // platform
+      "double",                     // test type(s)
+      "(?i).*large.*",                      // test data group
+      ".*", 40, 20);                 // test function
+#endif
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -258,30 +202,6 @@ void expected_results()
       largest_type,                     // test type(s)
       "(?i).*large.*",                      // test data group
       ".*", 200000, 10000);                 // test function
-   //
-   // Cygwin:
-   //
-   add_expected_result(
-      "GNU[^|]*",                       // compiler
-      "[^|]*",                          // stdlib
-      "Cygwin*",                        // platform
-      "real_concept",                   // test type(s)
-      "(?i).*medium.*",                 // test data group
-      ".*", 400, 50);                   // test function
-   add_expected_result(
-      "GNU.*",                          // compiler
-      ".*",                             // stdlib
-      "Cygwin*",                        // platform
-      "double",                         // test type(s)
-      "(?i).*large.*",                  // test data group
-      ".*", 20, 10);                    // test function
-   add_expected_result(
-      "GNU.*",                          // compiler
-      ".*",                             // stdlib
-      "Cygwin*",                        // platform
-      largest_type,                     // test type(s)
-      "(?i).*large.*",                  // test data group
-      ".*", 200000, 10000);             // test function
 
 #ifdef BOOST_MATH_NO_LONG_DOUBLE_MATH_FUNCTIONS
    //
@@ -312,20 +232,6 @@ void expected_results()
       largest_type,                     // test type(s)
       "(?i).*medium.*",                     // test data group
       ".*", 350, 50);  // test function
-   add_expected_result(
-      "[^|]*",                          // compiler
-      "[^|]*",                          // stdlib
-      "[^|]*",                          // platform
-      largest_type,                     // test type(s)
-      "(?i).*Very Large.*",             // test data group
-      ".*", 200000, 20000);             // test function
-   add_expected_result(
-      "[^|]*",                          // compiler
-      "[^|]*",                          // stdlib
-      "[^|]*",                          // platform
-      largest_type,                     // test type(s)
-      "(?i).*Asymptotically Large.*",   // test data group
-      ".*", 900000000, 80000000);       // test function
    add_expected_result(
       "[^|]*",                          // compiler
       "[^|]*",                          // stdlib
@@ -389,8 +295,8 @@ BOOST_AUTO_TEST_CASE( test_main )
 #ifdef TEST_LDOUBLE
    test_spots(0.0L);
 #endif
-#if !BOOST_WORKAROUND(BOOST_BORLANDC, BOOST_TESTED_AT(0x582))
-#if defined(TEST_REAL_CONCEPT) && !defined(BOOST_MATH_NO_REAL_CONCEPT_TESTS)
+#if !BOOST_WORKAROUND(__BORLANDC__, BOOST_TESTED_AT(0x582))
+#ifdef TEST_REAL_CONCEPT
    test_spots(boost::math::concepts::real_concept(0.1));
 #endif
 #endif
@@ -408,14 +314,7 @@ BOOST_AUTO_TEST_CASE( test_main )
 #endif
 #ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
 #ifdef TEST_REAL_CONCEPT
-#if LDBL_MANT_DIG != 113
-   //
-   // TODO: why does this fail when we have a 128-bit long double
-   // even though the regular long double tests pass?
-   // Most likely there is a hidden issue in real_concept somewhere...
-   //
    test_beta(boost::math::concepts::real_concept(0.1), "real_concept");
-#endif
 #endif
 #endif
 #else

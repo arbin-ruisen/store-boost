@@ -518,11 +518,14 @@ void test_exceptions()
 void test_input_iterator()
 {
     {
+        using std::begin;
+        using std::end;
+
         std::vector< int > vec;
         coro::coroutine< int >::pull_type coro( f16);
-        coro::coroutine< int >::pull_type::iterator e = std::end( coro);
+        coro::coroutine< int >::pull_type::iterator e = end( coro);
         for (
-            coro::coroutine< int >::pull_type::iterator i = std::begin( coro);
+            coro::coroutine< int >::pull_type::iterator i = begin( coro);
             i != e; ++i)
         { vec.push_back( * i); }
         BOOST_CHECK_EQUAL( ( std::size_t)5, vec.size() );

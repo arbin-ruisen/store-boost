@@ -1,3 +1,4 @@
+
 [section:specialized Specialized Adaptors]
 
 [include ./counting_iterator.qbk]

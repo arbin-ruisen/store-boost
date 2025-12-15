@@ -10,7 +10,8 @@
 
 #include <boost/gil/color_convert.hpp>
 #include <boost/gil/typedefs.hpp>
-#include <boost/gil/detail/mp11.hpp>
+
+#include <boost/mpl/vector.hpp>
 
 namespace boost{ namespace gil {
 
@@ -28,17 +29,17 @@ struct z_t {};
 /// \}
 
 /// \ingroup ColorSpaceModel
-using xyz_t = mp11::mp_list
-<
-    xyz_color_space::x_t,
-    xyz_color_space::y_t,
-    xyz_color_space::z_t
->;
+using xyz_t = mpl::vector3
+    <
+        xyz_color_space::x_t,
+        xyz_color_space::y_t,
+        xyz_color_space::z_t
+    >;
 
 /// \ingroup LayoutModel
 using xyz_layout_t = layout<xyz_t>;
 
-BOOST_GIL_DEFINE_ALL_TYPEDEFS(32f, float32_t, xyz)
+GIL_DEFINE_ALL_TYPEDEFS(32f, float32_t, xyz)
 
 /// \ingroup ColorConvert
 /// \brief RGB to XYZ

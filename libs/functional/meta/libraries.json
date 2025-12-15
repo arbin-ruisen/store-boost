@@ -9,27 +9,23 @@
         "description": "The Boost.Function library contains a family of class templates that are function object wrappers.",
         "category": [
             "Function-objects"
-        ],
-        "cxxstd": "03"
+        ]
     },
     {
         "key": "functional/factory",
         "boost-version": "1.43.0",
         "name": "Functional/Factory",
         "authors": [
-            "Glen Fernandes",
             "Tobias Schwinger"
         ],
         "maintainers": [
-            "Glen Fernandes <glenjofe -at- gmail.com>",
             "Tobias Schwinger <tschwinger -at- isonews2.com>"
         ],
         "description": "Function object templates for dynamic and static object creation",
         "documentation": "factory/",
         "category": [
             "Function-objects"
-        ],
-        "cxxstd": "03"
+        ]
     },
     {
         "key": "functional/forward",
@@ -45,8 +41,7 @@
         "documentation": "forward/",
         "category": [
             "Function-objects"
-        ],
-        "cxxstd": "03"
+        ]
     },
     {
         "key": "functional/overloaded_function",
@@ -62,7 +57,6 @@
         "documentation": "overloaded_function/",
         "category": [
             "Function-objects"
-        ],
-        "cxxstd": "03"
+        ]
     }
 ]

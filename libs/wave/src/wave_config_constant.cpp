@@ -14,6 +14,7 @@
 // disable stupid compiler warnings
 #include <boost/config/warning_disable.hpp>
 
+#include <cstring>
 #include <boost/preprocessor/stringize.hpp>
 
 #include <boost/wave/wave_config.hpp>

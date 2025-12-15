@@ -2,8 +2,8 @@
 
 // Copyright (c) 2008-2015 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017, 2018, 2019.
-// Modifications copyright (c) 2017-2019, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017, 2018.
+// Modifications copyright (c) 2017-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle.
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -75,20 +75,26 @@ namespace projections
                 bool        flip_axis;
             };
 
+            // template class, using CRTP to implement forward/inverse
             template <typename T, typename Parameters>
             struct base_geos_ellipsoid
+                : public base_t_fi<base_geos_ellipsoid<T, Parameters>, T, Parameters>
             {
                 par_geos<T> m_proj_parm;
 
+                inline base_geos_ellipsoid(const Parameters& par)
+                    : base_t_fi<base_geos_ellipsoid<T, Parameters>, T, Parameters>(*this, par)
+                {}
+
                 // FORWARD(e_forward)  ellipsoid
                 // Project coordinates from geographic (lon, lat) to cartesian (x, y)
-                inline void fwd(Parameters const& , T const& lp_lon, T lp_lat, T& xy_x, T& xy_y) const
+                inline void fwd(T const& lp_lon, T lp_lat, T& xy_x, T& xy_y) const
                 {
                     T r, Vx, Vy, Vz, tmp;
 
                     /* Calculation of geocentric latitude. */
                     lp_lat = atan (this->m_proj_parm.radius_p2 * tan (lp_lat));
-
+                
                     /* Calculation of the three components of the vector from satellite to
                     ** position on earth surface (lon,lat).*/
                     r = (this->m_proj_parm.radius_p) / boost::math::hypot(this->m_proj_parm.radius_p * cos (lp_lat), sin (lp_lat));
@@ -115,13 +121,13 @@ namespace projections
 
                 // INVERSE(e_inverse)  ellipsoid
                 // Project coordinates from cartesian (x, y) to geographic (lon, lat)
-                inline void inv(Parameters const& , T const& xy_x, T const& xy_y, T& lp_lon, T& lp_lat) const
+                inline void inv(T const& xy_x, T const& xy_y, T& lp_lon, T& lp_lat) const
                 {
                     T Vx, Vy, Vz, a, b, det, k;
 
                     /* Setting three components of vector from satellite to position.*/
                     Vx = -1.0;
-
+                        
                     if(this->m_proj_parm.flip_axis) {
                         Vz = tan (xy_y / this->m_proj_parm.radius_g_1);
                         Vy = tan (xy_x / this->m_proj_parm.radius_g_1) * boost::math::hypot(1.0, Vz);
@@ -157,14 +163,20 @@ namespace projections
 
             };
 
+            // template class, using CRTP to implement forward/inverse
             template <typename T, typename Parameters>
             struct base_geos_spheroid
+                : public base_t_fi<base_geos_spheroid<T, Parameters>, T, Parameters>
             {
                 par_geos<T> m_proj_parm;
 
+                inline base_geos_spheroid(const Parameters& par)
+                    : base_t_fi<base_geos_spheroid<T, Parameters>, T, Parameters>(*this, par)
+                {}
+
                 // FORWARD(s_forward)  spheroid
                 // Project coordinates from geographic (lon, lat) to cartesian (x, y)
-                inline void fwd(Parameters const& , T const& lp_lon, T const& lp_lat, T& xy_x, T& xy_y) const
+                inline void fwd(T const& lp_lon, T const& lp_lat, T& xy_x, T& xy_y) const
                 {
                     T Vx, Vy, Vz, tmp;
 
@@ -194,7 +206,7 @@ namespace projections
 
                 // INVERSE(s_inverse)  spheroid
                 // Project coordinates from cartesian (x, y) to geographic (lon, lat)
-                inline void inv(Parameters const& , T const& xy_x, T const& xy_y, T& lp_lon, T& lp_lat) const
+                inline void inv(T const& xy_x, T const& xy_y, T& lp_lon, T& lp_lat) const
                 {
                     T Vx, Vy, Vz, a, b, det, k;
 
@@ -207,7 +219,7 @@ namespace projections
                         Vy = tan (xy_x / (this->m_proj_parm.radius_g - 1.0));
                         Vz = tan (xy_y / (this->m_proj_parm.radius_g - 1.0)) * sqrt (1.0 + Vy * Vy);
                     }
-
+                    
                     /* Calculation of terms in cubic equation and determinant.*/
                     a   = Vy * Vy + Vz * Vz + Vx * Vx;
                     b   = 2 * this->m_proj_parm.radius_g * Vx;
@@ -274,7 +286,7 @@ namespace projections
                 if (par.phi0 != 0.0)
                     BOOST_THROW_EXCEPTION( projection_exception(error_unknown_prime_meridian) );
 
-
+                
                 proj_parm.flip_axis = geos_flip_axis(params);
 
                 proj_parm.radius_g_1 = proj_parm.h / par.a;
@@ -313,8 +325,9 @@ namespace projections
     {
         template <typename Params>
         inline geos_ellipsoid(Params const& params, Parameters const& par)
+            : detail::geos::base_geos_ellipsoid<T, Parameters>(par)
         {
-            detail::geos::setup_geos(params, par, this->m_proj_parm);
+            detail::geos::setup_geos(params, this->m_par, this->m_proj_parm);
         }
     };
 
@@ -339,8 +352,9 @@ namespace projections
     {
         template <typename Params>
         inline geos_spheroid(Params const& params, Parameters const& par)
+            : detail::geos::base_geos_spheroid<T, Parameters>(par)
         {
-            detail::geos::setup_geos(params, par, this->m_proj_parm);
+            detail::geos::setup_geos(params, this->m_par, this->m_proj_parm);
         }
     };
 
@@ -349,11 +363,11 @@ namespace projections
     {
 
         // Static projection
-        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION_FI2(srs::spar::proj_geos, geos_spheroid, geos_ellipsoid)
+        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION(srs::spar::proj_geos, geos_spheroid, geos_ellipsoid)
 
         // Factory entry(s)
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_ENTRY_FI2(geos_entry, geos_spheroid, geos_ellipsoid)
-
+        
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_BEGIN(geos_init)
         {
             BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_ENTRY(geos, geos_entry);

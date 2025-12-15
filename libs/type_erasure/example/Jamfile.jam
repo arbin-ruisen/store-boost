@@ -8,8 +8,6 @@
 
 import testing ;
 
-project : requirements <library>/boost/type_erasure//boost_type_erasure ;
-
 compile basic.cpp ;
 compile multi.cpp ;
 compile convert.cpp ;
@@ -23,4 +21,4 @@ compile associated.cpp ;
 
 run print_sequence.cpp ;
 run printf.cpp ;
-run multifunction.cpp /boost/variant//boost_variant /boost/phoenix//boost_phoenix ;
+run multifunction.cpp ;

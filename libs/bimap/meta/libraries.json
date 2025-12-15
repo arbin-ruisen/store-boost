@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Matias Capeletto <matias.capeletto -at- gmail.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

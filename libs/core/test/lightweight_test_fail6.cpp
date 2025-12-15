@@ -8,11 +8,7 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#if defined(_MSC_VER)
-# pragma warning(disable: 4702) // unreachable code
-#endif
-
-#include <boost/core/lightweight_test.hpp>
+#include <boost/detail/lightweight_test.hpp>
 
 struct X
 {

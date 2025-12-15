@@ -21,10 +21,10 @@ class derived_from_memory_resource
       : id(i)
    {}
 
-   virtual ~derived_from_memory_resource() BOOST_OVERRIDE
+   virtual ~derived_from_memory_resource()
    {  destructor_called = true;  }
 
-   virtual void* do_allocate(std::size_t bytes, std::size_t alignment) BOOST_OVERRIDE
+   virtual void* do_allocate(std::size_t bytes, std::size_t alignment)
    {
       do_allocate_called = true;
       do_allocate_bytes = bytes;
@@ -32,7 +32,7 @@ class derived_from_memory_resource
       return do_allocate_return;
    }
 
-   virtual void do_deallocate(void* p, std::size_t bytes, std::size_t alignment) BOOST_OVERRIDE
+   virtual void do_deallocate(void* p, std::size_t bytes, std::size_t alignment)
    {
       do_deallocate_called = true;
       do_deallocate_p = p;
@@ -40,7 +40,7 @@ class derived_from_memory_resource
       do_deallocate_alignment = alignment;
    }
 
-   virtual bool do_is_equal(const boost::container::pmr::memory_resource& other) const BOOST_NOEXCEPT BOOST_OVERRIDE
+   virtual bool do_is_equal(const boost::container::pmr::memory_resource& other) const BOOST_NOEXCEPT
    {
       do_is_equal_called = true;
       do_is_equal_other = &other;

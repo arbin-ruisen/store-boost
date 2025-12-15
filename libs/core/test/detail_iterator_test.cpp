@@ -8,10 +8,9 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#define BOOST_ALLOW_DEPRECATED_HEADERS
 #include <boost/detail/iterator.hpp>
+#include <boost/core/is_same.hpp>
 #include <boost/core/lightweight_test_trait.hpp>
-#include <boost/type_traits/is_same.hpp>
 #include <cstddef>
 #include <list>
 
@@ -31,7 +30,7 @@ using std::distance;
 
 */
 
-// struct C {} doesn't work with libc++.
+// struct C {} doesn't wotk with libc++.
 typedef std::forward_iterator_tag C;
 
 struct T
@@ -62,7 +61,7 @@ struct iterator
 
 int main()
 {
-    using boost::is_same;
+    using boost::core::is_same;
 
 /*
     template<class Iterator> struct iterator_traits {

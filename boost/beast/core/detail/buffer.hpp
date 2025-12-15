@@ -11,7 +11,6 @@
 #define BOOST_BEAST_CORE_DETAIL_BUFFER_HPP
 
 #include <boost/beast/core/error.hpp>
-#include <boost/asio/buffer.hpp>
 #include <boost/optional.hpp>
 #include <stdexcept>
 
@@ -34,7 +33,7 @@ dynamic_buffer_prepare_noexcept(
     if(buffer.max_size() - buffer.size() < size)
     {
         // length error
-        BOOST_BEAST_ASSIGN_EC(ec, ev);
+        ec = ev;
         return boost::none;
     }
     boost::optional<typename
@@ -67,7 +66,7 @@ dynamic_buffer_prepare(
     }
     catch(std::length_error const&)
     {
-        BOOST_BEAST_ASSIGN_EC(ec, ev);
+        ec = ev;
     }
     return boost::none;
 

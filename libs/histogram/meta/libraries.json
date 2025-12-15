@@ -1,6 +1,6 @@
 {
     "key": "histogram",
-    "name": "Histogram",
+    "name": "histogram",
     "authors": [
         "Hans Dembinski"
     ],
@@ -12,6 +12,5 @@
     ],
     "maintainers": [
         "Hans Dembinski <hans.dembinski -at- gmail.com>"
-    ],
-    "cxxstd": "14"
+    ]
 }

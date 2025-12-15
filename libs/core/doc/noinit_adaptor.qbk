@@ -71,7 +71,8 @@ struct noinit_adaptor
     : A {
     template<class U>
     struct rebind {
-        typedef noinit_adaptor<allocator_rebind_t<A, U> > other;
+        typedef noinit_adaptor<typename std::allocator_traits<A>::template
+            rebind_alloc<U> > other;
     };
 
     noinit_adaptor() noexcept;
@@ -84,6 +85,9 @@ struct noinit_adaptor
 
     template<class U>
     void construct(U* p);
+
+    template<class U, class V, class... Args>
+    void construct(U* p, V&& v, Args&&... args);
 
     template<class U>
     void destroy(U* p);
@@ -117,7 +121,7 @@ noinit_adaptor<A> noinit_adapt(const A& a) noexcept;
 [[variablelist
 [[Requires][`A` shall be constructible from `U`.]]
 [[Effects][Initializes the `A` base class with
-`static_cast<const A&>(u)`.]]]]]]
+`static_cast<const U&>(u)`.]]]]]]
 
 [endsect]
 
@@ -127,6 +131,11 @@ noinit_adaptor<A> noinit_adapt(const A& a) noexcept;
 [[`template<class U> void construct(U* p);`]
 [[variablelist
 [[Effects][`::new((void*)p) U`.]]]]]
+[[`template<class U, class V, class... Args> void construct(U* p, V&& v,
+Args&&... args);`]
+[[variablelist
+[[Effects][`::new(void*)p) U(std::forward<V>(v),
+std::forward<Args>(args)...)`.]]]]]
 [[`template<class U> void destroy(U* p);`]
 [[variablelist
 [[Effects][`p->~U()`.]]]]]]

@@ -5,7 +5,7 @@
 
 #include <boost/parameter.hpp>
 #include <boost/parameter/macros.hpp>
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include "basics.hpp"
 
 namespace test {
@@ -38,7 +38,7 @@ namespace test {
     }
 } // namespace test
 
-#include <boost/core/ref.hpp>
+#include <boost/ref.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <string>
 
@@ -65,3 +65,4 @@ int main()
 
     return boost::report_errors();
 }
+

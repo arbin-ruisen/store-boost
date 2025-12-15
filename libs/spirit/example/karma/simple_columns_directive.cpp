@@ -14,7 +14,6 @@
 #include <boost/spirit/include/karma_operator.hpp>
 #include <boost/spirit/include/karma_numeric.hpp>
 
-#include <iostream>
 #include <string>
 #include "simple_columns_directive.hpp"
 

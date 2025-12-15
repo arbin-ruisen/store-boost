@@ -37,7 +37,7 @@ private:
 
 public:
 
-    static const int arity = 1;
+    enum { arity = 1 };
 
     struct iterator {
         // Constructor

@@ -8,10 +8,12 @@
 // file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
+#include <iostream>
 #include <boost/msm/back/state_machine.hpp>
 #include <boost/msm/front/euml/euml.hpp>
+
 #ifndef BOOST_MSM_NONSTANDALONE_TEST
-#define BOOST_TEST_MODULE MySimpleInternalEumlTest
+#define BOOST_TEST_MODULE MyTest
 #endif
 #include <boost/test/unit_test.hpp>
 
@@ -158,7 +160,7 @@ namespace
 //    static char const* const state_names[] = { "Stopped", "Paused", "Open", "Empty", "Playing" };
 
 
-    BOOST_AUTO_TEST_CASE( simple_internal_euml_test )
+    BOOST_AUTO_TEST_CASE( my_test )
     {     
         player p;
 
@@ -200,7 +202,7 @@ namespace
                             "Empty entry not called correctly");
 
         p.process_event(
-            cd_detected("louie, louie",DISK_CD));
+            cd_detected("louie, louie",DISK_CD)); 
         p.process_event(play);
         BOOST_CHECK_MESSAGE(p.current_state()[0] == 4,"Playing should be active"); //Playing
         BOOST_CHECK_MESSAGE(p.get_state<Empty_impl&>().get_attribute(exit_counter) == 2,

@@ -26,10 +26,7 @@
 #include <boost/variant/variant.hpp>
 
 
-struct no_strategy
-{
-    using cs_tag = void;
-};
+struct no_strategy {};
 
 template <typename Geometry1, typename Geometry2, typename Strategy>
 bool call_equals(Geometry1 const& geometry1,
@@ -63,9 +60,7 @@ void check_geometry(Geometry1 const& geometry1,
         << " equals: " << wkt1
         << " to " << wkt2
         << " -> Expected: " << expected
-        << " detected: " << detected
-        << " strategy: " << typeid(Strategy).name()
-        << " cs: " << typeid(typename Strategy::cs_tag).name());
+        << " detected: " << detected);
 
     detected = call_equals(geometry2, geometry1, strategy);
 
@@ -74,8 +69,7 @@ void check_geometry(Geometry1 const& geometry1,
         << " equals: " << wkt2
         << " to " << wkt1
         << " -> Expected: " << expected
-        << " strategy: " << typeid(Strategy).name()
-        << " cs: " << typeid(typename Strategy::cs_tag).name());
+        << " detected: " << detected);
 }
 
 
@@ -98,7 +92,7 @@ void test_geometry(std::string const& caseid,
         bg::correct(geometry2);
     }
 
-    typedef typename bg::strategies::relate::services::default_strategy
+    typedef typename bg::strategy::relate::services::default_strategy
         <
             Geometry1, Geometry2
         >::type strategy_type;

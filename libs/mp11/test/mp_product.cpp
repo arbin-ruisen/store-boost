@@ -24,10 +24,9 @@ struct Y1 {};
 struct Z1 {};
 struct Z2 {};
 
-template<class T> struct F1 {};
-template<class T1, class T2, class T3> struct F3 {};
+template<class T1, class T2, class T3> struct F {};
 
-template<class...> struct F {};
+template<class T> struct F1 {};
 
 int main()
 {
@@ -41,8 +40,8 @@ int main()
         using L2 = mp_list<Y1>;
         using L3 = std::pair<Z1, Z2>;
 
-        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product<F3, L1, L2, L3>, std::tuple<F3<X1, Y1, Z1>, F3<X1, Y1, Z2>, F3<X2, Y1, Z1>, F3<X2, Y1, Z2>, F3<X3, Y1, Z1>, F3<X3, Y1, Z2>>>));
-        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product_q<mp_quote<F3>, L1, L2, L3>, std::tuple<F3<X1, Y1, Z1>, F3<X1, Y1, Z2>, F3<X2, Y1, Z1>, F3<X2, Y1, Z2>, F3<X3, Y1, Z1>, F3<X3, Y1, Z2>>>));
+        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product<F, L1, L2, L3>, std::tuple<F<X1, Y1, Z1>, F<X1, Y1, Z2>, F<X2, Y1, Z1>, F<X2, Y1, Z2>, F<X3, Y1, Z1>, F<X3, Y1, Z2>>>));
+        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product_q<mp_quote<F>, L1, L2, L3>, std::tuple<F<X1, Y1, Z1>, F<X1, Y1, Z2>, F<X2, Y1, Z1>, F<X2, Y1, Z2>, F<X3, Y1, Z1>, F<X3, Y1, Z2>>>));
     }
 
     {
@@ -50,8 +49,8 @@ int main()
         using L2 = mp_list<>;
         using L3 = std::pair<Z1, Z2>;
 
-        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product<F3, L1, L2, L3>, std::tuple<>>));
-        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product_q<mp_quote<F3>, L1, L2, L3>, std::tuple<>>));
+        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product<F, L1, L2, L3>, std::tuple<>>));
+        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product_q<mp_quote<F>, L1, L2, L3>, std::tuple<>>));
     }
 
     {
@@ -63,11 +62,6 @@ int main()
 
         BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product<F1, L2>, mp_list<F1<X1>, F1<X2>, F1<X3>>>));
         BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product_q<mp_quote<F1>, L2>, mp_list<F1<X1>, F1<X2>, F1<X3>>>));
-    }
-
-    {
-        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product<F>, mp_list<F<>>>));
-        BOOST_TEST_TRAIT_TRUE((std::is_same<mp_product_q<mp_quote<F>>, mp_list<F<>>>));
     }
 
     return boost::report_errors();

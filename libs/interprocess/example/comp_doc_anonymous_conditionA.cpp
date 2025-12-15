@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_anonymous_conditionA
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -15,9 +15,6 @@
 #include <iostream>
 #include <cstdio>
 #include "doc_anonymous_condition_shared_data.hpp"
-//<-
-#include "../test/get_process_id_name.hpp"
-//->
 
 using namespace boost::interprocess;
 
@@ -27,8 +24,8 @@ int main ()
    //Erase previous shared memory and schedule erasure on exit
    struct shm_remove
    {
-      shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
-      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+      shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
    } remover;
    //<-
    (void)remover;
@@ -36,11 +33,11 @@ int main ()
 
    //Create a shared memory object.
    shared_memory_object shm
-      (create_only                  //only create
-      , test::get_process_id_name() //name
-      , read_write                  //read-write mode
+      (create_only               //only create
+      ,"MySharedMemory"           //name
+      ,read_write                //read-write mode
       );
-   BOOST_INTERPROCESS_TRY{
+   try{
       //Set size
       shm.truncate(sizeof(trace_queue));
 
@@ -75,11 +72,10 @@ int main ()
          data->message_in = true;
       }
    }
-   BOOST_INTERPROCESS_CATCH(interprocess_exception &ex){
+   catch(interprocess_exception &ex){
       std::cout << ex.what() << std::endl;
       return 1;
    }
-   BOOST_INTERPROCESS_CATCH_END
 
    return 0;
 }

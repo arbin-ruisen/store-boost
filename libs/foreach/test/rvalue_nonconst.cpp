@@ -9,7 +9,7 @@
 */
 
 #include <vector>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/foreach.hpp>
 
 #ifdef BOOST_FOREACH_NO_RVALUE_DETECTION
@@ -24,7 +24,7 @@ std::vector<int> get_vector()
 ///////////////////////////////////////////////////////////////////////////////
 // test_main
 //   
-int main()
+int test_main( int, char*[] )
 {
     int counter = 0;
 
@@ -33,9 +33,9 @@ int main()
         counter += i;
     }
 
-    BOOST_TEST(16 == counter);
+    BOOST_CHECK(16 == counter);
 
-    return boost::report_errors();
+    return 0;
 }
 
 #endif

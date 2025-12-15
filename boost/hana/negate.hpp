@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::negate`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -21,7 +21,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <type_traits>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @cond
     template <typename X>
     constexpr decltype(auto) negate_t::operator()(X&& x) const {
@@ -56,6 +56,6 @@ namespace boost { namespace hana {
         static constexpr decltype(auto) apply(X&& x)
         { return -static_cast<X&&>(x); }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_NEGATE_HPP

@@ -34,7 +34,7 @@ template <typename Block>
 inline bool nth_bit(Block num, std::size_t n)
 {
 #ifndef NDEBUG
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
   // Borland deduces Block as a const qualified type,
   // and thus finds numeric_limits<Block> to be zero :(
   //  (though not directly relevant here, see also
@@ -967,25 +967,25 @@ struct bitset_test {
     BOOST_TEST(b.intersects(a) == have_intersection);
   }
 
-  static void find_first(const Bitset& b, typename Bitset::size_type offset = 0)
+  static void find_first(const Bitset& b)
   {
-    // find first non-null bit from offset onwards, if any
-    typename Bitset::size_type i = offset;
-    while (i < b.size() && b[i] == 0)
-        ++i;
+      // find first non-null bit, if any
+      typename Bitset::size_type i = 0;
+      while (i < b.size() && b[i] == 0)
+          ++i;
 
-    if (i >= b.size())
-      BOOST_TEST(b.find_first(offset) == Bitset::npos); // not found;
-    else {
-      BOOST_TEST(b.find_first(offset) == i);
-      BOOST_TEST(b.test(i) == true);
-    }
+      if (i == b.size())
+        BOOST_TEST(b.find_first() == Bitset::npos); // not found;
+      else {
+        BOOST_TEST(b.find_first() == i);
+        BOOST_TEST(b.test(i) == true);
+      }
+
   }
 
-  static void find_pos(const Bitset& b, typename Bitset::size_type pos)
+  static void find_next(const Bitset& b, typename Bitset::size_type prev)
   {
-    find_first(b, pos);
-    BOOST_TEST(next_bit_on(b, pos) == b.find_next(pos));
+    BOOST_TEST(next_bit_on(b, prev) == b.find_next(prev));
   }
 
   static void operator_equal(const Bitset& a, const Bitset& b)
@@ -1156,94 +1156,6 @@ struct bitset_test {
   {
     Bitset x(lhs);
     BOOST_TEST((lhs >> pos) == (x >>= pos));
-  }
-
-  static void at(const Bitset& lhs, const std::vector<bool>& bit_vec)
-  {
-      Bitset b(lhs);
-      std::size_t i, j, k;
-
-      // x = b.at(i)
-      // x = ~b.at(i)
-      for (i = 0; i < b.size(); ++i)
-      {
-          bool x = b.at(i);
-          BOOST_TEST(x == bit_vec.at(i));
-          x = ~b.at(i);
-          BOOST_TEST(x == !bit_vec.at(i));
-      }
-      Bitset prev(b);
-
-      // b.at(i) = x
-      for (j = 0; j < b.size(); ++j)
-      {
-          bool x = !prev.at(j);
-          b.at(j) = x;
-          for (k = 0; k < b.size(); ++k)
-              if (j == k)
-                  BOOST_TEST(b.at(k) == x);
-              else
-                  BOOST_TEST(b.at(k) == prev.at(k));
-          b.at(j) = prev.at(j);
-      }
-      b.flip();
-
-      // b.at(i) = b.at(j)
-      for (i = 0; i < b.size(); ++i)
-      {
-          b.at(i) = prev.at(i);
-          for (j = 0; j < b.size(); ++j)
-          {
-              if (i == j)
-                  BOOST_TEST(b.at(j) == prev.at(j));
-              else
-                  BOOST_TEST(b.at(j) == !prev.at(j));
-          }
-          b.at(i) = !prev.at(i);
-      }
-
-      // b.at(i).flip()
-      for (i = 0; i < b.size(); ++i)
-      {
-          b.at(i).flip();
-          for (j = 0; j < b.size(); ++j)
-          {
-              if (i == j)
-                  BOOST_TEST(b.at(j) == prev.at(j));
-              else
-                  BOOST_TEST(b.at(j) == !prev.at(j));
-          }
-          b.at(i).flip();
-      }
-
-      // b.at(b.size())
-      bool will_out_of_range = false;
-      for (i = 0; i <= b.size(); ++i)
-      {
-          if (i == b.size())
-          {
-              will_out_of_range = true;
-              break;
-          }
-          b.at(i);
-      }
-      if (will_out_of_range)
-      {
-          try
-          {
-              b.at(b.size());
-              BOOST_TEST(false); // It should have thrown an exception
-          }
-          catch (const std::out_of_range& ex)
-          {
-              // Good!
-              BOOST_TEST(!!ex.what());
-          }
-          catch (...)
-          {
-              BOOST_TEST(false); // threw the wrong exception
-          }
-      }
   }
 
   // operator|

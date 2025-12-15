@@ -1,13 +1,13 @@
 [
     {
-        "key": "container_hash",
+        "key": "functional/hash",
         "boost-version": "1.33.0",
         "name": "Container Hash",
         "authors": [
             "Daniel James"
         ],
         "maintainers": [
-            "Peter Dimov <pdimov -at- gmail.com>"
+            "Daniel James <dnljms -at- gmail.com>"
         ],
         "description": "An STL-compatible hash function object that can be extended to hash user defined types.",
         "std": [
@@ -15,7 +15,6 @@
         ],
         "category": [
             "Function-objects"
-        ],
-        "cxxstd": "11"
+        ]
     }
 ]

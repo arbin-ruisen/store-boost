@@ -10,16 +10,14 @@
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
-#if !defined(BOOST_CPP_RE_HPP_B76C4F5E_63E9_4B8A_9975_EC32FA6BF027_INCLUDED)
-#define BOOST_CPP_RE_HPP_B76C4F5E_63E9_4B8A_9975_EC32FA6BF027_INCLUDED
+#if !defined(CPP_RE_HPP_B76C4F5E_63E9_4B8A_9975_EC32FA6BF027_INCLUDED)
+#define CPP_RE_HPP_B76C4F5E_63E9_4B8A_9975_EC32FA6BF027_INCLUDED
 
 #include <boost/assert.hpp>
 
 #include <boost/wave/wave_config.hpp>
 #include <boost/wave/token_ids.hpp>
 #include <boost/wave/cpplexer/cpplexer_exceptions.hpp>
-#include <boost/wave/cpplexer/re2clex/aq.hpp>
-#include <boost/wave/cpplexer/re2clex/scanner.hpp>
 
 // this must occur after all of the includes and before any code appears
 #ifdef BOOST_HAS_ABI_HEADERS
@@ -40,14 +38,12 @@
 #define YYMARKER  marker
 #define YYFILL(n)                                                             \
     {                                                                         \
-        s->ptr = marker;                                                      \
         cursor = uchar_wrapper(fill(s, cursor), cursor.column);               \
         limit = uchar_wrapper (s->lim);                                       \
-        marker = uchar_wrapper(s->ptr);                                       \
     }                                                                         \
     /**/
 
-#include <iosfwd>
+#include <iostream>
 
 ///////////////////////////////////////////////////////////////////////////////
 #define BOOST_WAVE_UPDATE_CURSOR()                                            \
@@ -185,10 +181,7 @@ uchar *fill(Scanner<Iterator> *s, uchar *cursor)
         {
             if (NULL == s->lim)
                 s->lim = s->top;
-            size_t length = s->lim - s->tok;
-            if(length > 0){
-                memmove(s->bot, s->tok, length);
-            }
+            memmove(s->bot, s->tok, s->lim - s->tok);
             s->tok = s->cur = s->bot;
             s->ptr -= cnt;
             cursor -= cnt;
@@ -209,10 +202,7 @@ uchar *fill(Scanner<Iterator> *s, uchar *cursor)
                 return cursor;
             }
 
-            size_t length = s->lim - s->tok;
-            if(length > 0){
-                memmove(buf, s->tok, length);
-            }
+            memmove(buf, s->tok, s->lim - s->tok);
             s->tok = s->cur = buf;
             s->ptr = &buf[s->ptr - s->bot];
             cursor = &buf[cursor - s->bot];
@@ -239,13 +229,10 @@ uchar *fill(Scanner<Iterator> *s, uchar *cursor)
         /* backslash-newline erasing time */
 
         /* first scan for backslash-newline and erase them */
-        /* a backslash-newline combination can be 2 (regular) or 4 (trigraph backslash) chars */
-        /* start checking 3 chars within the old buffer, if possible */
-        for (p = (std::max)(s->lim - 3, s->cur); p < s->lim + cnt - 2; ++p)
+        for (p = s->lim; p < s->lim + cnt - 2; ++p)
         {
             int len = 0;
-            /* is there a backslash, and room afterwards for a newline? */
-            if (is_backslash(p, s->lim + cnt, len) && ((p + len) < (s->lim + cnt)))
+            if (is_backslash(p, s->lim + cnt, len))
             {
                 if (*(p+len) == '\n')
                 {
@@ -257,8 +244,7 @@ uchar *fill(Scanner<Iterator> *s, uchar *cursor)
                 }
                 else if (*(p+len) == '\r')
                 {
-                    /* is there also room for a newline, and is one present? */
-                    if (((p + len + 1) < s->lim + cnt) && (*(p+len+1) == '\n'))
+                    if (*(p+len+1) == '\n')
                     {
                         int offset = len + 2;
                         memmove(p, p + offset, s->lim + cnt - p - offset);
@@ -349,6 +335,7 @@ uchar *fill(Scanner<Iterator> *s, uchar *cursor)
     }
     return cursor;
 }
+#undef BOOST_WAVE_BSIZE
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Special wrapper class holding the current cursor position
@@ -420,4 +407,4 @@ boost::wave::token_id scan(Scanner<Iterator> *s)
 #include BOOST_ABI_SUFFIX
 #endif
 
-#endif // !defined(BOOST_CPP_RE_HPP_B76C4F5E_63E9_4B8A_9975_EC32FA6BF027_INCLUDED)
+#endif // !defined(CPP_RE_HPP_B76C4F5E_63E9_4B8A_9975_EC32FA6BF027_INCLUDED)

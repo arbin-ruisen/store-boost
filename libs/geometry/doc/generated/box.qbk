@@ -46,18 +46,7 @@ class model::box
 ] [Default constructor, no initialization. ] [
 
 ]]
-[[``template<typename P, std::enable_if_t< ! std::is_copy_constructible< P >::value, int >>
-box(Point const & min_corner, Point const & max_corner)``
-
-] [Constructor taking the minimum corner point and the maximum corner point. ] [[* Point const &]: ['min_corner]:  
-
-[* Point const &]: ['max_corner]:  
-
-
-
-]]
-[[``template<typename P, std::enable_if_t< std::is_copy_constructible< P >::value, int >>
-box(Point const & min_corner, Point const & max_corner)``
+[[``box(Point const & min_corner, Point const & max_corner)``
 
 ] [Constructor taking the minimum corner point and the maximum corner point. ] [[* Point const &]: ['min_corner]:  
 
@@ -71,7 +60,7 @@ box(Point const & min_corner, Point const & max_corner)``
 [heading Member Function(s)]
 [table
 [[Function] [Description] [Parameters]  [Returns]]
-[[``Point const & min_corner()``
+[[``Point const  & min_corner()``
 
 ] [] [
 
@@ -79,7 +68,7 @@ box(Point const & min_corner, Point const & max_corner)``
 
 ]
 ]
-[[``Point const & max_corner()``
+[[``Point const  & max_corner()``
 
 ] [] [
 

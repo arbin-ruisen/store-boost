@@ -15,8 +15,9 @@
 //
 
 #include "boost/optional/optional.hpp"
+#include "boost/utility/in_place_factory.hpp"
 
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 #pragma hdrstop
 #endif
 
@@ -51,9 +52,6 @@ namespace optional_swap_test
       BOOST_TEST(!"The assignment should not be used while swapping!");
       throw assignment_exception();
     }
-
-    base_class_with_forbidden_assignment() {}
-    base_class_with_forbidden_assignment(base_class_with_forbidden_assignment const&) {}
 
     virtual ~base_class_with_forbidden_assignment() {}
   };
@@ -96,8 +94,7 @@ namespace optional_swap_test
 
     class_whose_default_ctor_should_be_used() : data('\0') { }
 
-    class_whose_default_ctor_should_be_used(const class_whose_default_ctor_should_be_used & rhs)
-      : base_class_with_forbidden_assignment(rhs)
+    class_whose_default_ctor_should_be_used(const class_whose_default_ctor_should_be_used &)
     {
       BOOST_TEST(!"This copy constructor should not be used while swapping!");
       throw copy_ctor_exception();
@@ -140,8 +137,7 @@ namespace optional_swap_test
       throw default_ctor_exception();
     }
 
-    class_whose_explicit_ctor_should_be_used(const class_whose_explicit_ctor_should_be_used & rhs)
-      : base_class_with_forbidden_assignment(rhs)
+    class_whose_explicit_ctor_should_be_used(const class_whose_explicit_ctor_should_be_used &)
     {
       BOOST_TEST(!"This copy constructor should not be used while swapping!");
       throw copy_ctor_exception();
@@ -188,9 +184,9 @@ namespace optional_swap_test
      return;
 
     if( !hasX )
-       x.emplace('\0');
+       x = boost::in_place('\0');
     else if ( !hasY )
-       y.emplace('\0');
+       y = boost::in_place('\0');
 
     optional_swap_test::swap(*x,*y);
 

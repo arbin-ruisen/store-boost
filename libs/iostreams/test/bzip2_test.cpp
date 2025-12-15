@@ -20,28 +20,7 @@ using namespace boost::iostreams::test;
 using boost::unit_test::test_suite;  
 namespace io = boost::iostreams;
 
-template<class T> struct basic_test_alloc: std::allocator<T>
-{
-    basic_test_alloc()
-    {
-    }
-
-    basic_test_alloc( basic_test_alloc const& /*other*/ )
-    {
-    }
-
-    template<class U>
-    basic_test_alloc( basic_test_alloc<U> const & /*other*/ )
-    {
-    }
-
-    template<class U> struct rebind
-    {
-        typedef basic_test_alloc<U> other;
-    };
-};
-
-typedef basic_test_alloc<char> bzip2_alloc;
+struct bzip2_alloc : std::allocator<char> { };
 
 void bzip2_test()
 {

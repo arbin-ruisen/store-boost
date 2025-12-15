@@ -5,6 +5,7 @@
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/spirit/home/x3.hpp>
 
 #include <string>
@@ -26,12 +27,6 @@ main()
     using boost::spirit::x3::phrase_parse;
     using boost::spirit::x3::skip_flag;
     using boost::spirit::x3::traits::has_attribute;
-
-#ifdef BOOST_SPIRIT_X3_NO_RTTI
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(rule<class r>{});
-#endif
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(rule<class r>{"r"});
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(rule<class r>{"r"} = 'x');
 
     // check attribute advertising
     static_assert( has_attribute<rule<class r, int>, /*Context=*/unused_type>::value, "");
@@ -91,17 +86,17 @@ main()
 
     { // basic tests w/ skipper but no final post-skip
 
-        auto a = rule<class a_id>()
+        auto a = rule<class a>()
             = lit('a');
 
-        auto b = rule<class b_id>()
+        auto b = rule<class b>()
             = lit('b');
 
-        auto c = rule<class c_id>()
+        auto c = rule<class c>()
             = lit('c');
 
         {
-            auto start = rule<class start_id>() = *(a | b) >> c;
+            auto start = rule<class start>() = *(a | b) >> c;
 
             char const *s1 = " a b a a b b a c ... "
               , *const e1 = s1 + std::strlen(s1);

@@ -96,7 +96,10 @@ public:
                             ec == net::error::eof, ec.message()))
                             continue;
                         auto const s = buffers_to_string(ba.data());
-                        BEAST_EXPECTS(s == out, s);
+                        if(! BEAST_EXPECTS(s == out, s))
+                        {
+                            s.size();
+                        }
                     }
                 }
             }

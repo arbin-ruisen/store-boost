@@ -8,14 +8,12 @@
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
-#if !defined(BOOST_CPP_EXPRESSION_VALUE_HPP_452FE66D_8754_4107_AF1E_E42255A0C18A_INCLUDED)
-#define BOOST_CPP_EXPRESSION_VALUE_HPP_452FE66D_8754_4107_AF1E_E42255A0C18A_INCLUDED
+#if !defined(CPP_EXPRESSION_VALUE_HPP_452FE66D_8754_4107_AF1E_E42255A0C18A_INCLUDED)
+#define CPP_EXPRESSION_VALUE_HPP_452FE66D_8754_4107_AF1E_E42255A0C18A_INCLUDED
 
 #if defined (BOOST_SPIRIT_DEBUG)
 #include <iostream>
 #endif // defined(BOOST_SPIRIT_DEBUG)
-
-#include <limits>
 
 #include <boost/wave/wave_config.hpp>
 #include <boost/wave/grammars/cpp_value_error.hpp> // value_error
@@ -74,7 +72,7 @@ public:
     value_type get_type() const { return type; }
     value_error is_valid() const { return valid; }
 
-    // explicit conversion
+// explicit conversion
     friend int_literal_type as_int(closure_value const& v)
     {
         switch (v.type) {
@@ -121,7 +119,7 @@ public:
         return v.value.i != 0.0;
     }
 
-    // assignment
+// assignment
     closure_value &operator= (closure_value const &rhs)
     {
         switch (rhs.get_type()) {
@@ -179,7 +177,7 @@ public:
         return *this;
     }
 
-    // arithmetics
+// arithmetics
     closure_value &operator+= (closure_value const &rhs)
     {
         switch (type) {
@@ -187,30 +185,28 @@ public:
             switch(rhs.type) {
             case is_bool:
                 {
-                    // bool is either 0 or 1
-                    if (((std::numeric_limits<int_literal_type>::max)() - as_long(rhs)) < value.i)
+                    int_literal_type result = value.i + as_long(rhs);
+                    if ((rhs.value.i > 0L && value.i > result) ||
+                        (rhs.value.i < 0L && value.i < result))
                     {
-                        // signed overflow will occur if addition performed
                         valid = error_integer_overflow;
                     }
                     else {
-                        value.i += as_long(rhs);
+                        value.i = result;
                     }
                 }
                 break;
 
             case is_int:
                 {
-                    if (((rhs.value.i > 0) &&
-                         (((std::numeric_limits<int_literal_type>::max)() - rhs.value.i) < value.i)) ||
-                        ((rhs.value.i < 0) &&
-                         (((std::numeric_limits<int_literal_type>::min)() - rhs.value.i) > value.i)))
+                    int_literal_type result = value.i + rhs.value.i;
+                    if ((rhs.value.i > 0L && value.i > result) ||
+                        (rhs.value.i < 0L && value.i < result))
                     {
-                        // signed overflow will occur if addition performed
                         valid = error_integer_overflow;
                     }
                     else {
-                        value.i += rhs.value.i;
+                        value.i = result;
                     }
                 }
                 break;
@@ -256,29 +252,28 @@ public:
             switch(rhs.type) {
             case is_bool:
                 {
-                    if (((std::numeric_limits<int_literal_type>::min)() + as_long(rhs)) > value.i)
+                    int_literal_type result = value.i - as_long(rhs);
+                    if ((rhs.value.i > 0L && result > value.i) ||
+                        (rhs.value.i < 0L && result < value.i))
                     {
-                        // signed overflow will occur if subtraction performed
                         valid = error_integer_overflow;
                     }
                     else {
-                        value.i -= as_long(rhs);
+                        value.i = result;
                     }
                 }
                 break;
 
             case is_int:
                 {
-                    if (((rhs.value.i < 0) &&
-                         (((std::numeric_limits<int_literal_type>::max)() + rhs.value.i) < value.i)) ||
-                        ((rhs.value.i > 0) &&
-                         (((std::numeric_limits<int_literal_type>::min)() + rhs.value.i) > value.i)))
+                    int_literal_type result = value.i - rhs.value.i;
+                    if ((rhs.value.i > 0L && result > value.i) ||
+                        (rhs.value.i < 0L && result < value.i))
                     {
-                        // signed overflow will occur if subtraction performed
                         valid = error_integer_overflow;
                     }
                     else {
-                        value.i -= rhs.value.i;
+                        value.i = result;
                     }
                 }
                 break;
@@ -356,22 +351,16 @@ public:
             case is_bool:   value.i *= as_long(rhs); break;
             case is_int:
                 {
-                    // overflow tests for signed multiplication taken from
-                    // Warren, Hacker's Delight, 2nd Ed. p32
-                    int_literal_type mx = (std::numeric_limits<int_literal_type>::max)();
-                    int_literal_type mn = (std::numeric_limits<int_literal_type>::min)();
-
-                    bool ovflw =
-                        (value.i > 0) ? ((rhs.value.i > 0) ? (value.i > (mx / rhs.value.i))
-                                                           : (rhs.value.i < (mn / value.i)))
-                                      : ((rhs.value.i > 0) ? (value.i < (mn / rhs.value.i))
-                                                           : ((value.i != 0) && (rhs.value.i < (mx / value.i))));
-                    if (ovflw)
+                    int_literal_type result = value.i * rhs.value.i;
+                    if (0 != value.i && 0 != rhs.value.i &&
+                        (result / value.i != rhs.value.i ||
+                         result / rhs.value.i != value.i)
+                       )
                     {
                         valid = error_integer_overflow;
                     }
                     else {
-                        value.i *= rhs.value.i;
+                        value.i = result;
                     }
                 }
                 break;
@@ -441,9 +430,8 @@ public:
             case is_bool:
             case is_int:
                 if (as_long(rhs) != 0) {
-                    if (std::numeric_limits<int_literal_type>::min() == value.i &&
-                        -1 == rhs.value.i) {
-                        // LONG_MIN / -1 on two's complement
+                    if (value.i == -value.i && -1 == rhs.value.i) {
+                    // LONG_MIN / -1 on two's complement
                         valid = error_integer_overflow;
                     }
                     else {
@@ -506,7 +494,7 @@ public:
             case is_int:
                 if (as_long(rhs) != 0) {
                     if (value.i == -value.i && -1 == rhs.value.i) {
-                        // LONG_MIN % -1 on two's complement
+                    // LONG_MIN % -1 on two's complement
                         valid = error_integer_overflow;
                     }
                     else {
@@ -598,7 +586,7 @@ public:
         return closure_value(!as_ulong(rhs), rhs.valid);
     }
 
-    // comparison
+// comparison
     friend closure_value
     operator== (closure_value const &lhs, closure_value const &rhs)
     {
@@ -892,4 +880,4 @@ private:
 #include BOOST_ABI_SUFFIX
 #endif
 
-#endif // !defined(BOOST_CPP_EXPRESSION_VALUE_HPP_452FE66D_8754_4107_AF1E_E42255A0C18A_INCLUDED)
+#endif // !defined(CPP_EXPRESSION_VALUE_HPP_452FE66D_8754_4107_AF1E_E42255A0C18A_INCLUDED)

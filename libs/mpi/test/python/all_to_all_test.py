@@ -6,8 +6,7 @@
 
 # Test all_to_all() collective.
 
-from __future__ import print_function
-import mpi
+import boost.parallel.mpi as mpi
 from generators import *
 
 def all_to_all_test(comm, generator, kind):
@@ -22,7 +21,7 @@ def all_to_all_test(comm, generator, kind):
     for p in range(0, comm.size):
         assert result[p] == generator(comm.rank)
 
-    if comm.rank == 0: print ("OK.")
+    if comm.rank == 0: print "OK."
     return
 
 all_to_all_test(mpi.world, int_generator, "integers")

@@ -17,9 +17,6 @@
 #ifndef BOOST_LOG_SINKS_FRONTEND_REQUIREMENTS_HPP_INCLUDED_
 #define BOOST_LOG_SINKS_FRONTEND_REQUIREMENTS_HPP_INCLUDED_
 
-#include <boost/type_traits/is_base_of.hpp>
-#include <boost/log/detail/config.hpp>
-#if defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
 #include <boost/mpl/aux_/na.hpp>
 #include <boost/mpl/placeholders.hpp>
 #include <boost/mpl/inherit.hpp>
@@ -27,7 +24,8 @@
 #include <boost/mpl/vector.hpp>
 #include <boost/preprocessor/repetition/enum_params.hpp>
 #include <boost/preprocessor/repetition/enum_params_with_a_default.hpp>
-#endif
+#include <boost/type_traits/is_base_of.hpp>
+#include <boost/log/detail/config.hpp>
 #include <boost/log/detail/header.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
@@ -77,7 +75,7 @@ struct formatted_records {};
  */
 struct flushing {};
 
-#if defined(BOOST_LOG_DOXYGEN_PASS)
+#ifdef BOOST_LOG_DOXYGEN_PASS
 
 /*!
  * The metafunction combines multiple requirement tags into one type. The resulting type will
@@ -85,24 +83,6 @@ struct flushing {};
  */
 template< typename... RequirementsT >
 struct combine_requirements;
-
-#elif !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
-
-namespace aux {
-
-template< typename... RequirementsT >
-struct combined_requirements :
-    public RequirementsT...
-{
-};
-
-} // namespace aux
-
-template< typename... RequirementsT >
-struct combine_requirements
-{
-    typedef sinks::aux::combined_requirements< RequirementsT... > type;
-};
 
 #else
 

@@ -9,10 +9,10 @@
 // ----------------------------------------------------------------------------
 #include "test_utils.hpp"
 #include <boost/any.hpp>
-#include <boost/mp11.hpp>
 #include <boost/range.hpp>
 #include <list>
 #include <cmath>
+#include <iostream>
 
 // If using VC, disable some warnings that trip in boost::serialization bowels
 #ifdef BOOST_MSVC
@@ -67,11 +67,6 @@ struct any_translator
         return boost::any(v);
     }
 };
-
-// Checks the validity of calling get_child with a default value type
-template<class P, class C, class D>
-using get_child_accepts_default_of_type = decltype(
-    std::declval<P>().get_child(std::declval<const C*>(), std::declval<D>()));
 
 namespace boost { namespace property_tree {
     template <typename E>
@@ -171,7 +166,7 @@ void run_tests(Ptree* pt)
     test_leaks(pt);                  // must be a final test
 }
 
-int main(int, char *[])
+int test_main(int, char *[])
 {
     
     using namespace boost::property_tree;
@@ -204,5 +199,5 @@ int main(int, char *[])
     }
 #endif
 
-    return boost::report_errors();
+    return 0;
 }

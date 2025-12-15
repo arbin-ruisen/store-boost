@@ -11,19 +11,12 @@
 #ifndef BOOST_MOVE_TEST_MOVABLE_HPP
 #define BOOST_MOVE_TEST_MOVABLE_HPP
 
+#include <boost/move/detail/config_begin.hpp>
+
 //[movable_definition 
 //header file "movable.hpp"
-
-//This devinition should only include a single, minimal move header
 #include <boost/move/core.hpp>
-
-//Forward declaration of 
-namespace boost{
-
-template<class T>
-struct has_nothrow_move;
-
-}  //namespace boost{
+#include <boost/move/traits.hpp>
 
 //A movable class
 class movable
@@ -58,5 +51,7 @@ struct has_nothrow_move<movable>
 
 }  //namespace boost{
 //]
+
+#include <boost/move/detail/config_end.hpp>
 
 #endif //BOOST_MOVE_TEST_MOVABLE_HPP

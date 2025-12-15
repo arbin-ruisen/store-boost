@@ -2,11 +2,6 @@
 // Unit Test Helper
 
 // Copyright (c) 2010-2019 Barend Gehrels, Amsterdam, the Netherlands.
-
-// This file was modified by Oracle on 2021.
-// Modifications copyright (c) 2021, Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -14,8 +9,6 @@
 
 #ifndef BOOST_GEOMETRY_TEST_BUFFER_SVG_PER_TURN_HPP
 #define BOOST_GEOMETRY_TEST_BUFFER_SVG_PER_TURN_HPP
-
-#if defined(TEST_WITH_SVG_PER_TURN)
 
 #include <fstream>
 #include <vector>
@@ -139,7 +132,7 @@ public :
             return;
         }
 
-        for (pair_type const& p : points)
+        BOOST_FOREACH(pair_type const& p, points)
         {
             mappers.push_back(new mapper_visitor<Point>(complete_caseid, p.second, p.first));
         }
@@ -148,9 +141,10 @@ public :
     template <typename PieceCollection>
     inline void apply(PieceCollection const& collection, int phase)
     {
-        for (auto& item : mappers)
+        for(typename container_type::iterator it = mappers.begin();
+            it != mappers.end(); ++it)
         {
-            item.apply(collection, phase);
+            it->apply(collection, phase);
         }
     }
 
@@ -158,13 +152,13 @@ public :
     void map_input_output(Geometry const& geometry,
             GeometryBuffer const& buffered, bool negative)
     {
-        for (auto& item : mappers)
+        for(typename container_type::iterator it = mappers.begin();
+            it != mappers.end(); ++it)
         {
-           item.map_input_output(geometry, buffered, negative);
+           it->map_input_output(geometry, buffered, negative);
         }
     }
 };
 
-#endif
 
 #endif // BOOST_GEOMETRY_TEST_BUFFER_SVG_PER_TURN_HPP

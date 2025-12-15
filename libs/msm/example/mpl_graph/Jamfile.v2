@@ -8,11 +8,10 @@
 
 import testing ;
 
-project
+project msm
     :
     requirements
-       <library>/boost/msm//boost_msm
-       <include>.
+        <include>.
        <toolset>gcc:<cxxflags>"-ftemplate-depth-300 -g0"
        <toolset>darwin:<cxxflags>"-ftemplate-depth-300 -g0"
        <toolset>intel:<cxxflags>"-g0"

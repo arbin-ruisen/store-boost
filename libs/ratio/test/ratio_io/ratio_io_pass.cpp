@@ -13,8 +13,9 @@
 
 // test ratio_add
 
+#define BOOST_RATIO_EXTENSIONS
 #include <boost/ratio/ratio_io.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/detail/lightweight_test.hpp>
 #include <climits>
 
 int main()
@@ -148,8 +149,23 @@ int main()
                 boost::ratio_string<boost::exa, char>::symbol() == "E"
         ));
     }
-
-	return boost::report_errors();
+    {
+        BOOST_TEST((
+                boost::ratio_string<boost::kibi, char>::prefix() == "kibi"
+        ));
+        BOOST_TEST((
+                boost::ratio_string<boost::kibi, char>::symbol() == "Ki"
+        ));
+    }
+    {
+        BOOST_TEST((
+                boost::ratio_string<boost::gibi, char>::prefix() == "gibi"
+        ));
+        BOOST_TEST((
+                boost::ratio_string<boost::gibi, char>::symbol() == "Gi"
+        ));
+    }
+    return boost::report_errors();
 }
 
 

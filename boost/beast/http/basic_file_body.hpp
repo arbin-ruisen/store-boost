@@ -10,8 +10,6 @@
 #ifndef BOOST_BEAST_HTTP_BASIC_FILE_BODY_HPP
 #define BOOST_BEAST_HTTP_BASIC_FILE_BODY_HPP
 
-#include <boost/beast/http/basic_file_body_fwd.hpp>
-
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/file_base.hpp>
@@ -87,11 +85,9 @@ class basic_file_body<File>::value_type
     // This body container holds a handle to the file
     // when it is open, and also caches the size when set.
 
-#ifndef BOOST_BEAST_DOXYGEN
     friend class reader;
     friend class writer;
     friend struct basic_file_body;
-#endif
 
     // This represents the open file
     File file_;
@@ -114,12 +110,6 @@ public:
 
     /// Move assignment
     value_type& operator=(value_type&& other) = default;
-
-    /// Return the file
-    File& file()
-    {
-        return file_;
-    }
 
     /// Returns `true` if the file is open
     bool
@@ -162,19 +152,6 @@ public:
     */
     void
     reset(File&& file, error_code& ec);
-
-    /** Set the cursor position of the file.
-
-        This function can be used to move the cursor of the file ahead
-        so that only a part gets read. This file will also adjust the
-        value_type, in case the file is already part of a body.
-
-        @param offset The offset in bytes from the beginning of the file
-
-        @param ec Set to the error, if any occurred
-    */
-
-    void seek(std::uint64_t offset, error_code& ec);
 };
 
 template<class File>
@@ -225,28 +202,7 @@ reset(File&& file, error_code& ec)
 
     // Cache the size
     file_size_ = file_.size(ec);
-
-    // Consider the offset
-    if (!ec)
-        file_size_ -= file_.pos(ec);
 }
-
-template<class File>
-void
-basic_file_body<File>::
-value_type::
-seek(std::uint64_t offset, error_code& ec)
-{
-    file_.seek(offset, ec);
-    // Cache the size
-    if (!ec)
-        file_size_ = file_.size(ec);
-
-    // Consider the offset
-    if (!ec)
-        file_size_ -= file_.pos(ec);
-}
-
 
 // This is called from message::payload_size
 template<class File>
@@ -270,9 +226,9 @@ size(value_type const& body)
 template<class File>
 class basic_file_body<File>::writer
 {
-    value_type& body_;                       // The body we are reading from
-    std::uint64_t remain_;                   // The number of unread bytes
-    char buf_[BOOST_BEAST_FILE_BUFFER_SIZE]; // Small buffer for reading
+    value_type& body_;      // The body we are reading from
+    std::uint64_t remain_;  // The number of unread bytes
+    char buf_[4096];        // Small buffer for reading
 
 public:
     // The type of buffer sequence returned by `get`.
@@ -400,12 +356,6 @@ get(error_code& ec) ->
     auto const nread = body_.file_.read(buf_, amount, ec);
     if(ec)
         return boost::none;
-
-    if (nread == 0)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, error::short_read);
-        return boost::none;
-    }
 
     // Make sure there is forward progress
     BOOST_ASSERT(nread != 0);
@@ -577,8 +527,8 @@ finish(error_code& ec)
 // operator<< is not supported for file_body
 template<bool isRequest, class File, class Fields>
 std::ostream&
-operator<<(std::ostream&, message<
-    isRequest, basic_file_body<File>, Fields> const&) = delete;
+operator<<(std::ostream& os, message<
+    isRequest, basic_file_body<File>, Fields> const& msg) = delete;
 #endif
 
 } // http

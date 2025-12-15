@@ -1,6 +1,5 @@
 
 // Copyright 2006-2009 Daniel James.
-// Copyright 2022 Christian Mazakas
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -11,9 +10,7 @@
 #if !defined(BOOST_UNORDERED_OBJECTS_MINIMAL_HEADER)
 #define BOOST_UNORDERED_OBJECTS_MINIMAL_HEADER
 
-#include <boost/core/addressof.hpp>
-#include <boost/core/lightweight_test.hpp>
-#include <boost/core/pointer_traits.hpp>
+#include <boost/move/move.hpp>
 #include <cstddef>
 #include <utility>
 
@@ -164,18 +161,19 @@ namespace test {
 
     class movable1
     {
+      BOOST_MOVABLE_BUT_NOT_COPYABLE(movable1)
+
     public:
       movable1(constructor_param const&) {}
       movable1() {}
       explicit movable1(movable_init) {}
-      movable1(movable1 const&) = delete;
-      movable1& operator=(movable1 const&) = delete;
-      movable1(movable1&&) {}
-      movable1& operator=(movable1&&) { return *this; }
+      movable1(BOOST_RV_REF(movable1)) {}
+      movable1& operator=(BOOST_RV_REF(movable1)) { return *this; }
       ~movable1() {}
       void dummy_member() const {}
     };
 
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
     class movable2
     {
     public:
@@ -191,6 +189,9 @@ namespace test {
       movable2(movable2 const&);
       movable2& operator=(movable2 const&);
     };
+#else
+    typedef movable1 movable2;
+#endif
 
     template <class T> class hash
     {
@@ -200,11 +201,6 @@ namespace test {
       hash(hash const&) {}
       hash& operator=(hash const&) { return *this; }
       ~hash() {}
-
-#if defined(BOOST_UNORDERED_FOA_TESTS)
-      hash(hash&&) = default;
-      hash& operator=(hash&&) = default;
-#endif
 
       std::size_t operator()(T const&) const { return 0; }
 #if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
@@ -223,11 +219,6 @@ namespace test {
       equal_to(equal_to const&) {}
       equal_to& operator=(equal_to const&) { return *this; }
       ~equal_to() {}
-
-#if defined(BOOST_UNORDERED_FOA_TESTS)
-      equal_to(equal_to&&) = default;
-      equal_to& operator=(equal_to&&) = default;
-#endif
 
       bool operator()(T const&, T const&) const { return true; }
 #if BOOST_UNORDERED_CHECK_ADDR_OPERATOR_NOT_USED
@@ -302,7 +293,6 @@ namespace test {
 
     public:
       ptr() : ptr_(0) {}
-      ptr(std::nullptr_t) : ptr_(0) {}
       explicit ptr(void_ptr const& x) : ptr_((T*)x.ptr_) {}
 
       T& operator*() const { return *ptr_; }
@@ -319,28 +309,12 @@ namespace test {
         return tmp;
       }
       ptr operator+(std::ptrdiff_t s) const { return ptr<T>(ptr_ + s); }
-      friend ptr operator+(std::ptrdiff_t s, ptr p) { return ptr<T>(s + p.ptr_); }
-
-      ptr& operator+=(std::ptrdiff_t s)
+      friend ptr operator+(std::ptrdiff_t s, ptr p)
       {
-        ptr_ += s;
-        return *this;
+        return ptr<T>(s + p.ptr_);
       }
-
-      ptr& operator-=(std::ptrdiff_t s)
-      {
-        ptr_ -= s;
-        return *this;
-      }
-
-      std::ptrdiff_t operator-(ptr p) const { return ptr_ - p.ptr_; }
-      ptr operator-(std::ptrdiff_t s) const { return ptr(ptr_ - s); }
       T& operator[](std::ptrdiff_t s) const { return ptr_[s]; }
       bool operator!() const { return !ptr_; }
-
-      static ptr pointer_to(T& p) {
-        return ptr(std::addressof(p));
-      }
 
       // I'm not using the safe bool idiom because the containers should be
       // able to cope with bool conversions.
@@ -348,8 +322,6 @@ namespace test {
 
       bool operator==(ptr const& x) const { return ptr_ == x.ptr_; }
       bool operator!=(ptr const& x) const { return ptr_ != x.ptr_; }
-      bool operator==(std::nullptr_t) const { return ptr_ == nullptr; }
-      bool operator!=(std::nullptr_t) const { return ptr_ != nullptr; }
       bool operator<(ptr const& x) const { return ptr_ < x.ptr_; }
       bool operator>(ptr const& x) const { return ptr_ > x.ptr_; }
       bool operator<=(ptr const& x) const { return ptr_ <= x.ptr_; }
@@ -456,13 +428,16 @@ namespace test {
         ::operator delete((void*)p.ptr_);
       }
 
-      template <class U, class... Args>
-      void construct(U* p, Args&&... args)
-      {
-        new ((void*)p) U(std::forward<Args>(args)...);
-      }
+      void construct(T* p, T const& t) { new ((void*)p) T(t); }
 
-      template <class U> void destroy(U* p) { p->~U(); }
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+      template <class... Args> void construct(T* p, BOOST_FWD_REF(Args)... args)
+      {
+        new ((void*)p) T(boost::forward<Args>(args)...);
+      }
+#endif
+
+      void destroy(T* p) { p->~T(); }
 
       size_type max_size() const { return 1000; }
 
@@ -523,13 +498,17 @@ namespace test {
         ::operator delete((void*)p.ptr_);
       }
 
-      template <class U, class... Args>
-      void construct(U* p, Args&&... args)
-      {
-        new (p) U(std::forward<Args>(args)...);
-      }
+      void construct(T const* p, T const& t) { new ((void*)p) T(t); }
 
-      template <class U> void destroy(U* p) { p->~U(); }
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+      template <class... Args>
+      void construct(T const* p, BOOST_FWD_REF(Args)... args)
+      {
+        new ((void*)p) T(boost::forward<Args>(args)...);
+      }
+#endif
+
+      void destroy(T const* p) { p->~T(); }
 
       size_type max_size() const { return 1000; }
 
@@ -594,13 +573,16 @@ namespace test {
 
       void deallocate(T* p, std::size_t) { ::operator delete((void*)p); }
 
-      template <class U, class... Args>
-      void construct(U* p, Args&&... args)
-      {
-        new ((void*)p) U(std::forward<Args>(args)...);
-      }
+      void construct(T* p, T const& t) { new ((void*)p) T(t); }
 
-      template <class U> void destroy(U* p) { p->~U(); }
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+      template <class... Args> void construct(T* p, BOOST_FWD_REF(Args)... args)
+      {
+        new ((void*)p) T(boost::forward<Args>(args)...);
+      }
+#endif
+
+      void destroy(T* p) { p->~T(); }
 
       std::size_t max_size() const { return 1000u; }
     };
@@ -641,18 +623,5 @@ namespace test {
 #if defined(BOOST_MSVC)
 #pragma warning(pop)
 #endif
-
-namespace boost {
-  template <> struct pointer_traits< ::test::minimal::void_ptr>
-  {
-    template <class U> struct rebind_to
-    {
-      typedef ::test::minimal::ptr<U> type;
-    };
-
-    template<class U>
-    using rebind=typename rebind_to<U>::type;
-  };
-}
 
 #endif

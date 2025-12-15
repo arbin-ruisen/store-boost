@@ -17,7 +17,7 @@
 #include <boost/detail/utf8_codecvt_facet.hpp>
 #include <boost/detail/utf8_codecvt_facet.ipp>
 
-int main(int , char *[])
+int test_main(int argc, char *argv[])
 {
     using namespace boost::property_tree;
     test_xml_parser<ptree>();
@@ -30,5 +30,5 @@ int main(int , char *[])
     test_xml_parser<wptree>();
     test_xml_parser<wiptree>();
 #endif
-    return boost::report_errors();
+    return 0;
 }

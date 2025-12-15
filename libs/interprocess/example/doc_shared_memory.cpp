@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+#include <boost/interprocess/detail/config_begin.hpp>
 //[doc_shared_memory
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
@@ -26,15 +26,32 @@ int main(int argc, char *argv[])
       //Remove shared memory on construction and destruction
       struct shm_remove
       {
+      //<-
+      #if 1
          shm_remove() { shared_memory_object::remove(test::get_process_id_name()); }
          ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()); }
+      #else
+      //->
+         shm_remove() { shared_memory_object::remove("MySharedMemory"); }
+         ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
+      //<-
+      #endif
+      //->
       } remover;
       //<-
       (void)remover;
       //->
 
       //Create a shared memory object.
+      //<-
+      #if 1
       shared_memory_object shm (create_only, test::get_process_id_name(), read_write);
+      #else
+      //->
+      shared_memory_object shm (create_only, "MySharedMemory", read_write);
+      //<-
+      #endif
+      //->
 
       //Set size
       shm.truncate(1000);
@@ -55,7 +72,15 @@ int main(int argc, char *argv[])
    }
    else{
       //Open already created shared memory object.
-      shared_memory_object shm (open_only, test::get_argv_2(argv), read_only);
+      //<-
+      #if 1
+      shared_memory_object shm (open_only, argv[2], read_only);
+      #else
+      //->
+      shared_memory_object shm (open_only, "MySharedMemory", read_only);
+      //<-
+      #endif
+      //->
 
       //Map the whole shared memory in this process
       mapped_region region(shm, read_only);
@@ -69,4 +94,4 @@ int main(int argc, char *argv[])
    return 0;
 }
 //]
-
+#include <boost/interprocess/detail/config_end.hpp>

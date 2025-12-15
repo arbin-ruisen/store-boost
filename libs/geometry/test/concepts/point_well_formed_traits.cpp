@@ -27,19 +27,19 @@ namespace boost { namespace geometry { namespace traits {
 template <>
 struct tag<point>
 {
-    using type = point_tag;
+    typedef point_tag type;
 };
 
 template <>
 struct coordinate_type<point>
 {
-    using type = float;
+    typedef float type;
 };
 
 template <>
 struct coordinate_system<point>
 {
-    using type = bg::cs::cartesian;
+    typedef bg::cs::cartesian type;
 };
 
 template <>

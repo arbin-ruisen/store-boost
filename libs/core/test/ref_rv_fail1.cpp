@@ -8,7 +8,7 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include <boost/core/ref.hpp>
+#include <boost/ref.hpp>
 
 #if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
 

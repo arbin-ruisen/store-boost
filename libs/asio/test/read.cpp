@@ -2,7 +2,7 @@
 // read.cpp
 // ~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2019 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,9 +16,7 @@
 // Test that header file is self-contained.
 #include <boost/asio/read.hpp>
 
-#include <array>
 #include <cstring>
-#include <functional>
 #include <vector>
 #include "archetypes/async_result.hpp"
 #include <boost/asio/io_context.hpp>
@@ -26,9 +24,19 @@
 #include <boost/asio/streambuf.hpp>
 #include "unit_test.hpp"
 
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+# include <boost/bind.hpp>
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
+# include <functional>
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
+
 #if defined(BOOST_ASIO_HAS_BOOST_ARRAY)
 #include <boost/array.hpp>
 #endif // defined(BOOST_ASIO_HAS_BOOST_ARRAY)
+
+#if defined(BOOST_ASIO_HAS_STD_ARRAY)
+# include <array>
+#endif // defined(BOOST_ASIO_HAS_STD_ARRAY)
 
 using namespace std; // For memcmp, memcpy and memset.
 
@@ -45,7 +53,7 @@ public:
   {
   }
 
-  executor_type get_executor() noexcept
+  executor_type get_executor() BOOST_ASIO_NOEXCEPT
   {
     return io_context_.get_executor();
   }
@@ -113,12 +121,12 @@ public:
 
   template <typename Mutable_Buffers, typename Handler>
   void async_read_some(const Mutable_Buffers& buffers,
-      Handler&& handler)
+      BOOST_ASIO_MOVE_ARG(Handler) handler)
   {
     size_t bytes_transferred = read_some(buffers);
     boost::asio::post(get_executor(),
         boost::asio::detail::bind_handler(
-          static_cast<Handler&&>(handler),
+          BOOST_ASIO_MOVE_CAST(Handler)(handler),
           boost::system::error_code(), bytes_transferred));
   }
 
@@ -431,7 +439,11 @@ bool old_style_transfer_all(const boost::system::error_code& ec,
 struct short_transfer
 {
   short_transfer() {}
+#if defined(BOOST_ASIO_HAS_MOVE)
   short_transfer(short_transfer&&) {}
+#else // defined(BOOST_ASIO_HAS_MOVE)
+  short_transfer(const short_transfer&) {}
+#endif // defined(BOOST_ASIO_HAS_MOVE)
   size_t operator()(const boost::system::error_code& ec,
       size_t /*bytes_transferred*/)
   {
@@ -2463,9 +2475,13 @@ void async_read_handler(const boost::system::error_code& e,
 
 void test_3_arg_mutable_buffer_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -2515,25 +2531,17 @@ void test_3_arg_mutable_buffer_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-    boost::asio::async_read(s, buffers)(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
 }
 
 void test_3_arg_boost_array_buffers_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
 #if defined(BOOST_ASIO_HAS_BOOST_ARRAY)
   boost::asio::io_context ioc;
@@ -2585,27 +2593,20 @@ void test_3_arg_boost_array_buffers_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers)(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
 #endif // defined(BOOST_ASIO_HAS_BOOST_ARRAY)
 }
 
 void test_3_arg_std_array_buffers_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
+#if defined(BOOST_ASIO_HAS_STD_ARRAY)
   boost::asio::io_context ioc;
   test_stream s(ioc);
   char read_buf[sizeof(read_data)];
@@ -2655,25 +2656,18 @@ void test_3_arg_std_array_buffers_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers)(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
+#endif // defined(BOOST_ASIO_HAS_STD_ARRAY)
 }
 
 void test_3_arg_vector_buffers_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -2725,25 +2719,17 @@ void test_3_arg_vector_buffers_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers)(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
 }
 
 void test_3_arg_dynamic_string_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -2798,27 +2784,18 @@ void test_3_arg_dynamic_string_async_read()
   ioc.run();
   BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
   BOOST_ASIO_CHECK(s.check_buffers(sb.data(0, sb.size()), sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  sb.consume(sb.size());
-  called = false;
-  boost::asio::async_read(s, sb)(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
-  BOOST_ASIO_CHECK(s.check_buffers(sb.data(0, sb.size()), sizeof(read_data)));
 }
 
 void test_3_arg_streambuf_async_read()
 {
 #if !defined(BOOST_ASIO_NO_DYNAMIC_BUFFER_V1)
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -2870,27 +2847,18 @@ void test_3_arg_streambuf_async_read()
   ioc.run();
   BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
   BOOST_ASIO_CHECK(s.check_buffers(sb.data(), sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  sb.consume(sb.size());
-  called = false;
-  boost::asio::async_read(s, sb)(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
-  BOOST_ASIO_CHECK(s.check_buffers(sb.data(), sizeof(read_data)));
 #endif // !defined(BOOST_ASIO_NO_DYNAMIC_BUFFER_V1)
 }
 
 void test_4_arg_mutable_buffer_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -3221,25 +3189,17 @@ void test_4_arg_mutable_buffer_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers, short_transfer())(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
 }
 
 void test_4_arg_boost_array_buffers_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
 #if defined(BOOST_ASIO_HAS_BOOST_ARRAY)
   boost::asio::io_context ioc;
@@ -3572,27 +3532,20 @@ void test_4_arg_boost_array_buffers_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers, short_transfer())(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
 #endif // defined(BOOST_ASIO_HAS_BOOST_ARRAY)
 }
 
 void test_4_arg_std_array_buffers_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
+#if defined(BOOST_ASIO_HAS_STD_ARRAY)
   boost::asio::io_context ioc;
   test_stream s(ioc);
   char read_buf[sizeof(read_data)];
@@ -3923,25 +3876,18 @@ void test_4_arg_std_array_buffers_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers, short_transfer())(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
+#endif // defined(BOOST_ASIO_HAS_STD_ARRAY)
 }
 
 void test_4_arg_vector_buffers_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -4274,25 +4220,17 @@ void test_4_arg_vector_buffers_async_read()
   ioc.restart();
   ioc.run();
   BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  memset(read_buf, 0, sizeof(read_buf));
-  called = false;
-  boost::asio::async_read(s, buffers, short_transfer())(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(s.check_buffers(buffers, sizeof(read_data)));
 }
 
 void test_4_arg_dynamic_string_async_read()
 {
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -4652,27 +4590,18 @@ void test_4_arg_dynamic_string_async_read()
   ioc.run();
   BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
   BOOST_ASIO_CHECK(s.check_buffers(sb.data(0, sb.size()), sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  sb.consume(sb.size());
-  called = false;
-  boost::asio::async_read(s, sb, short_transfer())(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
-  BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
-  BOOST_ASIO_CHECK(s.check_buffers(sb.data(0, sb.size()), sizeof(read_data)));
 }
 
 void test_4_arg_streambuf_async_read()
 {
 #if !defined(BOOST_ASIO_NO_DYNAMIC_BUFFER_V1)
+#if defined(BOOST_ASIO_HAS_BOOST_BIND)
+  namespace bindns = boost;
+#else // defined(BOOST_ASIO_HAS_BOOST_BIND)
   namespace bindns = std;
-  using bindns::placeholders::_1;
-  using bindns::placeholders::_2;
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+#endif // defined(BOOST_ASIO_HAS_BOOST_BIND)
 
   boost::asio::io_context ioc;
   test_stream s(ioc);
@@ -5027,19 +4956,6 @@ void test_4_arg_streambuf_async_read()
   BOOST_ASIO_CHECK(i == 42);
   ioc.restart();
   ioc.run();
-  BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
-  BOOST_ASIO_CHECK(s.check_buffers(sb.data(), sizeof(read_data)));
-
-  s.reset(read_data, sizeof(read_data));
-  s.next_read_length(10);
-  sb.consume(sb.size());
-  called = false;
-  boost::asio::async_read(s, sb, short_transfer())(
-      bindns::bind(async_read_handler,
-        _1, _2, sizeof(read_data), &called));
-  ioc.restart();
-  ioc.run();
-  BOOST_ASIO_CHECK(called);
   BOOST_ASIO_CHECK(sb.size() == sizeof(read_data));
   BOOST_ASIO_CHECK(s.check_buffers(sb.data(), sizeof(read_data)));
 #endif // !defined(BOOST_ASIO_NO_DYNAMIC_BUFFER_V1)

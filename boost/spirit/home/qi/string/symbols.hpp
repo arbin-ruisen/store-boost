@@ -23,8 +23,7 @@
 #include <boost/spirit/home/support/info.hpp>
 #include <boost/spirit/home/support/unused.hpp>
 #include <boost/spirit/home/support/string_traits.hpp>
-#include <boost/proto/extends.hpp>
-#include <boost/proto/traits.hpp>
+
 #include <boost/range/begin.hpp>
 #include <boost/range/end.hpp>
 #include <boost/shared_ptr.hpp>
@@ -285,10 +284,6 @@ public:
             return name_;
         }
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4512) // assignment operator could not be generated.
-#endif
         struct adder
         {
             template <typename, typename = unused_type, typename = unused_type>
@@ -326,6 +321,9 @@ public:
             }
 
             symbols& sym;
+
+            // silence MSVC warning C4512: assignment operator could not be generated
+            BOOST_DELETED_FUNCTION(adder& operator= (adder const&))
         };
 
         struct remover
@@ -365,10 +363,10 @@ public:
             }
 
             symbols& sym;
+
+            // silence MSVC warning C4512: assignment operator could not be generated
+            BOOST_DELETED_FUNCTION(remover& operator= (remover const&))
         };
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
         adder add;
         remover remove;

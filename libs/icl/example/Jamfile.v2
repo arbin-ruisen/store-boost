@@ -79,6 +79,7 @@ exe static_interval
 exe boost_party
     :
         boost_party_/boost_party.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)
@@ -87,6 +88,7 @@ exe boost_party
 exe partys_height_average
     :
         partys_height_average_/partys_height_average.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)
@@ -95,6 +97,7 @@ exe partys_height_average
 exe partys_tallest_guests
     :
         partys_tallest_guests_/partys_tallest_guests.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)
@@ -103,6 +106,7 @@ exe partys_tallest_guests
 exe man_power
     :
         man_power_/man_power.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)
@@ -111,6 +115,7 @@ exe man_power
 exe month_and_week_grid
     :
         month_and_week_grid_/month_and_week_grid.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)
@@ -119,6 +124,7 @@ exe month_and_week_grid
 exe user_groups
     :
         user_groups_/user_groups.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)

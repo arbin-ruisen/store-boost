@@ -2,7 +2,6 @@
 // Unit Test
 
 // Copyright (c) 2015-2019 Barend Gehrels, Amsterdam, the Netherlands.
-// Copyright (c) 2022 Adam Wulkiewicz, Lodz, Poland.
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -20,7 +19,6 @@
 #include <boost/geometry/algorithms/area.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/num_points.hpp>
-#include <boost/geometry/io/wkt/read.hpp>
 
 
 // This unit test tests boost::geometry::buffer (overload with strategies)
@@ -76,8 +74,8 @@ void test_with_strategies(std::string const& caseid,
             << " detected: " << bg::num_points(result)
         );
 
-    auto const area = bg::area(result);
-    auto const difference = area - expected_area;
+    double const area = bg::area(result);
+    double const difference = area - expected_area;
 
     BOOST_CHECK_MESSAGE
         (
@@ -135,9 +133,6 @@ void test_all()
 
 int test_main(int, char* [])
 {
-    BoostGeometryWriteTestConfiguration();
-
-    test_all<true, bg::model::point<default_test_type, 2, bg::cs::cartesian> >();
-
+    test_all<true, bg::model::point<double, 2, bg::cs::cartesian> >();
     return 0;
 }

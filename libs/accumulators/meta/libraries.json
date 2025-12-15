@@ -10,6 +10,5 @@
     ],
     "maintainers": [
         "Eric Niebler <eric -at- boostpro.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

@@ -8,9 +8,8 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+#include <boost/move/detail/config_begin.hpp>
 #include <boost/move/utility_core.hpp>
-
 #include <boost/utility/enable_if.hpp>
 #include "../example/movable.hpp"
 #include "../example/copymovable.hpp"
@@ -24,36 +23,36 @@ class non_movable
 };
 
 template<class MaybeRvalue>
-void catch_test(BOOST_RV_REF(MaybeRvalue)
+void catch_test(BOOST_RV_REF(MaybeRvalue) x
                #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
                ,typename ::boost::enable_if< ::boost::has_move_emulation_enabled<MaybeRvalue> >::type* = 0
                #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
                )
-{}
+{  (void)x;}
 
 template<class MaybeRvalue>
-void catch_test(BOOST_COPY_ASSIGN_REF(MaybeRvalue)
+void catch_test(BOOST_COPY_ASSIGN_REF(MaybeRvalue) x
                #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
                ,typename ::boost::enable_if< ::boost::has_move_emulation_enabled<MaybeRvalue> >::type* = 0
                #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
                )
 
-{}
+{  (void)x;}
 
 template<class MaybeRvalue>
-void catch_test(MaybeRvalue &
+void catch_test(MaybeRvalue &x
                #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
                ,typename ::boost::enable_if< ::boost::has_move_emulation_enabled<MaybeRvalue> >::type* = 0
                #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
                )
-{}
+{  (void)x;}
 
                #ifdef BOOST_NO_CXX11_RVALUE_REFERENCES
 template<class MaybeRvalue>
-void catch_test(const MaybeRvalue&
+void catch_test(const MaybeRvalue& x
                ,typename ::boost::disable_if< ::boost::has_move_emulation_enabled<MaybeRvalue> >::type* = 0
                )
-{}
+{  (void)x;}
                #endif   //BOOST_NO_CXX11_RVALUE_REFERENCES
 
 movable create_movable()
@@ -114,3 +113,5 @@ int main()
    forward_test();
    return 0;
 }
+
+#include <boost/move/detail/config_end.hpp>

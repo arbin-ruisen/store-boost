@@ -15,12 +15,6 @@
 namespace boost {
 namespace beast {
 
-// compile test for other exec
-template class basic_stream<
-        net::ip::tcp,
-        net::io_context::executor_type,
-        unlimited_rate_policy> ;
-
 class tcp_stream_test
     : public beast::unit_test::suite
 {

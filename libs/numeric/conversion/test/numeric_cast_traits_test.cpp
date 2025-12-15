@@ -12,8 +12,7 @@
 #include <boost/mpl/for_each.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/cstdint.hpp>
-#include <boost/core/lightweight_test.hpp>
-#include <boost/static_assert.hpp>
+#include <boost/test/minimal.hpp>
 
 //! Define a simple custom number
 struct Double
@@ -315,11 +314,15 @@ namespace boost { namespace numeric {
 }}//namespace boost::numeric;
 
 #define BOOST_TEST_CATCH_CUSTOM_POSITIVE_OVERFLOW( CastCode ) \
-    BOOST_TEST_THROWS( CastCode, custom::positive_overflow )
+    try { CastCode; BOOST_CHECK( false ); }                   \
+    catch( custom::positive_overflow& ){}                     \
+    catch(...){ BOOST_CHECK( false ); }                       \
 /***/
 
 #define BOOST_TEST_CATCH_CUSTOM_NEGATIVE_OVERFLOW( CastCode ) \
-    BOOST_TEST_THROWS( CastCode, custom::negative_overflow )
+    try { CastCode; BOOST_CHECK( false ); }                   \
+    catch( custom::negative_overflow& ){}                     \
+    catch(...){ BOOST_CHECK( false ); }                       \
 /***/
 
 struct test_cast_traits
@@ -328,9 +331,9 @@ struct test_cast_traits
     void operator()(T) const
     {
         Double d = boost::numeric_cast<Double>( static_cast<T>(50) );
-        BOOST_TEST( d.v == 50. );
+        BOOST_CHECK( d.v == 50. );
         T v = boost::numeric_cast<T>( d );
-        BOOST_TEST( v == 50 );
+        BOOST_CHECK( v == 50 );
     }
 };
 
@@ -357,20 +360,20 @@ void test_numeric_cast_traits()
     //! Check overflow handler.
     Double d( 56.0 );
     BOOST_TEST_CATCH_CUSTOM_POSITIVE_OVERFLOW( d = boost::numeric_cast<Double>( 101 ) );
-    BOOST_TEST( d.v == 56. );
+    BOOST_CHECK( d.v == 56. );
     BOOST_TEST_CATCH_CUSTOM_NEGATIVE_OVERFLOW( d = boost::numeric_cast<Double>( -101 ) );
-    BOOST_TEST( d.v == 56.);
+    BOOST_CHECK( d.v == 56.);
 
     //! Check custom round policy.
     d = 5.9;
     int five = boost::numeric_cast<int>( d );
-    BOOST_TEST( five == 5 );
+    BOOST_CHECK( five == 5 );
 }
 
-int main()
+int test_main( int argc, char * argv[] )
 {
     test_numeric_cast_traits();
-    return boost::report_errors();
+    return 0;
 }
 
 #undef BOOST_TEST_CATCH_CUSTOM_POSITIVE_OVERFLOW

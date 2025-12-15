@@ -1,4 +1,4 @@
-// Copyright Antony Polukhin, 2013-2025.
+// Copyright Antony Polukhin, 2013-2019.
 
 // Distributed under the Boost Software License, Version 1.0.
 // (See the accompanying file LICENSE_1_0.txt
@@ -12,12 +12,13 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/variant.hpp>
+#include <cassert>
 
 struct to_long_double_functor: boost::static_visitor<long double> {
     template <class T>
     long double operator()(const T& v) const {
-        // Lexical cast has many optimizations including optimizations for situations that usually
-        // occur in generic programming, like std::string to std::string or arithmetic type to arithmetic type conversion.
+        // Lexical cast has many optimizations including optimizations for situations that usually 
+        // occur in generic programming, like std::string to std::string or arithmetic type to arithmetic type conversion. 
         return boost::lexical_cast<long double>(v);
     }
 };
@@ -32,11 +33,9 @@ int main() {
     boost::variant<char, int, std::string> v1('0'), v2("10.0001"), v3(1);
 
     const long double sum = to_long_double(v1) + to_long_double(v2) + to_long_double(v3);
-    if (11 < sum  && sum < 11.1) {
-        return 0;  // OK, as expected
-    };
-
-    return 1;      // FAIL
+    const int ret = (sum > 11 && sum < 11.1 ? 0 : 1);
+    assert(ret == 0);
+    return ret;
 }
 
 //] [/lexical_cast_variant_to_long_double]

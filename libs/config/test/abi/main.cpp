@@ -11,7 +11,7 @@
 #include <boost/config.hpp>
 #ifdef BOOST_MSVC
 #pragma pack(1)
-#elif defined(BOOST_BORLANDC)
+#elif defined(__BORLANDC__)
 #pragma option -Ve- -Vx- -a1 -b-
 #endif
 #include <stdio.h>

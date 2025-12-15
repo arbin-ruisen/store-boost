@@ -14,15 +14,6 @@
 
 TT_TEST_BEGIN(is_complete)
 
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void const>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void volatile>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void const volatile>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void*>::value, true);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void const*>::value, true);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void volatile*>::value, true);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<void const volatile*>::value, true);
-
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int const>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int volatile>::value, true);
@@ -40,11 +31,9 @@ BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int[2]>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int const[3]>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int volatile[2][3]>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int const volatile[4][5][6]>::value, true);
-
+#ifdef BOOST_TT_HAS_WORKING_IS_COMPLETE
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int[]>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int const[]>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int volatile[]>::value, false);
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<int const volatile[]>::value, false);
+#endif
 
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<enum_UDT>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<UDT>::value, true);
@@ -57,7 +46,6 @@ BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<test_abc1>::value, true);
 #ifdef BOOST_TT_HAS_WORKING_IS_COMPLETE
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<incomplete_type>::value, false);
 #endif
-BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<incomplete_type*>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<polymorphic_base>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<virtual_inherit6>::value, true);
 BOOST_CHECK_INTEGRAL_CONSTANT(::tt::is_complete<foo0_t>::value, true);

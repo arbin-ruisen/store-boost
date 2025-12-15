@@ -31,7 +31,6 @@
 # define BOOST_DYNAMIC_BITSET_NO_WCHAR_T_TESTS
 #endif
 
-#include <boost/serialization/vector.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>

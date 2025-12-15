@@ -7,7 +7,8 @@
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+#include <boost/container/detail/config_begin.hpp>
+#include <boost/container/detail/workaround.hpp>
 //[doc_extended_allocators
 #include <boost/container/vector.hpp>
 #include <boost/container/flat_set.hpp>
@@ -50,3 +51,4 @@ int main ()
    return 0;
 }
 //]
+#include <boost/container/detail/config_end.hpp>

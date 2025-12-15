@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 #define BOOST_CONTAINER_ADAPTIVE_NODE_POOL_CHECK_INVARIANTS
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/indexes/map_index.hpp>
 #include "named_allocation_test_template.hpp"
 
@@ -20,3 +21,5 @@ int main ()
 
    return 0;
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

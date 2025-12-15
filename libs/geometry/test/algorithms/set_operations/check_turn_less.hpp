@@ -1,7 +1,7 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2015-2024, Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// Copyright (c) 2015, 2019, Oracle and/or its affiliates.
+
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -11,16 +11,14 @@
 #ifndef BOOST_GEOMETRY_TEST_CHECK_TURN_LESS_HPP
 #define BOOST_GEOMETRY_TEST_CHECK_TURN_LESS_HPP
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/size.hpp>
+#include <boost/range.hpp>
 
 #include "test_set_ops_linear_linear.hpp"
 
 
 // check less functor for turns
 template <typename Turns, typename Less>
-inline void verify_less_for_turns(Turns const& turns, Less const& less)
+inline void verify_less_for_turns(Turns turns, Less const& less)
 {
     typedef typename boost::range_iterator<Turns const>::type iterator_type;
 
@@ -57,7 +55,6 @@ struct check_turn_less
         static bool const include_no_turn = false;
         static bool const include_degenerate = EnableDegenerateTurns;
         static bool const include_opposite = false;
-        static bool const include_start_turn = false;
 
         template
         <
@@ -76,10 +73,12 @@ struct check_turn_less
     static inline void apply(Geometry1 const& geometry1,
                              Geometry2 const& geometry2)
     {
-        typedef typename bg::strategies::relate::services::default_strategy
+        typedef typename bg::strategy::intersection::services::default_strategy
             <
-                Geometry1, Geometry2
+                typename bg::cs_tag<Geometry1>::type
             >::type strategy_type;
+
+        typedef bg::detail::no_rescale_policy robust_policy_type;
 
         typedef bg::detail::relate::turns::get_turns
             <
@@ -93,7 +92,7 @@ struct check_turn_less
 
         typedef typename get_turns_type::template turn_info_type
             <
-                strategy_type
+                strategy_type, robust_policy_type
             >::type turn_info;
 
         typedef std::vector<turn_info> turns_container;
@@ -104,7 +103,7 @@ struct check_turn_less
 
         get_turns_type::apply(turns, geometry1, geometry2,
                               interrupt_policy,
-                              strategy_type());
+                              strategy_type(), robust_policy_type());
 
 
         typedef bg::detail::turns::less_seg_fraction_other_op<> turn_less_type;

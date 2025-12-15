@@ -25,7 +25,6 @@ struct order_perf_type
    std::size_t val;
 
    order_perf_type()
-      : key(), val()
    {
       ++num_elements;
    }
@@ -87,13 +86,11 @@ struct order_move_type
    order_move_type(BOOST_RV_REF(order_move_type) other)
       : key(other.key), val(other.val)
    {
-      assert(this != &other);
       other.key = other.val = std::size_t(-1);
    }
 
    order_move_type & operator=(BOOST_RV_REF(order_move_type) other)
    {
-      assert(this != &other);
       key = other.key;
       val = other.val;
       other.key = other.val = std::size_t(-2);
@@ -134,34 +131,11 @@ inline bool is_order_type_ordered(T *elements, std::size_t element_count, bool s
 
 namespace boost {
 namespace movelib {
+namespace detail_adaptive {
 
-inline bool is_sorted(::order_perf_type *first, ::order_perf_type *last, ::order_type_less)
-{
-   if (first != last) {
-      const order_perf_type *next = first, *cur(first);
-      while (++next != last) {
-         if (!(cur->key < next->key || (cur->key == next->key && cur->val < next->val)))
-            return false;
-         cur = next;
-      }
-   }
-   return true;
-}
 
-inline bool is_sorted(::order_move_type* first, ::order_move_type* last, ::order_type_less)
-{
-   if (first != last) {
-      const order_move_type* next = first, * cur(first);
-      while (++next != last) {
-         if (!(cur->key < next->key || (cur->key == next->key && cur->val < next->val)))
-            return false;
-         cur = next;
-      }
-   }
-   return true;
-}
 
-}} //boost::movelib
+}}}
 
 template<class T>
 inline bool is_key(T *elements, std::size_t element_count)

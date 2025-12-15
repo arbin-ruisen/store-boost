@@ -16,8 +16,8 @@
 
 struct non_assignable
 {
-   BOOST_TT_PROC non_assignable();
-   BOOST_TT_PROC non_assignable& operator=(const non_assignable&) = delete;
+   non_assignable();
+   non_assignable& operator=(const non_assignable&) = delete;
 };
 
 #endif
@@ -26,8 +26,8 @@ struct non_assignable
 
 struct noexcept_assignable
 {
-   BOOST_TT_PROC noexcept_assignable();
-   BOOST_TT_PROC noexcept_assignable& operator=(const noexcept_assignable&)noexcept;
+   noexcept_assignable();
+   noexcept_assignable& operator=(const noexcept_assignable&)noexcept;
 };
 
 #endif

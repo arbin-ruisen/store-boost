@@ -16,13 +16,13 @@
 #include "example/common/server_certificate.hpp"
 
 #include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
-#include <boost/asio/dispatch.hpp>
-#include <boost/asio/ssl.hpp>
 #include <boost/asio/strand.hpp>
 #include <algorithm>
 #include <cstdlib>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -48,7 +48,8 @@ fail(beast::error_code ec, char const* what)
 // Echoes back all received WebSocket messages
 class session : public std::enable_shared_from_this<session>
 {
-    websocket::stream<ssl::stream<beast::tcp_stream>> ws_;
+    websocket::stream<
+        beast::ssl_stream<beast::tcp_stream>> ws_;
     beast::flat_buffer buffer_;
 
 public:
@@ -58,28 +59,14 @@ public:
     {
     }
 
-    // Get on the correct executor
-    void
-    run()
-    {
-        // We need to be executing within a strand to perform async operations
-        // on the I/O objects in this session. Although not strictly necessary
-        // for single-threaded contexts, this example code is written to be
-        // thread-safe by default.
-        net::dispatch(ws_.get_executor(),
-            beast::bind_front_handler(
-                &session::on_run,
-                shared_from_this()));
-    }
-
     // Start the asynchronous operation
     void
-    on_run()
+    run()
     {
         // Set the timeout.
         beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
 
-         // Perform the SSL handshake
+        // Perform the SSL handshake
         ws_.next_layer().async_handshake(
             ssl::stream_base::server,
             beast::bind_front_handler(
@@ -151,7 +138,7 @@ public:
             return;
 
         if(ec)
-            return fail(ec, "read");
+            fail(ec, "read");
 
         // Echo the message
         ws_.text(ws_.got_text());

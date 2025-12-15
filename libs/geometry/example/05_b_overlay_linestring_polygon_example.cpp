@@ -19,6 +19,9 @@
 #include <string>
 #include <vector>
 
+#include <boost/foreach.hpp>
+
+
 #include <boost/geometry/geometry.hpp>
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
@@ -36,7 +39,7 @@ int main(void)
 {
     namespace bg = boost::geometry;
 
-    using point_2d = bg::model::d2::point_xy<double>;
+    typedef bg::model::d2::point_xy<double> point_2d;
 
     bg::model::linestring<point_2d> ls;
     {
@@ -64,15 +67,15 @@ int main(void)
 #endif
 
     // Calculate intersection points (turn points)
-    using segment_ratio = bg::segment_ratio_type<point_2d>::type;
-    using turn_info = bg::detail::overlay::turn_info<point_2d, segment_ratio>;
+    typedef bg::segment_ratio_type<point_2d, bg::detail::no_rescale_policy>::type segment_ratio;
+    typedef bg::detail::overlay::turn_info<point_2d, segment_ratio> turn_info;
     std::vector<turn_info> turns;
     bg::detail::get_turns::no_interrupt_policy policy;
-    bg::strategies::relate::services::default_strategy<bg::model::linestring<point_2d>, bg::model::polygon<point_2d>>::type strategy;
-    bg::get_turns<false, false, bg::detail::overlay::assign_null_policy>(ls, p, strategy, turns, policy);
+    bg::detail::no_rescale_policy rescale_policy;
+    bg::get_turns<false, false, bg::detail::overlay::assign_null_policy>(ls, p, rescale_policy, turns, policy);
 
     std::cout << "Intersection of linestring/polygon" << std::endl;
-    for (turn_info const& turn : turns)
+    BOOST_FOREACH(turn_info const& turn, turns)
     {
         std::string action = "intersecting";
         if (turn.operations[0].operation

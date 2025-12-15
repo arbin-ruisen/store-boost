@@ -10,43 +10,41 @@
 #include <iostream>
 #include <exception>
 #include <boost/filesystem.hpp>
-
 using namespace boost::filesystem;
 
 int main(int argc, char* argv[])
 {
-    if (argc < 2)
-    {
-        std::cout << "Usage: tut6b path\n";
-        return 1;
-    }
+  if (argc < 2)
+  {
+    std::cout << "Usage: tut6b path\n";
+    return 1;
+  }
 
-    try
+  try
+  {
+    for (recursive_directory_iterator it (argv[1]);
+         it != recursive_directory_iterator();
+        )
     {
-        for (recursive_directory_iterator it(argv[1]);
-             it != recursive_directory_iterator();)
-        {
-            for (int i = 0; i <= it.depth(); ++i)
-                std::cout << "  ";
+      for (int i = 0; i <= it.level(); ++i)
+        std::cout << "  ";
 
-            std::cout << it->path() << '\n';
+      std::cout << it->path() << '\n';
 
-            try
-            {
-                ++it;
-            }
-            catch (filesystem_error& ex)
-            {
-                std::cout << "************* filesystem_error *****************\n";
-                std::cout << ex.what() << '\n';
-            }
-        }
-    }
-    catch (std::exception& ex)
-    {
-        std::cout << "************* exception *****************\n";
+      try { ++it; }
+      catch (const filesystem_error& ex)
+      {
+        std::cout << "************* filesystem_error *****************\n";
         std::cout << ex.what() << '\n';
+      }
     }
+  }
+  
+  catch (const std::exception& ex)
+  {
+    std::cout << "************* exception *****************\n";
+    std::cout << ex.what() << '\n';
+  }
 
-    return 0;
-}
+  return 0;
+}  

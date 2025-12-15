@@ -8,10 +8,19 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 
+#include <boost/config.hpp>
+
+#if defined( BOOST_NO_CXX11_RVALUE_REFERENCES ) || defined( BOOST_NO_CXX11_VARIADIC_TEMPLATES )
+
+int main()
+{
+}
+
+#else
+
 #include <boost/smart_ptr/local_shared_ptr.hpp>
 #include <boost/smart_ptr/make_local_shared.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/config.hpp>
 
 struct deleter
 {
@@ -61,3 +70,5 @@ int main()
 struct deleter2
 {
 };
+
+#endif

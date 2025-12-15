@@ -9,12 +9,9 @@ project detail/test/container_fwd
   : requirements
         <warnings>all
         <toolset>intel:<warnings>on
-        <toolset>gcc:<warnings>pedantic
-        <toolset>gcc:<cxxflags>"-Wstrict-aliasing -fstrict-aliasing -Wsign-promo -Wunused-parameter -Wconversion"
-        <toolset>darwin:<warnings>pedantic
-        <toolset>darwin:<cxxflags>"-Wstrict-aliasing -fstrict-aliasing -Wsign-promo -Wunused-parameter -Wconversion"
-        <toolset>clang:<warnings>pedantic
-        <toolset>clang:<cxxflags>"-Wmismatched-tags"
+        <toolset>gcc:<cxxflags>"-pedantic -Wstrict-aliasing -fstrict-aliasing -Wextra -Wsign-promo -Wunused-parameter -Wconversion"
+        <toolset>darwin:<cxxflags>"-pedantic -Wstrict-aliasing -fstrict-aliasing -Wextra -Wsign-promo -Wunused-parameter -Wconversion"
+        <toolset>clang:<cxxflags>"-pedantic -Wextra -Wmismatched-tags"
         <warnings-as-errors>on
   ;
 

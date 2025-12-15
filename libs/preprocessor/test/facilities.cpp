@@ -9,4 +9,4 @@
 #
 # /* See http://www.boost.org for most recent version. */
 #
-# include "facilities.cxx"
+# include <libs/preprocessor/test/facilities.cxx>

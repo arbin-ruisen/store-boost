@@ -10,11 +10,10 @@
 #include <boost/detail/lightweight_test.hpp>
 
 #if ! defined BOOST_THREAD_TEST_TIME_MS
-#ifdef __linux__
-#define BOOST_THREAD_TEST_TIME_MS 75
+#ifdef BOOST_THREAD_PLATFORM_WIN32
+#define BOOST_THREAD_TEST_TIME_MS 250
 #else
-// Windows, Cygwin, macOS all need this
-#define BOOST_THREAD_TEST_TIME_MS 400
+#define BOOST_THREAD_TEST_TIME_MS 75
 #endif
 #endif
 

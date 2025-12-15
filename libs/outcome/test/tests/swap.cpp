@@ -1,5 +1,5 @@
 /* Unit testing for outcomes
-(C) 2013-2025 Niall Douglas <http://www.nedproductions.biz/> (5 commits)
+(C) 2013-2019 Niall Douglas <http://www.nedproductions.biz/> (5 commits)
 
 
 Boost Software License - Version 1.0 - August 17th, 2003
@@ -27,64 +27,9 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 */
 
-#include <boost/outcome.hpp>
+#include <boost/outcome/outcome.hpp>
 #include <boost/test/unit_test.hpp>
 #include <boost/test/unit_test_monitor.hpp>
-
-/* Should be this:
-
-78 move constructor count = 2
-65 move assignment count = 3
-78 move assignment count = 1
-65 move constructor count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-
-78 move constructor count = 1
-65 move assignment count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-78 move assignment count = 0
-
-78 move constructor count = 2
-65 move assignment count = 3
-78 move assignment count = 1
-65 move constructor count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-
-78 move constructor count = 1
-65 move assignment count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-78 move assignment count = 0
-
-78 move constructor count = 2
-65 move assignment count = 3
-78 move assignment count = 1
-65 move constructor count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-
-78 move constructor count = 1
-65 move assignment count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-78 move assignment count = 0
-
-78 move constructor count = 2
-65 move assignment count = 3
-78 move assignment count = 1
-65 move constructor count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-
-78 move constructor count = 1
-65 move assignment count = 2
-78 move assignment count = 0
-65 move assignment count = 1
-78 move assignment count = 0
-*/
 
 #ifndef BOOST_NO_EXCEPTIONS
 #ifdef _MSC_VER
@@ -114,10 +59,9 @@ template <bool mc, bool ma> struct Throwy
   {
     if(mc)
     {
-      std::cout << "   " << id << " move constructor count = " << count << std::endl;
+      std::cout << id << " move constructor count = " << count << std::endl;
       if(!count)
       {
-        std::cout << "      " << id << " move constructor throws!" << std::endl;
         throw std::bad_alloc();
       }
     }
@@ -130,10 +74,9 @@ template <bool mc, bool ma> struct Throwy
     count = o.count - o.inc;
     if(ma)
     {
-      std::cout << "   " << o.id << " move assignment count = " << count << std::endl;
+      std::cout << o.id << " move assignment count = " << count << std::endl;
       if(!count)
       {
-        std::cout << "      " << o.id << " move assignment throws!" << std::endl;
         throw std::bad_alloc();
       }
     }
@@ -225,7 +168,6 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
 
     static_assert(!detail::is_nothrow_swappable<throwy_t>::value, "is_nothrow_swappable is not correct!");
 
-    std::cout << "Result value first swap succeeds, second swap second move assignment throws:" << std::endl;
     {
       throwy a(3, 78), b(4, 65);
       a.swap(b);
@@ -245,7 +187,7 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
       BOOST_CHECK(!a.has_lost_consistency());
       BOOST_CHECK(!b.has_lost_consistency());
     }
-    std::cout << "\nResult value second move assignment throws, on recover second move assignment throws:" << std::endl;
+    std::cout << std::endl;
     {
       throwy a(2, 78), b(3, 65);  // fails on second assignment, cannot restore
       try
@@ -259,8 +201,8 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
         BOOST_CHECK(b.has_lost_consistency());
       }
     }
+    std::cout << std::endl;
   }
-  std::cout << "\nResult error first swap succeeds, second swap first move assignment throws:" << std::endl;
   {  // Does swap implement the strong guarantee?
     using throwy_t = Throwy<true, true>;
     using throwy = resulty2<true, true>;
@@ -290,7 +232,7 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
       BOOST_CHECK(!a.has_lost_consistency());
       BOOST_CHECK(!b.has_lost_consistency());
     }
-    std::cout << "\nResult error second move assignment throws, on recover second move assignment throws:" << std::endl;
+    std::cout << std::endl;
     {
       throwy a(2, 78), b(3, 65);  // fails on second assignment, cannot restore
       try
@@ -304,6 +246,7 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
         BOOST_CHECK(b.has_lost_consistency());
       }
     }
+    std::cout << std::endl;
   }
 
   {  // Is noexcept propagated?
@@ -337,7 +280,6 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
     static_assert(noexcept(a.swap(b)), "type has a throwing swap!");
   }
 
-  std::cout << "\n\nOutcome value first swap succeeds, second swap first move assignment throws:" << std::endl;
   {  // Does swap implement the strong guarantee?
     using throwy_t = Throwy<true, true>;
     using throwy = outcomey1<true, true>;
@@ -367,7 +309,7 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
       BOOST_CHECK(!a.has_lost_consistency());
       BOOST_CHECK(!b.has_lost_consistency());
     }
-    std::cout << "\nOutcome value second move assignment throws, on recover second move assignment throws:" << std::endl;
+    std::cout << std::endl;
     {
       throwy a(2, 78), b(3, 65);  // fails on second assignment, cannot restore
       try
@@ -381,8 +323,8 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
         BOOST_CHECK(b.has_lost_consistency());
       }
     }
+    std::cout << std::endl;
   }
-  std::cout << "\nOutcome error first swap succeeds, second swap first move assignment throws:" << std::endl;
   {  // Does swap implement the strong guarantee?
     using throwy_t = Throwy<true, true>;
     using throwy = outcomey2<true, true>;
@@ -412,7 +354,7 @@ BOOST_OUTCOME_AUTO_TEST_CASE(works_outcome_swap, "Tests that the outcome swaps a
       BOOST_CHECK(!a.has_lost_consistency());
       BOOST_CHECK(!b.has_lost_consistency());
     }
-    std::cout << "\nOutcome error second move assignment throws, on recover second move assignment throws:" << std::endl;
+    std::cout << std::endl;
     {
       throwy a(2, 78), b(3, 65);  // fails on second assignment, cannot restore
       try

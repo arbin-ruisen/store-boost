@@ -10,6 +10,5 @@
     ],
     "maintainers": [
 	"Stefan Seefeld <stefan -at- seefeld.name>"
-    ],
-    "cxxstd": "03"
+    ]
 }

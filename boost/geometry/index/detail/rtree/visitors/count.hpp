@@ -4,9 +4,8 @@
 //
 // Copyright (c) 2011-2014 Adam Wulkiewicz, Lodz, Poland.
 //
-// This file was modified by Oracle on 2019-2023.
-// Modifications copyright (c) 2019-2023 Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// This file was modified by Oracle on 2019.
+// Modifications copyright (c) 2019 Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 //
 // Use, modification and distribution is subject to the Boost Software License,
@@ -15,12 +14,6 @@
 
 #ifndef BOOST_GEOMETRY_INDEX_DETAIL_RTREE_VISITORS_COUNT_HPP
 #define BOOST_GEOMETRY_INDEX_DETAIL_RTREE_VISITORS_COUNT_HPP
-
-#include <boost/geometry/index/equal_to.hpp>
-#include <boost/geometry/index/detail/algorithms/bounds.hpp>
-#include <boost/geometry/index/detail/rtree/node/node_elements.hpp>
-#include <boost/geometry/index/detail/rtree/node/variant_visitor.hpp>
-#include <boost/geometry/index/parameters.hpp>
 
 namespace boost { namespace geometry { namespace index {
 
@@ -56,21 +49,19 @@ struct count_helper<Value, Value>
     }
 };
 
-template <typename ValueOrIndexable, typename MembersHolder>
+template <typename ValueOrIndexable, typename Value, typename Options, typename Translator, typename Box, typename Allocators>
 struct count
-    : public MembersHolder::visitor_const
+    : public rtree::visitor<Value, typename Options::parameters_type, Box, Allocators, typename Options::node_tag, true>::type
 {
-    typedef typename MembersHolder::value_type value_type;
-    typedef typename MembersHolder::parameters_type parameters_type;
-    typedef typename MembersHolder::translator_type translator_type;
+    typedef typename Options::parameters_type parameters_type;
 
-    typedef typename MembersHolder::node node;
-    typedef typename MembersHolder::internal_node internal_node;
-    typedef typename MembersHolder::leaf leaf;
+    typedef typename rtree::node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type node;
+    typedef typename rtree::internal_node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
+    typedef typename rtree::leaf<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
 
-    typedef count_helper<ValueOrIndexable, value_type> count_help;
+    typedef count_helper<ValueOrIndexable, Value> count_help;
 
-    inline count(ValueOrIndexable const& vori, parameters_type const& parameters, translator_type const& t)
+    inline count(ValueOrIndexable const& vori, parameters_type const& parameters, Translator const& t)
         : value_or_indexable(vori), m_parameters(parameters), tr(t), found_count(0)
     {}
 
@@ -112,8 +103,8 @@ struct count
 
     ValueOrIndexable const& value_or_indexable;
     parameters_type const& m_parameters;
-    translator_type const& tr;
-    typename MembersHolder::size_type found_count;
+    Translator const& tr;
+    typename Allocators::size_type found_count;
 };
 
 }}} // namespace detail::rtree::visitors

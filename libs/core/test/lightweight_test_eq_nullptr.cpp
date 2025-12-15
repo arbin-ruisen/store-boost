@@ -8,12 +8,8 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#if defined(_MSC_VER)
-# pragma warning( disable: 4100 ) // nullptr_t parameter unrereferenced
-#endif
-
-#include <boost/core/lightweight_test.hpp>
 #include <boost/config.hpp>
+#include <boost/core/lightweight_test.hpp>
 
 int main()
 {

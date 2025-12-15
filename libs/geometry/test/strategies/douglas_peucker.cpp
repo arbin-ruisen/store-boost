@@ -1,9 +1,9 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 // Unit Test
 
-// Copyright (c) 2015-2021, Oracle and/or its affiliates.
+// Copyright (c) 2015, Oracle and/or its affiliates.
+
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
@@ -23,19 +23,10 @@
 #include <sstream>
 #include <string>
 
-#include <boost/core/ignore_unused.hpp>
 #include <boost/test/included/unit_test.hpp>
-#include <boost/tuple/tuple.hpp>
-
-#include <boost/geometry/algorithms/comparable_distance.hpp>
-#include <boost/geometry/algorithms/equals.hpp>
-#include <boost/geometry/algorithms/simplify.hpp>
 
 #include <boost/geometry/core/point_type.hpp>
 #include <boost/geometry/core/tags.hpp>
-
-#include <boost/geometry/io/wkt/wkt.hpp>
-#include <boost/geometry/io/dsv/write.hpp>
 
 #include <boost/geometry/strategies/distance.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
@@ -44,8 +35,20 @@
 #include <boost/geometry/geometries/adapted/boost_tuple.hpp>
 #include <boost/geometry/geometries/register/multi_point.hpp>
 
+#include <boost/geometry/algorithms/comparable_distance.hpp>
+#include <boost/geometry/algorithms/equals.hpp>
+
+#include <boost/geometry/io/wkt/wkt.hpp>
+#include <boost/geometry/io/dsv/write.hpp>
+
+#include <boost/assign/list_of.hpp>
+#include <boost/core/ignore_unused.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/tuple/tuple.hpp>
+
 
 namespace bg = ::boost::geometry;
+namespace ba = ::boost::assign;
 namespace services = bg::strategy::distance::services;
 
 typedef boost::tuple<double, double> tuple_point_type;
@@ -55,28 +58,46 @@ BOOST_GEOMETRY_REGISTER_BOOST_TUPLE_CS(cs::cartesian)
 BOOST_GEOMETRY_REGISTER_MULTI_POINT(tuple_multi_point_type)
 BOOST_GEOMETRY_REGISTER_MULTI_POINT_TEMPLATED(std::vector)
 
+typedef bg::strategy::distance::projected_point<> distance_strategy_type;
+typedef bg::strategy::distance::projected_point
+    <
+        void, bg::strategy::distance::comparable::pythagoras<>
+    > comparable_distance_strategy_type;
+
+
 template <typename CoordinateType>
-struct simplify_default_strategy
+struct default_simplify_strategy
 {
     typedef bg::model::point<CoordinateType, 2, bg::cs::cartesian> point_type;
-    typedef typename bg::strategies::simplify::services::default_strategy
+    typedef typename bg::strategy::distance::services::default_strategy
         <
-            point_type
-        >::type type;
+            bg::point_tag, bg::segment_tag, point_type
+        >::type default_distance_strategy_type;
+
+    typedef bg::strategy::simplify::douglas_peucker
+        <
+            point_type, default_distance_strategy_type
+        > type;
+};
+
+
+template <typename CoordinateType>
+struct simplify_regular_distance_strategy
+{
+    typedef bg::model::point<CoordinateType, 2, bg::cs::cartesian> point_type;
+    typedef bg::strategy::simplify::douglas_peucker
+        <
+            point_type, distance_strategy_type
+        > type;
 };
 
 template <typename CoordinateType>
-struct simplify_regular_strategy
+struct simplify_comparable_distance_strategy
 {
-    typedef bg::strategies::simplify::cartesian<> type;
-};
-
-template <typename CoordinateType>
-struct simplify_comparable_strategy
-{
-    typedef bg::strategies::distance::detail::comparable
+    typedef bg::model::point<CoordinateType, 2, bg::cs::cartesian> point_type;
+    typedef bg::strategy::simplify::douglas_peucker
         <
-            bg::strategies::simplify::cartesian<>
+            point_type, comparable_distance_strategy_type
         > type;
 };
 
@@ -86,7 +107,7 @@ template <typename Geometry>
 inline Geometry from_wkt(std::string const& wkt)
 {
     Geometry geometry;
-    bg::read_wkt(wkt, geometry);
+    boost::geometry::read_wkt(wkt, geometry);
     return geometry;
 }
 
@@ -146,15 +167,14 @@ struct equals
 template <typename Geometry>
 struct test_one_case
 {
-    using point_type = typename bg::point_type<Geometry>::type;
-
-    template <typename Strategy>
+    template <typename Strategy, typename Range>
     static inline void apply(std::string const& case_id,
                              std::string const& wkt,
                              double max_distance,
                              Strategy const& strategy,
-                             std::initializer_list<point_type> const& expected_result)
+                             Range const& expected_result)
     {
+        typedef typename bg::point_type<Geometry>::type point_type;
         std::vector<point_type> result;
 
         Geometry geometry = from_wkt<Geometry>(wkt);
@@ -168,8 +188,9 @@ struct test_one_case
         std::cout << wkt << std::endl;
 #endif
 
-        bg::detail::simplify::douglas_peucker::apply(
-            geometry, std::back_inserter(result), max_distance, strategy);
+        strategy.apply(geometry, std::back_inserter(result), max_distance);
+
+        boost::ignore_unused(strategy);
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
         print_point_range(std::cout, boost::begin(result), boost::end(result),
@@ -223,7 +244,7 @@ inline void test_with_strategy(std::string label)
                           "LINESTRING(12 -3, 4 8,-6 -13,-9 4,0 -15,-12 5)",
                           10,
                           strategy,
-                          {{12,-3},{4,8},{-6,-13},{-12,5}}
+                          ba::tuple_list_of(12,-3)(4,8)(-6,-13)(-12,5)
                           );
         }
         else
@@ -232,7 +253,7 @@ inline void test_with_strategy(std::string label)
                           "LINESTRING(12 -3, 4 8,-6 -13,-9 4,0 -15,-12 5)",
                           10,
                           strategy,
-                          {{12,-3},{4,8},{-6,-13},{-9,4},{0,-15},{-12,5}}
+                          ba::tuple_list_of(12,-3)(4,8)(-6,-13)(-9,4)(0,-15)(-12,5)
                           );
         }
     }
@@ -241,21 +262,21 @@ inline void test_with_strategy(std::string label)
                   "LINESTRING(-6 -13,-9 4,0 -15,-12 5)",
                   10,
                   strategy,
-                  {{-6,-13},{-12,5}}
+                  ba::tuple_list_of(-6,-13)(-12,5)
                   );
 
     tester::apply("l03" + label,
                   "LINESTRING(12 -3, 4 8,-6 -13,-9 4,0 -14,-12 5)",
                   10,
                   strategy,
-                  {{12,-3},{4,8},{-6,-13},{-12,5}}
+                  ba::tuple_list_of(12,-3)(4,8)(-6,-13)(-12,5)
                   );
 
     tester::apply("l04" + label,
                   "LINESTRING(12 -3, 4 8,-6 -13,-9 4,0 -14,-12 5)",
                   14,
                   strategy,
-                  {{12,-3},{-6,-13},{-12,5}}
+                  ba::tuple_list_of(12,-3)(-6,-13)(-12,5)
                   );
 
     {
@@ -302,13 +323,13 @@ inline void test_with_strategy(std::string label)
                           wkt,
                           1,
                           strategy,
-                          {{0,0},{5,0},{0,-1},{5,-1},{0,-2},{5,-2},{0,-3},{5,-4},{0,0}}
+                          ba::tuple_list_of(0,0)(5,0)(0,-1)(5,-1)(0,-2)(5,-2)(0,-3)(5,-4)(0,0)
                           );
             tester::apply("l05c1a" + label,
                           wkt,
                           2,
                           strategy,
-                          {{0,0},{5,0},{0,-1},{5,-1},{0,-2},{5,-4},{0,0}}
+                          ba::tuple_list_of(0,0)(5,0)(0,-1)(5,-1)(0,-2)(5,-4)(0,0)
                           );
         }
         else
@@ -317,13 +338,13 @@ inline void test_with_strategy(std::string label)
                           wkt,
                           1,
                           strategy,
-                          {{0,0},{5,0},{0,-1},{5,-1},{0,-2},{5,-2},{0,-4},{5,-4},{0,0}}
+                          ba::tuple_list_of(0,0)(5,0)(0,-1)(5,-1)(0,-2)(5,-2)(0,-4)(5,-4)(0,0)
                           );
             tester::apply("l05c2a" + label,
                           wkt,
                           2,
                           strategy,
-                          {{0,0},{5,0},{0,-1},{5,-1},{0,-4},{5,-4},{0,0}}
+                          ba::tuple_list_of(0,0)(5,0)(0,-1)(5,-1)(0,-4)(5,-4)(0,0)
                           );
         }
     }
@@ -340,13 +361,13 @@ inline void test_with_strategy(std::string label)
 
 BOOST_AUTO_TEST_CASE( test_default_strategy )
 {
-    test_with_strategy<int, simplify_default_strategy<int>::type>("i");
-    test_with_strategy<float, simplify_default_strategy<float>::type>("f");
-    test_with_strategy<double, simplify_default_strategy<double>::type>("d");
+    test_with_strategy<int, default_simplify_strategy<int>::type>("i");
+    test_with_strategy<float, default_simplify_strategy<float>::type>("f");
+    test_with_strategy<double, default_simplify_strategy<double>::type>("d");
     test_with_strategy
         <
             long double,
-            simplify_default_strategy<long double>::type
+            default_simplify_strategy<long double>::type
         >("ld");
 }
 
@@ -355,24 +376,24 @@ BOOST_AUTO_TEST_CASE( test_with_regular_distance_strategy )
     test_with_strategy
         <
             int,
-            simplify_regular_strategy<int>::type
+            simplify_regular_distance_strategy<int>::type
         >("i");
 
     test_with_strategy
         <
             float,
-            simplify_regular_strategy<float>::type
+            simplify_regular_distance_strategy<float>::type
         >("f");
 
     test_with_strategy
         <
             double,
-            simplify_regular_strategy<double>::type
+            simplify_regular_distance_strategy<double>::type
         >("d");
     test_with_strategy
         <
             long double,
-            simplify_regular_strategy<long double>::type
+            simplify_regular_distance_strategy<long double>::type
         >("ld");
 }
 
@@ -381,21 +402,21 @@ BOOST_AUTO_TEST_CASE( test_with_comparable_distance_strategy )
     test_with_strategy
         <
             int,
-            simplify_comparable_strategy<int>::type
+            simplify_comparable_distance_strategy<int>::type
         >("i");
     test_with_strategy
         <
             float,
-            simplify_comparable_strategy<float>::type
+            simplify_comparable_distance_strategy<float>::type
         >("f");
     test_with_strategy
         <
             double,
-            simplify_comparable_strategy<double>::type
+            simplify_comparable_distance_strategy<double>::type
         >("d");
     test_with_strategy
         <
             long double,
-            simplify_comparable_strategy<long double>::type
+            simplify_comparable_distance_strategy<long double>::type
         >("ld");
 }

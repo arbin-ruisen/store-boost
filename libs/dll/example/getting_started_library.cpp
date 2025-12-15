@@ -1,5 +1,5 @@
 // Copyright 2014 Renato Tegon Forti, Antony Polukhin.
-// Copyright Antony Polukhin, 2015-2025.
+// Copyright 2015-2019 Antony Polukhin.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -11,14 +11,20 @@
 #include <boost/dll.hpp>
 #include <string>
 
+#ifdef BOOST_NO_CXX11_NOEXCEPT
+#define noexcept
+#endif
+
 #define API extern "C" BOOST_SYMBOL_EXPORT
 
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
 //[getting_started_exports_cpp11_function
 namespace some_namespace {
     API int i_am_a_cpp11_function(std::string&& param) noexcept;
-//          ^--------------------  function name to use in dll::import_symbol<>
+//          ^--------------------  function name to use in dll::import<>
 }
 //]
+#endif
 
 
 //[getting_started_exports_cpp_variable
@@ -55,8 +61,10 @@ namespace some_namespace {
         return param + " Hello from lib!";
     }
 
+#ifndef BOOST_NO_CXX11_RVALUE_REFERENCES
     int i_am_a_cpp11_function(std::string&& param) noexcept {
         return static_cast<int>(param.size());
     }
+#endif
 }
 

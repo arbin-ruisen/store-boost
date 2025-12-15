@@ -16,9 +16,9 @@
        typedef RealType  value_type;
        typedef Policy    policy_type;
 
-       BOOST_MATH_GPU_ENABLED bernoulli_distribution(RealType p); // Constructor.
+       bernoulli_distribution(RealType p); // Constructor.
        // Accessor function.
-       BOOST_MATH_GPU_ENABLED RealType success_fraction() const
+       RealType success_fraction() const
        // Probability of success (as a fraction).
     };
    }} // namespaces
@@ -34,10 +34,9 @@ sequences of independent Bernoulli trials can be based.
 The Bernoulli is the binomial distribution (k = 1, p) with only one trial.
 
 [@http://en.wikipedia.org/wiki/Probability_density_function probability density function pdf]
-[expression f(0) = 1 - p, f(1) = p]
-
+f(0) = 1 - p, f(1) = p.
 [@http://en.wikipedia.org/wiki/Cumulative_Distribution_Function Cumulative distribution function]
-[expression D(k) = if (k == 0) 1 - p else 1]
+D(k) = if (k == 0) 1 - p else 1.
 
 The following graph illustrates how the
 [@http://en.wikipedia.org/wiki/Probability_density_function probability density function pdf]
@@ -51,12 +50,12 @@ and the [@http://en.wikipedia.org/wiki/Cumulative_Distribution_Function Cumulati
 
 [h4 Member Functions]
 
-   BOOST_MATH_GPU_ENABLED bernoulli_distribution(RealType p);
+   bernoulli_distribution(RealType p);
 
 Constructs a [@http://en.wikipedia.org/wiki/bernoulli_distribution
 bernoulli distribution] with success_fraction /p/.
 
-   BOOST_MATH_GPU_ENABLED RealType success_fraction() const
+   RealType success_fraction() const
 
 Returns the /success_fraction/ parameter of this distribution.
 
@@ -64,8 +63,6 @@ Returns the /success_fraction/ parameter of this distribution.
 
 All the [link math_toolkit.dist_ref.nmp usual non-member accessor functions]
 that are generic to all distributions are supported: __usual_accessors.
-For this distribution all non-member accessor functions are marked with `BOOST_MATH_GPU_ENABLED` and can
-be run on both host and device.
 
 The domain of the random variable is 0 and 1,
 and the useful supported range is only 0 or 1.
@@ -107,7 +104,7 @@ the binomial distribution with a single trial should be used, for example:
 ]
 
 [h4 References]
-* [@http://en.wikipedia.org/wiki/Bernoulli_distribution Wikipedia Bernoulli distribution]
+* [@http://en.wikipedia.org/wiki/Bernoulli_distribution Wikpedia Bernoulli distribution]
 * [@http://mathworld.wolfram.com/BernoulliDistribution.html Weisstein, Eric W. "Bernoulli Distribution." From MathWorld--A Wolfram Web Resource.]
 
 [endsect] [/section:bernoulli_dist bernoulli]

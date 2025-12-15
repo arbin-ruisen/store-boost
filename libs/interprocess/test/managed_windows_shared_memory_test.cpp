@@ -8,12 +8,13 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/detail/workaround.hpp>
 
 #ifdef BOOST_INTERPROCESS_WINDOWS
 
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/container/vector.hpp>
+#include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_windows_shared_memory.hpp>
 #include <cstdio>
 #include <string>
@@ -30,52 +31,29 @@ int main ()
    typedef allocator<int, managed_windows_shared_memory::segment_manager>
       allocator_int_t;
    //A vector that uses that allocator
-   typedef boost::container::vector<int, allocator_int_t> MyVect;
+   typedef boost::interprocess::vector<int, allocator_int_t> MyVect;
 
    {
       const int max              = 100;
-      void *array[std::size_t(max)];
+      void *array[max];
       //Named allocate capable shared memory allocator
       managed_windows_shared_memory w_shm(create_only, MemName, MemSize);
 
-      std::size_t i;
+      int i;
       //Let's allocate some memory
       for(i = 0; i < max; ++i){
-         array[std::ptrdiff_t(i)] = w_shm.allocate(i+1u);
+         array[i] = w_shm.allocate(i+1);
       }
 
       //Deallocate allocated memory
       for(i = 0; i < max; ++i){
-         w_shm.deallocate(array[std::ptrdiff_t(i)]);
+         w_shm.deallocate(array[i]);
       }
    }
 
    {
       //Named allocate capable shared memory managed memory class
       managed_windows_shared_memory w_shm(create_only, MemName, MemSize);
-
-      //Construct the STL-like allocator with the segment manager
-      const allocator_int_t myallocator (w_shm.get_segment_manager());
-
-      //Named allocate capable shared memory managed memory class
-      managed_windows_shared_memory w_tmp(open_only, MemName);
-   }
-   {
-      bool throws_ok = false;
-      //Check memory is gone
-      BOOST_INTERPROCESS_TRY{
-         managed_windows_shared_memory w_tmp(open_only, MemName);
-      }
-      BOOST_INTERPROCESS_CATCH(interprocess_exception &e) {
-         throws_ok = e.get_error_code() == not_found_error;
-      }
-      BOOST_INTERPROCESS_CATCH_END
-      if (!throws_ok)
-         return 1;
-   }
-   {
-      //Named allocate capable shared memory managed memory class
-      managed_windows_shared_memory w_shm(open_or_create, MemName, MemSize);
 
       //Construct the STL-like allocator with the segment manager
       const allocator_int_t myallocator (w_shm.get_segment_manager());
@@ -98,18 +76,6 @@ int main ()
       {
          //Map preexisting segment again in memory
          managed_windows_shared_memory w_shm_new(open_only, MemName);
-
-         //Check vector is still there
-         w_shm_vect = w_shm_new.find<MyVect>("MyVector").first;
-         if(!w_shm_vect)
-            return -1;
-
-         if(w_shm_new.get_size() != w_shm.get_size())
-            return 1;
-      }
-      {
-         //Map preexisting segment again in memory
-         managed_windows_shared_memory w_shm_new(open_or_create, MemName, MemSize);
 
          //Check vector is still there
          w_shm_vect = w_shm_new.find<MyVect>("MyVector").first;
@@ -149,7 +115,7 @@ int main ()
             }
          }
          {
-            //Map preexisting shmem again in read-only
+            //Map preexisting shmem again in copy-on-write
             managed_windows_shared_memory shmem(open_read_only, MemName);
 
             //Check vector is still there
@@ -182,3 +148,5 @@ int main()
 }
 
 #endif
+
+#include <boost/interprocess/detail/config_end.hpp>

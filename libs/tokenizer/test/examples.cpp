@@ -15,9 +15,9 @@
 #include <boost/tokenizer.hpp>
 #include <boost/array.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
-int main()
+int test_main( int /*argc*/, char* /*argv*/[] )
 {
   using namespace boost;
 
@@ -28,7 +28,7 @@ int main()
     typedef tokenizer<char_separator<char> > Tok;
     char_separator<char> sep("-;|");
     Tok t(test_string, sep);
-    BOOST_TEST(std::equal(t.begin(),t.end(),answer));
+    BOOST_REQUIRE(std::equal(t.begin(),t.end(),answer));
   }
   {
     const std::string test_string = ";;Hello|world||-foo--bar;yow;baz|";
@@ -37,14 +37,14 @@ int main()
     typedef tokenizer<char_separator<char> > Tok;
     char_separator<char> sep("-;", "|", boost::keep_empty_tokens);
     Tok t(test_string, sep);
-    BOOST_TEST(std::equal(t.begin(), t.end(), answer));
+    BOOST_REQUIRE(std::equal(t.begin(), t.end(), answer));
   }
   {
     const std::string test_string = "This,,is, a.test..";
     std::string answer[] = {"This","is","a","test"};
     typedef tokenizer<> Tok;
     Tok t(test_string);
-    BOOST_TEST(std::equal(t.begin(),t.end(),answer));
+    BOOST_REQUIRE(std::equal(t.begin(),t.end(),answer));
   }
 
   {
@@ -52,7 +52,7 @@ int main()
     std::string answer[] = {"Field 1","embedded,comma","quote \""," escape \\"};
     typedef tokenizer<escaped_list_separator<char> > Tok;
     Tok t(test_string);
-    BOOST_TEST(std::equal(t.begin(),t.end(),answer));
+    BOOST_REQUIRE(std::equal(t.begin(),t.end(),answer));
   }
 
   {
@@ -61,7 +61,7 @@ int main()
     typedef tokenizer<escaped_list_separator<char> > Tok;
     escaped_list_separator<char> sep("\\^",",;","\"\'");
     Tok t(test_string,sep);
-    BOOST_TEST(std::equal(t.begin(),t.end(),answer));
+    BOOST_REQUIRE(std::equal(t.begin(),t.end(),answer));
   }
 
   {
@@ -71,7 +71,7 @@ int main()
     boost::array<int,3> offsets = {{2,2,4}};
     offset_separator func(offsets.begin(),offsets.end());
     Tok t(test_string,func);
-    BOOST_TEST(std::equal(t.begin(),t.end(),answer));
+    BOOST_REQUIRE(std::equal(t.begin(),t.end(),answer));
   }
 
   // Use token_iterator_generator
@@ -82,7 +82,7 @@ int main()
     Iter begin = make_token_iterator<std::string>(test_string.begin(),
       test_string.end(),char_delimiters_separator<char>());
     Iter end;
-    BOOST_TEST(std::equal(begin,end,answer));
+    BOOST_REQUIRE(std::equal(begin,end,answer));
   }
 
   {
@@ -93,14 +93,14 @@ int main()
       test_string.end(),escaped_list_separator<char>());
     Iter begin_c(begin);
     Iter end;
-    BOOST_TEST(std::equal(begin,end,answer));
+    BOOST_REQUIRE(std::equal(begin,end,answer));
 
     while(begin_c != end)
     {
-       BOOST_TEST(begin_c.at_end() == 0);
+       BOOST_REQUIRE(begin_c.at_end() == 0);
        ++begin_c;
     }
-    BOOST_TEST(begin_c.at_end());
+    BOOST_REQUIRE(begin_c.at_end());
   }
 
   {
@@ -113,7 +113,7 @@ int main()
       test_string.end(),func);
     Iter end= make_token_iterator<std::string>(test_string.end(),
       test_string.end(),func);
-    BOOST_TEST(std::equal(begin,end,answer));
+    BOOST_REQUIRE(std::equal(begin,end,answer));
   }
 
   // Test copying
@@ -128,13 +128,13 @@ int main()
     other = beg;
     ++other;
 
-    BOOST_TEST(*beg=="bc");
-    BOOST_TEST(*other=="def");
+    BOOST_REQUIRE(*beg=="bc");
+    BOOST_REQUIRE(*other=="def");
 
     other = make_token_iterator<std::string>(test_string.begin(),
         test_string.end(),f);
 
-    BOOST_TEST(*other=="a");
+    BOOST_REQUIRE(*other=="a");
   }
 
   // Test non-default constructed char_delimiters_separator
@@ -142,8 +142,9 @@ int main()
     const std::string test_string = "how,are you, doing";
     std::string answer[] = {"how",",","are you",","," doing"};
     tokenizer<> t(test_string,char_delimiters_separator<char>(true,",",""));
-    BOOST_TEST(std::equal(t.begin(),t.end(),answer));
+    BOOST_REQUIRE(std::equal(t.begin(),t.end(),answer));
   }
 
-  return boost::report_errors();
+  return 0;
 }
+

@@ -9,10 +9,8 @@
 #ifndef __BOOST_SORT_COMMON_SEARCH_HPP
 #define __BOOST_SORT_COMMON_SEARCH_HPP
 
-#include <ciso646>
-#include <cassert>
 #include <boost/sort/common/util/traits.hpp>
-
+#include <cassert>
 
 namespace boost
 {
@@ -30,7 +28,7 @@ struct filter_pass
     const key & operator()(const T & val) const
     {
         return val;
-    }
+    };
 };
 
 //
@@ -79,9 +77,9 @@ inline Iter_t internal_find_first(Iter_t first, Iter_t last,
         if (comp(flt(*it_out), val))
             LI = it_out + 1;
         else LS = it_out;
-    }
+    };
     return LS;
-}
+};
 //
 //-----------------------------------------------------------------------------
 //  function : internal_find_last
@@ -112,9 +110,9 @@ inline Iter_t internal_find_last(Iter_t first, Iter_t last,
         it_out = LI + ((LS - LI + 1) >> 1);
         if (comp(val, flt(*it_out))) LS = it_out - 1;
         else                         LI = it_out;
-    }
+    };
     return LS;
-}
+};
 
 //
 //###########################################################################
@@ -149,7 +147,7 @@ inline Iter_t find_first(Iter_t first, Iter_t last,
     if (first == last) return last;
     Iter_t LS = internal_find_first(first, last, val, comp, flt);
     return (comp(flt(*LS), val) or comp(val, flt(*LS))) ? last : LS;
-}
+};
 //
 //-----------------------------------------------------------------------------
 //  function : find_last
@@ -174,7 +172,7 @@ inline Iter_t find_last(Iter_t first, Iter_t last,
     if (last == first) return last;
     Iter_t LS = internal_find_last(first, last, val, comp, flt);
     return (comp(flt(*LS), val) or comp(val, flt(*LS))) ? last : LS;
-}
+};
 
 //----------------------------------------------------------------------------
 //  function : lower_bound
@@ -196,7 +194,7 @@ inline Iter_t lower_bound(Iter_t first, Iter_t last,
     if (last == first) return last;
     Iter_t itaux = internal_find_first(first, last, val, comp, flt);
     return (itaux == (last - 1) and comp(flt(*itaux), val)) ? last : itaux;
-}
+};
 //----------------------------------------------------------------------------
 //  function :upper_bound
 /// @brief return the first element greather than val.If don't exist
@@ -242,7 +240,7 @@ inline std::pair<Iter_t, Iter_t> equal_range(Iter_t first, Iter_t last,
 {
     return std::make_pair(lower_bound(first, last, val, comp, flt),
                     upper_bound(first, last, val, comp, flt));
-}
+};
 //
 //-----------------------------------------------------------------------------
 //  function : insert_first
@@ -263,7 +261,7 @@ inline Iter_t insert_first(Iter_t first, Iter_t last,
                                            Filter())
 {
     return lower_bound(first, last, val, comp, flt);
-}
+};
 //
 //-----------------------------------------------------------------------------
 //  function : insert_last
@@ -285,7 +283,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
                                           Filter())
 {
     return upper_bound(first, last, val, comp, flt);
-}
+};
 
 /*
 
@@ -330,9 +328,9 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  while ( LI != LS)
  {   it_out = LI + ( (LS - LI) >> 1);
  if ( comp ( *it_out, val)) LI = it_out + 1 ; else LS = it_out ;
- }
+ };
  return LS ;
- }
+ };
  //
  //-----------------------------------------------------------------------------
  //  function : internal_find_last
@@ -359,9 +357,9 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  while ( LI != LS)
  {   it_out = LI + ( (LS - LI + 1) >> 1);
  if ( comp (val, *it_out)) LS = it_out - 1 ; else LI = it_out ;
- }
+ };
  return LS ;
- }
+ };
 
  //
  //###########################################################################
@@ -394,7 +392,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  if ( first == last) return last ;
  Iter_t LS = internal_find_first ( first, last, val, comp);
  return (comp (*LS, val) or comp (val, *LS))?last:LS;
- }
+ };
  //
  //-----------------------------------------------------------------------------
  //  function : find_last
@@ -417,7 +415,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  if ( last == first ) return last ;
  Iter_t LS = internal_find_last (first, last, val, comp);
  return (comp (*LS, val) or comp (val, *LS))?last:LS ;
- }
+ };
 
  //----------------------------------------------------------------------------
  //  function : lower_bound
@@ -437,7 +435,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  if ( last == first ) return last ;
  Iter_t  itaux = internal_find_first( first, last, val,comp);
  return (itaux == (last - 1) and comp (*itaux, val))?last: itaux;
- }
+ };
  //----------------------------------------------------------------------------
  //  function :upper_bound
  /// @brief return the first element greather than val.If don't exist
@@ -459,7 +457,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  if ( last == first ) return last ;
  Iter_t itaux = internal_find_last( first, last, val,comp);
  return ( itaux == first and comp (val,*itaux))? itaux: itaux + 1;
- }
+ };
  //----------------------------------------------------------------------------
  //  function :equal_range
  /// @brief return a pair of lower_bound and upper_bound with the value val.If
@@ -478,7 +476,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  {
  return std::make_pair(lower_bound(first, last, val,comp),
  upper_bound(first, last, val,comp));
- }
+ };
  //
  //-----------------------------------------------------------------------------
  //  function : insert_first
@@ -497,7 +495,7 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  Compare comp = Compare() )
  {
  return lower_bound (first, last, val, comp);
- }
+ };
  //
  //-----------------------------------------------------------------------------
  //  function : insert_last
@@ -517,15 +515,15 @@ inline Iter_t insert_last(Iter_t first, Iter_t last,
  Compare comp = Compare())
  {
  return upper_bound (first, last, val, comp);
- }
+ };
 
  */
 //
 //****************************************************************************
-} //    End namespace util
-} //    End namespace common
-} //    End namespace sort
-} //    End namespace boost
+};//    End namespace util
+};//    End namespace common
+};//    End namespace sort
+};//    End namespace boost
 //****************************************************************************
 //
 #endif

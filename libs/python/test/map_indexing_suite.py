@@ -1,6 +1,7 @@
 # Copyright Joel de Guzman 2004. Distributed under the Boost
 # Software License, Version 1.0. (See accompanying
 # file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+from __future__ import print_function
 '''
 
 #####################################################################
@@ -24,7 +25,7 @@ foo
 
 # test that a string is implicitly convertible
 # to an X
->>> x_value('bochi bochi')
+>>> x_value('bochi bochi') 
 'gotya bochi bochi'
 
 #####################################################################
@@ -32,9 +33,9 @@ foo
 #####################################################################
 >>> def print_xmap(xmap):
 ...     s = '[ '
-...     for x in xmap:
+...     for x in xmap: 
 ...         s += repr(x)
-...         s += ' '
+...         s += ' ' 
 ...     s += ']'
 ...     print(s)
 
@@ -134,7 +135,7 @@ foo
 >>> assert not 12345 in xm
 
 #####################################################################
-# Some references to the container elements
+# Some references to the container elements 
 #####################################################################
 
 >>> z0 = xm['joel']
@@ -155,7 +156,7 @@ banana
 kiwi
 
 #####################################################################
-# Delete some container element
+# Delete some container element 
 #####################################################################
 
 >>> del xm['tenji']
@@ -167,7 +168,7 @@ kiwi
 [ (joel, apple) (kim, kiwi) (mariel, grape) ]
 
 #####################################################################
-# Show that the references are still valid
+# Show that the references are still valid 
 #####################################################################
 >>> z0 # proxy
 apple
@@ -198,7 +199,7 @@ kiwi
 >>> print_xmap(tm)
 [ (joel, aaa) (kimpo, bbb) ]
 >>> for el in tm: #doctest: +NORMALIZE_WHITESPACE
-...     print(el.key(), end=' ')
+...     print(el.key(), end='')
 ...     dom = el.data()
 joel kimpo
 
@@ -215,19 +216,11 @@ joel kimpo
 4
 
 #####################################################################
-# Test signature...
-#####################################################################
-
->>> AMap.__iter__.__doc__.strip().split("\\n")[0]
-'__iter__( (AMap)arg1) -> __main__.iterator :'
-
-#####################################################################
-# END....
+# END.... 
 #####################################################################
 
 '''
 
-from __future__ import print_function
 
 def run(args = None):
     import sys
@@ -243,3 +236,8 @@ if __name__ == '__main__':
     status = run()[0]
     if (status == 0): print("Done.")
     sys.exit(status)
+
+
+
+
+

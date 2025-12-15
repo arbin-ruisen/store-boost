@@ -5,9 +5,9 @@
 // Copyright (c) 2009-2013 Mateusz Loskot, London, UK.
 // Copyright (c) 2013-2017 Adam Wulkiewicz, Lodz, Poland.
 
-// This file was modified by Oracle on 2014-2023.
-// Modifications copyright (c) 2014-2023 Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// This file was modified by Oracle on 2014, 2017.
+// Modifications copyright (c) 2014-2017 Oracle and/or its affiliates.
+
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -17,16 +17,23 @@
 #ifndef BOOST_GEOMETRY_ALGORITHMS_POINT_ON_SURFACE_HPP
 #define BOOST_GEOMETRY_ALGORITHMS_POINT_ON_SURFACE_HPP
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
+
+#include <cstddef>
+
+#include <numeric>
+
+#include <boost/concept_check.hpp>
+#include <boost/range.hpp>
 
 #include <boost/geometry/core/point_type.hpp>
+#include <boost/geometry/core/ring_type.hpp>
 
 #include <boost/geometry/geometries/concepts/check.hpp>
 
 #include <boost/geometry/algorithms/detail/extreme_points.hpp>
 #include <boost/geometry/algorithms/detail/signed_size_type.hpp>
 
+#include <boost/geometry/strategies/cartesian/centroid_bashein_detmer.hpp>
 #include <boost/geometry/strategies/side.hpp>
 
 
@@ -76,11 +83,11 @@ template <int Dimension, typename Collection, typename Value, typename Predicate
 inline bool max_value(Collection const& collection, Value& the_max, Predicate const& predicate)
 {
     bool first = true;
-    for (auto const& item : collection)
+    for (typename Collection::const_iterator it = collection.begin(); it != collection.end(); ++it)
     {
-        if (! item.empty())
+        if (! it->empty())
         {
-            Value the_value = geometry::get<Dimension>(*std::max_element(item.begin(), item.end(), predicate));
+            Value the_value = geometry::get<Dimension>(*std::max_element(it->begin(), it->end(), predicate));
             if (first || the_value > the_max)
             {
                 the_max = the_value;
@@ -146,15 +153,17 @@ struct min_of_intruder
 template <typename Point, typename P>
 inline void calculate_average(Point& point, std::vector<P> const& points)
 {
-    using coordinate_type = geometry::coordinate_type_t<Point>;
+    typedef typename geometry::coordinate_type<Point>::type coordinate_type;
+    typedef typename std::vector<P>::const_iterator iterator_type;
 
     coordinate_type x = 0;
     coordinate_type y = 0;
 
-    for (auto const& p : points)
+    iterator_type end = points.end();
+    for ( iterator_type it = points.begin() ; it != end ; ++it)
     {
-        x += geometry::get<0>(p);
-        y += geometry::get<1>(p);
+        x += geometry::get<0>(*it);
+        y += geometry::get<1>(*it);
     }
 
     signed_size_type const count = points.size();
@@ -237,8 +246,8 @@ template <int Dimension, typename Geometry, typename Point, typename SideStrateg
 inline bool calculate_point_on_surface(Geometry const& geometry, Point& point,
                                        SideStrategy const& strategy)
 {
-    using point_type = geometry::point_type_t<Geometry>;
-    using coordinate_type = geometry::coordinate_type_t<Geometry>;
+    typedef typename geometry::point_type<Geometry>::type point_type;
+    typedef typename geometry::coordinate_type<Geometry>::type coordinate_type;
     std::vector<point_type> extremes;
 
     typedef std::vector<std::vector<point_type> > intruders_type;
@@ -310,10 +319,10 @@ inline void point_on_surface(Geometry const& geometry, Point & point,
 template <typename Geometry, typename Point>
 inline void point_on_surface(Geometry const& geometry, Point & point)
 {
-    using strategy_type = typename strategy::side::services::default_strategy
+    typedef typename strategy::side::services::default_strategy
         <
-            cs_tag_t<Geometry>
-        >::type;
+            typename cs_tag<Geometry>::type
+        >::type strategy_type;
 
     point_on_surface(geometry, point, strategy_type());
 }
@@ -327,10 +336,10 @@ inline void point_on_surface(Geometry const& geometry, Point & point)
 \return The Point guaranteed to lie on the surface of the Geometry
  */
 template<typename Geometry, typename SideStrategy>
-inline geometry::point_type_t<Geometry>
+inline typename geometry::point_type<Geometry>::type
 return_point_on_surface(Geometry const& geometry, SideStrategy const& strategy)
 {
-    geometry::point_type_t<Geometry> result;
+    typename geometry::point_type<Geometry>::type result;
     geometry::point_on_surface(geometry, result, strategy);
     return result;
 }
@@ -342,10 +351,10 @@ return_point_on_surface(Geometry const& geometry, SideStrategy const& strategy)
 \return The Point guaranteed to lie on the surface of the Geometry
  */
 template<typename Geometry>
-inline geometry::point_type_t<Geometry>
+inline typename geometry::point_type<Geometry>::type
 return_point_on_surface(Geometry const& geometry)
 {
-    geometry::point_type_t<Geometry> result;
+    typename geometry::point_type<Geometry>::type result;
     geometry::point_on_surface(geometry, result);
     return result;
 }

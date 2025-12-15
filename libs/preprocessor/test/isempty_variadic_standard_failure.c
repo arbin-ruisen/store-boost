@@ -9,4 +9,4 @@
 #
 # /* See http://www.boost.org for most recent version. */
 #
-# include "isempty_variadic_standard_failure.cxx"
+# include <libs/preprocessor/test/isempty_variadic_standard_failure.cxx>

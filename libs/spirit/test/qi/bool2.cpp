@@ -8,8 +8,6 @@
 
 #include "bool.hpp"
 
-#include <boost/phoenix/core/reference.hpp>
-
 int main()
 {
     using spirit_test::test_attr;

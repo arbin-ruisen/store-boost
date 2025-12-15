@@ -11,8 +11,6 @@
     ],
     "maintainers": [
         "Gennadiy Rozental <rogeeff -at- gmail.com>",
-        "Raffi Enficiaud <raffi.enficiaud -at- free.fr>",
-        "Matt Borland <matt -at- mattborland.com>"
-    ],
-    "cxxstd": "11"
+        "Raffi Enficiaud <raffi.enficiaud -at- free.fr>"
+    ]
 }

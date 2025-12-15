@@ -10,27 +10,23 @@
 //
 // Testing the I/O facilities of tuples
 
-#define _CRT_SECURE_NO_WARNINGS // std::tmpnam
+#define BOOST_INCLUDE_MAIN  // for testing, include rather than link
+#include "boost/test/test_tools.hpp"    // see "Header Implementation Option"
 
 #include "boost/tuple/tuple_io.hpp"
 #include "boost/tuple/tuple_comparison.hpp"
-
-#include "boost/core/lightweight_test.hpp"
 
 #include <fstream>
 #include <iterator>
 #include <algorithm>
 #include <string>
 #include <iomanip>
-#include <cstdio>
 
 #if defined BOOST_NO_STRINGSTREAM
 #include <strstream>
 #else
 #include <sstream>
 #endif
-
-#define BOOST_CHECK BOOST_TEST
 
 using namespace boost;
 
@@ -42,7 +38,9 @@ typedef std::ostringstream useThisOStringStream;
 typedef std::istringstream useThisIStringStream;
 #endif
 
-int main() {
+int test_main(int argc, char * argv[] ) {
+   (void)argc;
+   (void)argv;
    using boost::tuples::set_close;
    using boost::tuples::set_open;
    using boost::tuples::set_delimiter;
@@ -86,9 +84,7 @@ int main() {
   os4 << std::setw(10) << make_tuple(1, 2, 3);
   BOOST_CHECK (os4.str() == std::string("   (1 2 3)") );
 
-  std::string fn = std::tmpnam( 0 );
-
-  std::ofstream tmp( fn.c_str() );
+  std::ofstream tmp("temp.tmp");
 
 #if !defined (BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
   tmp << make_tuple("One", "Two", 3);
@@ -99,7 +95,7 @@ int main() {
   tmp.close();
   
   // When teading tuples from a stream, manipulators must be set correctly:
-  std::ifstream tmp3( fn.c_str() );
+  std::ifstream tmp3("temp.tmp");
   tuple<std::string, std::string, int> j;
 
 #if !defined (BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
@@ -114,7 +110,6 @@ int main() {
    
   tmp3.close(); 
 
-  std::remove( fn.c_str() );
 
   // reading tuple<int, int, int> in format (a b c); 
   useThisIStringStream is1("(100 200 300)"); 
@@ -143,5 +138,6 @@ int main() {
   // general. If this is wanted, some kind of a parseable string class
   // should be used.
   
-  return boost::report_errors();
+  return 0;
 }
+

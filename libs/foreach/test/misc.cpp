@@ -11,7 +11,7 @@
 */
 
 #include <vector>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/foreach.hpp>
 
 struct xxx : std::vector<int>
@@ -41,7 +41,7 @@ struct yyy : std::vector<int>
 ///////////////////////////////////////////////////////////////////////////////
 // test_main
 //   
-int main()
+int test_main( int, char*[] )
 {
-    return boost::report_errors();
+    return 0;
 }

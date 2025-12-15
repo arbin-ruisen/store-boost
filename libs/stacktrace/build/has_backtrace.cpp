@@ -1,15 +1,10 @@
-// Copyright Antony Polukhin, 2016-2025.
+// Copyright Antony Polukhin, 2016-2019.
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#ifdef BOOST_STACKTRACE_BACKTRACE_INCLUDE_FILE
-#   include BOOST_STACKTRACE_BACKTRACE_INCLUDE_FILE
-#else
-#   include <backtrace.h>
-#endif
-
+#include <backtrace.h>
 #include <unwind.h>
 
 int main() {

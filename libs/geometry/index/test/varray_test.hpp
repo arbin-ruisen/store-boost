@@ -4,10 +4,6 @@
 // Copyright (c) 2012-2013 Adam Wulkiewicz, Lodz, Poland.
 // Copyright (c) 2012-2013 Andrew Hundt.
 
-// This file was modified by Oracle on 2021.
-// Modifications copyright (c) 2021, Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -27,11 +23,9 @@ public:
     ~value_ndc() {}
     bool operator==(value_ndc const& v) const { return aa == v.aa; }
     bool operator<(value_ndc const& v) const { return aa < v.aa; }
-    value_ndc(value_ndc const&) = delete;
-    value_ndc & operator=(value_ndc const&) = delete;
-    value_ndc(value_ndc&&) = default;
-    value_ndc & operator=(value_ndc&&) = default;
 private:
+    value_ndc(value_ndc const&) {}
+    value_ndc & operator=(value_ndc const&) { return *this; }
     size_t aa;
 };
 
@@ -53,11 +47,9 @@ public:
     ~value_nc() {}
     bool operator==(value_nc const& v) const { return aa == v.aa; }
     bool operator<(value_nc const& v) const { return aa < v.aa; }
-    value_nc(value_nc const&) = delete;
-    value_nc & operator=(value_nc const&) = delete;
-    value_nc(value_nc&&) = default;
-    value_nc & operator=(value_nc&&) = default;
 private:
+    value_nc(value_nc const&) {}
+    value_nc & operator=(value_ndc const&) { return *this; }
     size_t aa;
 };
 

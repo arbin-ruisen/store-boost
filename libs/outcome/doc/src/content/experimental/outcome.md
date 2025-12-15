@@ -1,6 +1,6 @@
 +++
 title = "Tying it all together"
-weight = 75
+weight = 80
 +++
 
 Firstly let's alias a more convenient form of `status_result`:

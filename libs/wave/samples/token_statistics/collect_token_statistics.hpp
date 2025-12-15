@@ -10,12 +10,11 @@
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
-#if !defined(BOOST_COLLECT_TOKEN_STATISTICS_VERSION_HPP)
-#define BOOST_COLLECT_TOKEN_STATISTICS_VERSION_HPP
+#if !defined(COLLECT_TOKEN_STATISTICS_VERSION_HPP)
+#define COLLECT_TOKEN_STATISTICS_VERSION_HPP
 
 #include <algorithm>
 #include <map>
-#include <iostream>
 
 #include <boost/assert.hpp>
 #include <boost/wave/token_ids.hpp>
@@ -39,7 +38,7 @@ public:
     {
         using boost::wave::token_id;
         
-        int id = ID_FROM_TOKEN(token) - boost::wave::T_FIRST_TOKEN;
+        int id = token_id(token) - boost::wave::T_FIRST_TOKEN;
         BOOST_ASSERT(id < count);
         ++token_count[id];
     }
@@ -69,4 +68,4 @@ private:
     int token_count[count];
 };
 
-#endif // !defined(BOOST_COLLECT_TOKEN_STATISTICS_VERSION_HPP)
+#endif // !defined(COLLECT_TOKEN_STATISTICS_VERSION_HPP)

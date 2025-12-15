@@ -10,6 +10,5 @@
     ],
     "maintainers": [
         "Andrey Semashev <andrey.semashev -at- gmail.com>"
-    ],
-    "cxxstd": "11"
+    ]
 }

@@ -19,7 +19,7 @@
 Centroid calculation taking average of points. 
 
 [heading Synopsis]
-``template<typename Ignored1, typename Ignored2>
+``template<typename PointCentroid, typename Point>
 class strategy::centroid::average
 {
   // ...
@@ -29,19 +29,18 @@ class strategy::centroid::average
 [heading Template parameter(s)]
 [table
 [[Parameter] [Default] [Description]]
-[[typename Ignored1] [void] []]
-[[typename Ignored2] [void] []]
+[[typename PointCentroid] [] []]
+[[typename Point] [PointCentroid] []]
 ]
 
 [heading Member Function(s)]
 [table
 [[Function] [Description] [Parameters]  [Returns]]
-[[``template<typename GeometryPoint, typename ResultPoint>
-void apply(GeometryPoint const & p, sum< GeometryPoint, ResultPoint > & state)``
+[[``void apply(Point const & p, sum & state)``
 
-] [] [[* GeometryPoint const &]: ['p]:  
+] [] [[* Point const &]: ['p]:  
 
-[* sum< GeometryPoint, ResultPoint > &]: ['state]:  
+[* sum &]: ['state]:  
 
 
 
@@ -49,12 +48,11 @@ void apply(GeometryPoint const & p, sum< GeometryPoint, ResultPoint > & state)``
 
 ]
 ]
-[[``template<typename GeometryPoint, typename ResultPoint>
-bool result(sum< GeometryPoint, ResultPoint > const & state, ResultPoint & centroid)``
+[[``bool result(sum const & state, PointCentroid & centroid)``
 
-] [] [[* sum< GeometryPoint, ResultPoint > const &]: ['state]:  
+] [] [[* sum const &]: ['state]:  
 
-[* ResultPoint &]: ['centroid]:  
+[* PointCentroid &]: ['centroid]:  
 
 
 

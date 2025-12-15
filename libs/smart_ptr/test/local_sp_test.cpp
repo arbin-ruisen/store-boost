@@ -78,6 +78,8 @@ static void default_constructor()
 
 static void nullptr_constructor()
 {
+#if !defined( BOOST_NO_CXX11_NULLPTR )
+
     {
         boost::local_shared_ptr<int> p( nullptr );
 
@@ -110,6 +112,8 @@ static void nullptr_constructor()
         BOOST_TEST_EQ( p.get(), static_cast<void*>(0) );
         BOOST_TEST_EQ( p.local_use_count(), 0 );
     }
+
+#endif
 }
 
 // pointer constructor
@@ -222,7 +226,9 @@ static void deleter_constructor()
 
 // nullptr_deleter_constructor
 
-void deleter3( std::nullptr_t )
+#if !defined( BOOST_NO_CXX11_NULLPTR )
+
+void deleter3( boost::detail::sp_nullptr_t )
 {
     ++m;
 }
@@ -253,6 +259,14 @@ static void nullptr_deleter_constructor()
     deleter3_test_<void volatile>();
     deleter3_test_<void const volatile>();
 }
+
+#else
+
+static void nullptr_deleter_constructor()
+{
+}
+
+#endif
 
 // allocator constructor
 
@@ -286,6 +300,8 @@ static void allocator_constructor()
 
 // nullptr_allocator_constructor
 
+#if !defined( BOOST_NO_CXX11_NULLPTR )
+
 template<class T> static void allocator3_test_()
 {
     {
@@ -312,6 +328,14 @@ static void nullptr_allocator_constructor()
     allocator3_test_<void volatile>();
     allocator3_test_<void const volatile>();
 }
+
+#else
+
+static void nullptr_allocator_constructor()
+{
+}
+
+#endif
 
 // copy constructor
 
@@ -407,6 +431,8 @@ static void copy_constructor()
 
 // move constructor
 
+#if !defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
+
 template<class T> static void empty_move_test()
 {
     boost::local_shared_ptr<T> p2(( boost::local_shared_ptr<T>() ));
@@ -486,6 +512,14 @@ static void move_constructor()
 
     BOOST_TEST( X::instances == 0 );
 }
+
+#else
+
+static void move_constructor()
+{
+}
+
+#endif
 
 // aliasing constructor
 
@@ -710,6 +744,8 @@ static void shared_ptr_copy_constructor()
 
 // shared_ptr_move constructor
 
+#if !defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
+
 template<class T> static void empty_shared_ptr_move_test()
 {
     boost::local_shared_ptr<T> p2(( boost::shared_ptr<T>() ));
@@ -789,7 +825,17 @@ static void shared_ptr_move_constructor()
     BOOST_TEST( X::instances == 0 );
 }
 
+#else
+
+static void shared_ptr_move_constructor()
+{
+}
+
+#endif
+
 // unique_ptr_constructor
+
+#if !defined( BOOST_NO_CXX11_SMART_PTR ) && !defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
 
 template<class T, class U> static void test_null_unique_ptr( std::unique_ptr<U> && p1 )
 {
@@ -891,6 +937,14 @@ static void unique_ptr_constructor()
     deleter_unique_ptr_test<int>();
     deleter_unique_ptr_test<void>();
 }
+
+#else
+
+static void unique_ptr_constructor()
+{
+}
+
+#endif
 
 // copy assignment
 
@@ -1049,6 +1103,8 @@ static void copy_assignment()
 
 // move assignment
 
+#if !defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
+
 template<class T> static void empty_move_assign_test()
 {
     boost::local_shared_ptr<T> p2;
@@ -1187,7 +1243,17 @@ static void move_assignment()
     BOOST_TEST( X::instances == 0 );
 }
 
+#else
+
+static void move_assignment()
+{
+}
+
+#endif
+
 // nullptr assignment
+
+#if !defined( BOOST_NO_CXX11_NULLPTR )
 
 template<class T> static void test_nullptr_assign( boost::local_shared_ptr<T> p1 )
 {
@@ -1240,6 +1306,14 @@ static void nullptr_assignment()
 
     BOOST_TEST( X::instances == 0 );
 }
+
+#else
+
+static void nullptr_assignment()
+{
+}
+
+#endif
 
 // default_reset
 
@@ -1454,6 +1528,8 @@ static void shared_ptr_copy_assignment()
 
 // shared_ptr_move assignment
 
+#if !defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
+
 template<class T> static void empty_shared_ptr_move_assign_test()
 {
     boost::local_shared_ptr<T> p2;
@@ -1597,7 +1673,17 @@ static void shared_ptr_move_assignment()
     BOOST_TEST( X::instances == 0 );
 }
 
+#else
+
+static void shared_ptr_move_assignment()
+{
+}
+
+#endif
+
 // unique_ptr assignment
+
+#if !defined( BOOST_NO_CXX11_RVALUE_REFERENCES ) && !defined( BOOST_NO_CXX11_SMART_PTR )
 
 template<class T> static void empty_unique_ptr_assign_test()
 {
@@ -1738,6 +1824,14 @@ static void unique_ptr_assignment()
 
     BOOST_TEST( X::instances == 0 );
 }
+
+#else
+
+static void unique_ptr_assignment()
+{
+}
+
+#endif
 
 // pointer reset
 

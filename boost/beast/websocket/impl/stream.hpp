@@ -59,15 +59,6 @@ stream(Args&&... args)
 }
 
 template<class NextLayer, bool deflateSupported>
-template<class Other>
-stream<NextLayer, deflateSupported>::
-stream(stream<Other> && other)
-    : impl_(boost::make_shared<impl_type>(std::move(other.next_layer())))
-{
-}
-
-
-template<class NextLayer, bool deflateSupported>
 auto
 stream<NextLayer, deflateSupported>::
 get_executor() noexcept ->
@@ -133,7 +124,7 @@ read_size_hint(
     std::size_t initial_size) const
 {
     return impl_->read_size_hint_pmd(
-        initial_size, impl_->rd_done, impl_->rd_msg_max,
+        initial_size, impl_->rd_done,
         impl_->rd_remain, impl_->rd_fh);
 }
 
@@ -173,18 +164,6 @@ stream<NextLayer, deflateSupported>::
 get_option(timeout& opt)
 {
     opt = impl_->timeout_opt;
-}
-
-template <class NextLayer, bool deflateSupported>
-void
-stream<NextLayer, deflateSupported>::
-get_status(permessage_deflate_status &status) const noexcept
-{
-    detail::pmd_offer pmd;
-    impl_->get_config_pmd(pmd);
-    status.active               = pmd.accept;
-    status.client_window_bits   = pmd.client_max_window_bits;
-    status.server_window_bits   = pmd.server_max_window_bits;
 }
 
 template<class NextLayer, bool deflateSupported>
@@ -325,22 +304,6 @@ text() const
     return impl_->wr_opcode == detail::opcode::text;
 }
 
-template<class NextLayer, bool deflateSupported>
-void
-stream<NextLayer, deflateSupported>::
-compress(bool value)
-{
-    impl_->wr_compress_opt = value;
-}
-
-template<class NextLayer, bool deflateSupported>
-bool
-stream<NextLayer, deflateSupported>::
-compress() const
-{
-    return impl_->wr_compress_opt;
-}
-
 //------------------------------------------------------------------------------
 
 // _Fail the WebSocket Connection_
@@ -373,9 +336,7 @@ do_fail(
         ec = {};
     }
     if(! ec)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, ev);
-    }
+        ec = ev;
     if(ec && ec != error::closed)
         impl_->change_status(status::failed);
     else

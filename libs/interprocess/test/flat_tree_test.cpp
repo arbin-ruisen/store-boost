@@ -8,10 +8,11 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <set>
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/container/flat_set.hpp>
-#include <boost/container/flat_map.hpp>
+#include <boost/interprocess/containers/flat_set.hpp>
+#include <boost/interprocess/containers/flat_map.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/indexes/flat_map_index.hpp>
 #include "print_container.hpp"
@@ -64,36 +65,36 @@ typedef std::multiset<int>                                              MyStdMul
 typedef std::map<int, int>                                              MyStdMap;
 typedef std::multimap<int, int>                                         MyStdMultiMap;
 
-typedef boost::container::flat_set<int, std::less<int>, shmem_allocator_t>                MyShmSet;
-typedef boost::container::flat_multiset<int, std::less<int>, shmem_allocator_t>           MyShmMultiSet;
-typedef boost::container::flat_map<int, int, std::less<int>, shmem_pair_allocator_t>      MyShmMap;
-typedef boost::container::flat_multimap<int, int, std::less<int>, shmem_pair_allocator_t> MyShmMultiMap;
+typedef flat_set<int, std::less<int>, shmem_allocator_t>                MyShmSet;
+typedef flat_multiset<int, std::less<int>, shmem_allocator_t>           MyShmMultiSet;
+typedef flat_map<int, int, std::less<int>, shmem_pair_allocator_t>      MyShmMap;
+typedef flat_multimap<int, int, std::less<int>, shmem_pair_allocator_t> MyShmMultiMap;
 
-typedef boost::container::flat_set<test::movable_int, std::less<test::movable_int>
+typedef flat_set<test::movable_int, std::less<test::movable_int>
                 ,shmem_movable_allocator_t>                             MyMovableShmSet;
-typedef boost::container::flat_multiset<test::movable_int,std::less<test::movable_int>
+typedef flat_multiset<test::movable_int,std::less<test::movable_int>
                      ,shmem_movable_allocator_t>                        MyMovableShmMultiSet;
-typedef boost::container::flat_map<test::movable_int, test::movable_int
+typedef flat_map<test::movable_int, test::movable_int
                 ,std::less<test::movable_int>
                 ,shmem_movable_pair_allocator_t>                        MyMovableShmMap;
-typedef boost::container::flat_multimap<test::movable_int, test::movable_int
+typedef flat_multimap<test::movable_int, test::movable_int
                 ,std::less<test::movable_int>
                 ,shmem_movable_pair_allocator_t>                        MyMovableShmMultiMap;
 
-typedef boost::container::flat_set<test::movable_and_copyable_int, std::less<test::movable_and_copyable_int>
+typedef flat_set<test::movable_and_copyable_int, std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_allocator_t>                             MyMoveCopyShmSet;
-typedef boost::container::flat_multiset<test::movable_and_copyable_int,std::less<test::movable_and_copyable_int>
+typedef flat_multiset<test::movable_and_copyable_int,std::less<test::movable_and_copyable_int>
                      ,shmem_move_copy_allocator_t>                        MyMoveCopyShmMultiSet;
 
-typedef boost::container::flat_set<test::copyable_int, std::less<test::copyable_int>
+typedef flat_set<test::copyable_int, std::less<test::copyable_int>
                 ,shmem_copy_allocator_t>                                MyCopyShmSet;
-typedef boost::container::flat_multiset<test::copyable_int,std::less<test::copyable_int>
+typedef flat_multiset<test::copyable_int,std::less<test::copyable_int>
                      ,shmem_copy_allocator_t>                           MyCopyShmMultiSet;
 
-typedef boost::container::flat_map<test::movable_and_copyable_int, test::movable_and_copyable_int
+typedef flat_map<test::movable_and_copyable_int, test::movable_and_copyable_int
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_pair_allocator_t>                        MyMoveCopyShmMap;
-typedef boost::container::flat_multimap<test::movable_and_copyable_int, test::movable_and_copyable_int
+typedef flat_multimap<test::movable_and_copyable_int, test::movable_and_copyable_int
                 ,std::less<test::movable_and_copyable_int>
                 ,shmem_move_copy_pair_allocator_t>                        MyMoveCopyShmMultiMap;
 
@@ -185,15 +186,17 @@ int main()
    const test::EmplaceOptions SetOptions = (test::EmplaceOptions)(test::EMPLACE_HINT | test::EMPLACE_ASSOC);
    const test::EmplaceOptions MapOptions = (test::EmplaceOptions)(test::EMPLACE_HINT_PAIR | test::EMPLACE_ASSOC_PAIR);
 
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_map<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+   if(!boost::interprocess::test::test_emplace<flat_map<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
       return 1;
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
+   if(!boost::interprocess::test::test_emplace<flat_multimap<test::EmplaceInt, test::EmplaceInt>, MapOptions>())
       return 1;
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_set<test::EmplaceInt>, SetOptions>())
+   if(!boost::interprocess::test::test_emplace<flat_set<test::EmplaceInt>, SetOptions>())
       return 1;
-   if(!boost::interprocess::test::test_emplace<boost::container::flat_multiset<test::EmplaceInt>, SetOptions>())
+   if(!boost::interprocess::test::test_emplace<flat_multiset<test::EmplaceInt>, SetOptions>())
       return 1;
    //#endif   //!defined(__GNUC__)
    return 0;
 
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

@@ -13,26 +13,19 @@
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
 #include <cstring>
-#include <string>
+
+using namespace boost::intrusive;
 
 // Hash function for strings
 struct StrHasher
 {
    std::size_t operator()(const char *str) const
    {
-      //Simple example, use favorite hash function (like boost::hash_combine)
       std::size_t seed = 0;
-      for(; *str; ++str){
-         std::size_t x = std::size_t(*str);
-         x = ((x >> 16) ^ x) * 0x45d9f3b;
-         x = (x >> 16) ^ x;
-         seed += x;
-      }
+      for(; *str; ++str)   boost::hash_combine(seed, *str);
       return seed;
    }
 };
-
-using namespace boost::intrusive;
 
 class Expensive : public set_base_hook<>, public unordered_set_base_hook<>
 {

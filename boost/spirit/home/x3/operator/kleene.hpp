@@ -1,8 +1,6 @@
 /*=============================================================================
     Copyright (c) 2001-2014 Joel de Guzman
     Copyright (c) 2001-2011 Hartmut Kaiser
-    Copyright (c) 2017 wanghan02
-    Copyright (c) 2024 Nana Sakisaka
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -13,7 +11,6 @@
 #include <boost/spirit/home/x3/core/parser.hpp>
 #include <boost/spirit/home/x3/support/traits/container_traits.hpp>
 #include <boost/spirit/home/x3/support/traits/attribute_of.hpp>
-#include <boost/spirit/home/x3/support/expectation.hpp>
 #include <boost/spirit/home/x3/core/detail/parse_into_container.hpp>
 
 namespace boost { namespace spirit { namespace x3
@@ -24,7 +21,7 @@ namespace boost { namespace spirit { namespace x3
         typedef unary_parser<Subject, kleene<Subject>> base_type;
         static bool const handles_container = true;
 
-        constexpr kleene(Subject const& subject)
+        kleene(Subject const& subject)
           : base_type(subject) {}
 
         template <typename Iterator, typename Context
@@ -35,12 +32,12 @@ namespace boost { namespace spirit { namespace x3
             while (detail::parse_into_container(
                 this->subject, first, last, context, rcontext, attr))
                 ;
-            return !has_expectation_failure(context);
+            return true;
         }
     };
 
     template <typename Subject>
-    constexpr kleene<typename extension::as_parser<Subject>::value_type>
+    inline kleene<typename extension::as_parser<Subject>::value_type>
     operator*(Subject const& subject)
     {
         return { as_parser(subject) };

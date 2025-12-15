@@ -4,7 +4,6 @@
 //           https://www.boost.org/LICENSE_1_0.txt)
 
 #include "test_autodiff.hpp"
-#include <boost/math/tools/test_value.hpp>
 
 BOOST_AUTO_TEST_SUITE(test_autodiff_4)
 
@@ -49,7 +48,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(equality, T, all_float_types) {
   constexpr std::size_t m = 3;
   // check zeros
   {
-    auto x = make_fvar<T, m>(T(0));
+    auto x = make_fvar<T, m>(0.0);
     auto y = T(-0.0);
     BOOST_CHECK_EQUAL(x.derivative(0u), y);
   }
@@ -73,7 +72,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(multiprecision, T, multiprecision_float_types) {
   const auto v =
       mixed_partials_f(w, x, y, z); // auto = autodiff_fvar<T,Nw,Nx,Ny,Nz>
   // Calculated from Mathematica symbolic differentiation.
-  const T answer = BOOST_MATH_TEST_VALUE(T, 1976.31960074779771777988187529041872090812118921875499076582535951111845769110560421820940516423255314);
+  const T answer = boost::lexical_cast<T>(
+      "1976.3196007477977177798818752904187209081211892187"
+      "5499076582535951111845769110560421820940516423255314");
   // BOOST_CHECK_CLOSE(v.derivative(Nw,Nx,Ny,Nz), answer, eps); // Doesn't work
   // for cpp_dec_float
   const T relative_error =
@@ -162,7 +163,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(atan_hpp, T, all_float_types) {
     auto autodiff_v = atan(make_fvar<T, m>(x));
     auto anchor_v = atan(x);
     BOOST_CHECK_CLOSE(autodiff_v.derivative(0u), anchor_v,
-                      T(1e3) * test_constants::pct_epsilon());
+                      1e3 * test_constants::pct_epsilon());
   }
 }
 

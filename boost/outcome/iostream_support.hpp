@@ -1,5 +1,5 @@
 /* iostream specialisations for result and outcome
-(C) 2017-2025 Niall Douglas <http://www.nedproductions.biz/> (21 commits)
+(C) 2017-2019 Niall Douglas <http://www.nedproductions.biz/> (21 commits)
 File Created: July 2017
 
 
@@ -31,19 +31,172 @@ DEALINGS IN THE SOFTWARE.
 #ifndef BOOST_OUTCOME_IOSTREAM_SUPPORT_HPP
 #define BOOST_OUTCOME_IOSTREAM_SUPPORT_HPP
 
-#include "iostream_support_result.hpp"
-
 #include "outcome.hpp"
 
+#include <iostream>
+#include <sstream>
+
 BOOST_OUTCOME_V2_NAMESPACE_BEGIN
+
+namespace detail
+{
+  template <class T> typename std::add_lvalue_reference<T>::type lvalueref() noexcept;
+
+  template <class T> inline std::ostream &operator<<(std::ostream &s, const value_storage_trivial<T> &v)
+  {
+    s << v._status << " ";
+    if((v._status & status_have_value) != 0)
+    {
+      s << v._value;  // NOLINT
+    }
+    return s;
+  }
+  inline std::ostream &operator<<(std::ostream &s, const value_storage_trivial<void> &v)
+  {
+    s << v._status << " ";
+    return s;
+  }
+  template <class T> inline std::ostream &operator<<(std::ostream &s, const value_storage_nontrivial<T> &v)
+  {
+    s << v._status << " ";
+    if((v._status & status_have_value) != 0)
+    {
+      s << v._value;  // NOLINT
+    }
+    return s;
+  }
+  template <class T> inline std::istream &operator>>(std::istream &s, value_storage_trivial<T> &v)
+  {
+    v = value_storage_trivial<T>();
+    s >> v._status;
+    if((v._status & status_have_value) != 0)
+    {
+      new(&v._value) decltype(v._value)();  // NOLINT
+      s >> v._value;                        // NOLINT
+    }
+    return s;
+  }
+  inline std::istream &operator>>(std::istream &s, value_storage_trivial<devoid<void>> &v)
+  {
+    v = value_storage_trivial<devoid<void>>();
+    s >> v._status;
+    return s;
+  }
+  template <class T> inline std::istream &operator>>(std::istream &s, value_storage_nontrivial<T> &v)
+  {
+    v = value_storage_nontrivial<T>();
+    s >> v._status;
+    if((v._status & status_have_value) != 0)
+    {
+      new(&v._value) decltype(v._value)();  // NOLINT
+      s >> v._value;                        // NOLINT
+    }
+    return s;
+  }
+  BOOST_OUTCOME_TEMPLATE(class T)
+  BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TPRED(!std::is_constructible<std::error_code, T>::value))
+  inline std::string safe_message(T && /*unused*/) { return {}; }
+  inline std::string safe_message(const std::error_code &ec) { return " (" + ec.message() + ")"; }
+}  // namespace detail
+
+/*! AWAITING HUGO JSON CONVERSION TOOL
+SIGNATURE NOT RECOGNISED
+*/
+BOOST_OUTCOME_TEMPLATE(class R, class S, class P)
+BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<R>()), BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<S>()))
+inline std::istream &operator>>(std::istream &s, basic_result<R, S, P> &v)
+{
+  s >> v._iostreams_state();
+  if(v.has_error())
+  {
+    s >> v.assume_error();
+  }
+  return s;
+}
+/*! AWAITING HUGO JSON CONVERSION TOOL
+SIGNATURE NOT RECOGNISED
+*/
+BOOST_OUTCOME_TEMPLATE(class R, class S, class P)
+BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<R>()), BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<S>()))
+inline std::ostream &operator<<(std::ostream &s, const basic_result<R, S, P> &v)
+{
+  s << v._iostreams_state();
+  if(v.has_error())
+  {
+    s << v.assume_error();
+  }
+  return s;
+}
+/*! AWAITING HUGO JSON CONVERSION TOOL
+SIGNATURE NOT RECOGNISED
+*/
+template <class R, class S, class P> inline std::string print(const basic_result<R, S, P> &v)
+{
+  std::stringstream s;
+  if(v.has_value())
+  {
+    s << v.value();
+  }
+  if(v.has_error())
+  {
+    s << v.error() << detail::safe_message(v.error());
+  }
+  return s.str();
+}
+/*! AWAITING HUGO JSON CONVERSION TOOL
+SIGNATURE NOT RECOGNISED
+*/
+template <class S, class P> inline std::string print(const basic_result<void, S, P> &v)
+{
+  std::stringstream s;
+  if(v.has_value())
+  {
+    s << "(+void)";
+  }
+  if(v.has_error())
+  {
+    s << v.error() << detail::safe_message(v.error());
+  }
+  return s.str();
+}
+/*! AWAITING HUGO JSON CONVERSION TOOL
+SIGNATURE NOT RECOGNISED
+*/
+template <class R, class P> inline std::string print(const basic_result<R, void, P> &v)
+{
+  std::stringstream s;
+  if(v.has_value())
+  {
+    s << v.value();
+  }
+  if(v.has_error())
+  {
+    s << "(-void)";
+  }
+  return s.str();
+}
+/*! AWAITING HUGO JSON CONVERSION TOOL
+SIGNATURE NOT RECOGNISED
+*/
+template <class P> inline std::string print(const basic_result<void, void, P> &v)
+{
+  std::stringstream s;
+  if(v.has_value())
+  {
+    s << "(+void)";
+  }
+  if(v.has_error())
+  {
+    s << "(-void)";
+  }
+  return s.str();
+}
 
 /*! AWAITING HUGO JSON CONVERSION TOOL
 SIGNATURE NOT RECOGNISED
 */
 BOOST_OUTCOME_TEMPLATE(class R, class S, class P, class N)
-BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<R>()),
-                  BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<S>()),
-                  BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<P>()))
+BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<R>()), BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<S>()), BOOST_OUTCOME_TEXPR(detail::lvalueref<std::istream>() >> detail::lvalueref<P>()))
 inline std::istream &operator>>(std::istream &s, outcome<R, S, P, N> &v)
 {
   s >> v._iostreams_state();
@@ -61,9 +214,7 @@ inline std::istream &operator>>(std::istream &s, outcome<R, S, P, N> &v)
 SIGNATURE NOT RECOGNISED
 */
 BOOST_OUTCOME_TEMPLATE(class R, class S, class P, class N)
-BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<R>()),
-                  BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<S>()),
-                  BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<P>()))
+BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<R>()), BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<S>()), BOOST_OUTCOME_TEXPR(detail::lvalueref<std::ostream>() << detail::lvalueref<P>()))
 inline std::ostream &operator<<(std::ostream &s, const outcome<R, S, P, N> &v)
 {
   s << v._iostreams_state();

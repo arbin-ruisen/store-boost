@@ -11,6 +11,7 @@
 //        sure your compiler finds the includes and your linker finds the 
 //        proper libraries.
 
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
 
 #include <Qt/qstring.h>

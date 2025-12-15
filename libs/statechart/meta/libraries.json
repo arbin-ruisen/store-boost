@@ -10,6 +10,5 @@
     ],
     "maintainers": [
         "Andreas Huber <ahd6974-boostorg -at- yahoo.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

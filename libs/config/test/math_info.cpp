@@ -281,7 +281,7 @@ int main()
       "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
       "Macros from <math.h>" << std::endl;
 
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
    // Turn off hardware exceptions so we don't just abort 
    // when calling numeric_limits members.
    _control87(MCW_EM,MCW_EM);

@@ -87,18 +87,17 @@ test_string( CharT* = 0 )
 
 //____________________________________________________________________________//
 
-template<typename CharT, size_t Size>
-CharT (&static_literal(char const (&orig)[Size]))[Size]
+template<typename CharT>
+CharT*
+static_literal(char const* orig, std::size_t orig_size)
 {
-    typedef typename boost::remove_const<CharT>::type mutable_char;
-    static mutable_char l[Size];
+    static string_literal<CharT> l;
     
-    for (size_t index = 0; index < Size; ++index)
-        l[index] = orig[index];
+    l.assign(orig, orig_size);
 
-    return l;
+    return l.begin();
 }
-#define LITERAL( s ) static_literal<CharT>( s )
+#define LITERAL( s ) static_literal<CharT>( s, sizeof( s ) )
 
 #define LOCAL_DEF( name, s )                                                \
 string_literal<CharT> BOOST_JOIN( sl, __LINE__)(s, sizeof( s ));            \
@@ -370,29 +369,29 @@ BOOST_TEST_CASE_TEMPLATE_FUNCTION( trim_test, CharT )
 
     bcs0 = TEST_STRING;
     bcs0.trim_right( bcs0.size() - bcs0.find( LITERAL( "t_s" ) ) - 3 );
-    BOOST_TEST( bcs0 == const_cast<CharT const*>(LITERAL( "test_s" ) ));
+    BOOST_TEST( bcs0 == LITERAL( "test_s" ) );
 
     bcs0.trim_left( bcs0.find( LITERAL( "t_s" ) ) );
-    BOOST_TEST( bcs0 == const_cast<CharT const*>(LITERAL( "t_s" )) );
+    BOOST_TEST( bcs0 == LITERAL( "t_s" ) );
 
     LOCAL_DEF( bcs1, "abcd   " );
     LOCAL_DEF( bcs2, "     abcd" );
     LOCAL_DEF( bcs3, "  abcd  " );
 
     bcs1.trim_right();
-    BOOST_TEST( bcs1 == const_cast<CharT const*>(LITERAL( "abcd" )) );
+    BOOST_TEST( bcs1 == LITERAL( "abcd" ) );
 
     bcs2.trim_left();
-    BOOST_TEST( bcs2 == const_cast<CharT const*>(LITERAL( "abcd" )) );
+    BOOST_TEST( bcs2 == LITERAL( "abcd" ) );
 
     bcs3.trim( LITERAL( "\"" ) );
-    BOOST_TEST( bcs3 == const_cast<CharT const*>(LITERAL( "  abcd  " )) );
+    BOOST_TEST( bcs3 == LITERAL( "  abcd  " ) );
 
     bcs3.trim();
-    BOOST_TEST( bcs3 == const_cast<CharT const*>(LITERAL( "abcd" )) );
+    BOOST_TEST( bcs3 == LITERAL( "abcd" ) );
 
     bcs3.trim();
-    BOOST_TEST( bcs3 == const_cast<CharT const*>(LITERAL( "abcd" )) );
+    BOOST_TEST( bcs3 == LITERAL( "abcd" ) );
 }
 
 //____________________________________________________________________________//
@@ -419,7 +418,7 @@ BOOST_TEST_CASE_TEMPLATE_FUNCTION( io_test, CharT )
 BOOST_TEST_CASE_TEMPLATE_FUNCTION( find_test, CharT )
 {
     typedef typename utf::basic_cstring<CharT>::size_type size;
-    utf::basic_cstring<CharT> bcs1( LITERAL( "test_string" ) );
+    utf::basic_cstring<CharT> bcs1( TEST_STRING );
 
     size not_found = (size)utf::basic_cstring<CharT>::npos;
 
@@ -461,35 +460,6 @@ void const_conversion()
 
 //____________________________________________________________________________//
 
-#if defined(BOOST_TEST_STRING_VIEW)
-BOOST_TEST_CASE_TEMPLATE_FUNCTION( string_view_support, CharT )
-{
-  using namespace std::literals;
-  typedef std::basic_string_view<CharT> string_view_t;
-  namespace utf = boost::unit_test;
-
-  {
-    string_view_t sv = LITERAL("");
-
-    utf::stringview_cstring_helper<CharT, string_view_t> svh = sv;
-    BOOST_TEST( svh.size() == 0U );
-    BOOST_TEST( svh.is_empty() );
-  }
-
-
-  {
-    string_view_t sv = LITERAL("bla");
-
-    utf::stringview_cstring_helper<CharT, string_view_t> svh = sv;
-    BOOST_TEST( svh.size() == 3U );
-    BOOST_TEST( !svh.is_empty() );
-  }
-}
-#endif
-
-
-//____________________________________________________________________________//
-
 utf::test_suite*
 init_unit_test_suite( int /*argc*/, char* /*argv*/[] )
 {
@@ -509,10 +479,6 @@ init_unit_test_suite( int /*argc*/, char* /*argv*/[] )
     test->add( BOOST_TEST_CASE_TEMPLATE( io_test, io_test_types ) );
     test->add( BOOST_TEST_CASE_TEMPLATE( find_test, char_types ) );
     test->add( BOOST_TEST_CASE( &const_conversion ) );
-  
-#if defined(BOOST_TEST_STRING_VIEW)
-    test->add( BOOST_TEST_CASE_TEMPLATE( string_view_support, char_types ) );
-#endif
 
     return test;
 }

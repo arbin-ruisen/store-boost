@@ -1,5 +1,5 @@
 /* Try operation macros
-(C) 2017-2025 Niall Douglas <http://www.nedproductions.biz/> (20 commits)
+(C) 2017-2019 Niall Douglas <http://www.nedproductions.biz/> (20 commits)
 File Created: July 2017
 
 
@@ -31,7 +31,6 @@ DEALINGS IN THE SOFTWARE.
 #ifndef BOOST_OUTCOME_TRY_HPP
 #define BOOST_OUTCOME_TRY_HPP
 
-#include "detail/try.h"
 #include "success_failure.hpp"
 
 BOOST_OUTCOME_V2_NAMESPACE_BEGIN
@@ -56,60 +55,26 @@ namespace detail
   struct value_overload
   {
   };
-  // #ifdef __APPLE__
-  //   BOOST_OUTCOME_TEMPLATE(class T, class R = decltype(std::declval<T>()._xcode_workaround_as_failure()))
-  // #else
   BOOST_OUTCOME_TEMPLATE(class T, class R = decltype(std::declval<T>().as_failure()))
-  // #endif
   BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TPRED(BOOST_OUTCOME_V2_NAMESPACE::is_failure_type<R>))
-  constexpr inline bool has_as_failure(int /*unused */)
-  {
-    return true;
-  }
-  template <class T> constexpr inline bool has_as_failure(...)
-  {
-    return false;
-  }
+  constexpr inline bool has_as_failure(int/*unused */) { return true; }
+  template<class T> constexpr inline bool has_as_failure(...) { return false; }
   BOOST_OUTCOME_TEMPLATE(class T)
   BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(std::declval<T>().assume_error()))
-  constexpr inline bool has_assume_error(int /*unused */)
-  {
-    return true;
-  }
-  template <class T> constexpr inline bool has_assume_error(...)
-  {
-    return false;
-  }
+  constexpr inline bool has_assume_error(int/*unused */) { return true; }
+  template<class T> constexpr inline bool has_assume_error(...) { return false; }
   BOOST_OUTCOME_TEMPLATE(class T)
   BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(std::declval<T>().error()))
-  constexpr inline bool has_error(int /*unused */)
-  {
-    return true;
-  }
-  template <class T> constexpr inline bool has_error(...)
-  {
-    return false;
-  }
+  constexpr inline bool has_error(int/*unused */) { return true; }
+  template<class T> constexpr inline bool has_error(...) { return false; }
   BOOST_OUTCOME_TEMPLATE(class T)
   BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(std::declval<T>().assume_value()))
-  constexpr inline bool has_assume_value(int /*unused */)
-  {
-    return true;
-  }
-  template <class T> constexpr inline bool has_assume_value(...)
-  {
-    return false;
-  }
+  constexpr inline bool has_assume_value(int/*unused */) { return true; }
+  template<class T> constexpr inline bool has_assume_value(...) { return false; }
   BOOST_OUTCOME_TEMPLATE(class T)
   BOOST_OUTCOME_TREQUIRES(BOOST_OUTCOME_TEXPR(std::declval<T>().value()))
-  constexpr inline bool has_value(int /*unused */)
-  {
-    return true;
-  }
-  template <class T> constexpr inline bool has_value(...)
-  {
-    return false;
-  }
+  constexpr inline bool has_value(int/*unused */) { return true; }
+  template<class T> constexpr inline bool has_value(...) { return false; }
 }  // namespace detail
 
 /*! AWAITING HUGO JSON CONVERSION TOOL
@@ -171,109 +136,59 @@ constexpr inline decltype(auto) try_operation_extract_value(T &&v, detail::value
 
 BOOST_OUTCOME_V2_NAMESPACE_END
 
+#define BOOST_OUTCOME_TRY_GLUE2(x, y) x##y
+#define BOOST_OUTCOME_TRY_GLUE(x, y) BOOST_OUTCOME_TRY_GLUE2(x, y)
+#define BOOST_OUTCOME_TRY_UNIQUE_NAME BOOST_OUTCOME_TRY_GLUE(_outcome_try_unique_name_temporary, __COUNTER__)
+
+#define BOOST_OUTCOME_TRY_RETURN_ARG_COUNT(_1_, _2_, _3_, _4_, _5_, _6_, _7_, _8_, count, ...) count
+#define BOOST_OUTCOME_TRY_EXPAND_ARGS(args) BOOST_OUTCOME_TRY_RETURN_ARG_COUNT args
+#define BOOST_OUTCOME_TRY_COUNT_ARGS_MAX8(...) BOOST_OUTCOME_TRY_EXPAND_ARGS((__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1, 0))
+#define BOOST_OUTCOME_TRY_OVERLOAD_MACRO2(name, count) name##count
+#define BOOST_OUTCOME_TRY_OVERLOAD_MACRO1(name, count) BOOST_OUTCOME_TRY_OVERLOAD_MACRO2(name, count)
+#define BOOST_OUTCOME_TRY_OVERLOAD_MACRO(name, count) BOOST_OUTCOME_TRY_OVERLOAD_MACRO1(name, count)
+#define BOOST_OUTCOME_TRY_OVERLOAD_GLUE(x, y) x y
+#define BOOST_OUTCOME_TRY_CALL_OVERLOAD(name, ...) BOOST_OUTCOME_TRY_OVERLOAD_GLUE(BOOST_OUTCOME_TRY_OVERLOAD_MACRO(name, BOOST_OUTCOME_TRY_COUNT_ARGS_MAX8(__VA_ARGS__)), (__VA_ARGS__))
+
 #if !defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 8
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wparentheses"
 #endif
 
-// Use if(!expr); else as some compilers assume else clauses are always unlikely
-#define BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(unique, retstmt, spec, ...)                                                                                               \
-  BOOST_OUTCOME_TRYV2_UNIQUE_STORAGE(unique, spec, __VA_ARGS__);                                                                                                     \
-  BOOST_OUTCOME_TRY_LIKELY_IF(::BOOST_OUTCOME_V2_NAMESPACE::try_operation_has_value(unique));                                                                              \
-  else                                                                                                                                                         \
-  { /* works around ICE in GCC's coroutines implementation */                                                                                                  \
-    auto unique##_f(::BOOST_OUTCOME_V2_NAMESPACE::try_operation_return_as(static_cast<decltype(unique) &&>(unique)));                                                \
-    retstmt unique##_f;                                                                                                                                        \
-  }
-#define BOOST_OUTCOME_TRYV3_FAILURE_LIKELY(unique, retstmt, spec, ...)                                                                                               \
-  BOOST_OUTCOME_TRYV2_UNIQUE_STORAGE(unique, spec, __VA_ARGS__);                                                                                                     \
-  BOOST_OUTCOME_TRY_LIKELY_IF(!BOOST_OUTCOME_V2_NAMESPACE::try_operation_has_value(unique))                                                                                \
-  { /* works around ICE in GCC's coroutines implementation */                                                                                                  \
-    auto unique##_f(::BOOST_OUTCOME_V2_NAMESPACE::try_operation_return_as(static_cast<decltype(unique) &&>(unique)));                                                \
-    retstmt unique##_f;                                                                                                                                        \
-  }
+#define BOOST_OUTCOME_TRYV2(unique, ...)                                                                                                                                                                                                                                                                                             \
+  auto && (unique) = (__VA_ARGS__);                                                                                                                                                                                                                                                                                            \
+  if(!BOOST_OUTCOME_V2_NAMESPACE::try_operation_has_value(unique))                                                                                                                                                                                                                                                                   \
+  return BOOST_OUTCOME_V2_NAMESPACE::try_operation_return_as(static_cast<decltype(unique) &&>(unique))
+#define BOOST_OUTCOME_TRY2(unique, v, ...)                                                                                                                                                                                                                                                                                           \
+  BOOST_OUTCOME_TRYV2(unique, __VA_ARGS__);                                                                                                                                                                                                                                                                                          \
+  auto && (v) = BOOST_OUTCOME_V2_NAMESPACE::try_operation_extract_value(static_cast<decltype(unique) &&>(unique))
 
-#define BOOST_OUTCOME_TRY2_SUCCESS_LIKELY(unique, retstmt, var, ...)                                                                                                 \
-  BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(unique, retstmt, var, __VA_ARGS__);                                                                                             \
-  BOOST_OUTCOME_TRY2_VAR(var) = ::BOOST_OUTCOME_V2_NAMESPACE::try_operation_extract_value(static_cast<decltype(unique) &&>(unique))
-#define BOOST_OUTCOME_TRY2_FAILURE_LIKELY(unique, retstmt, var, ...)                                                                                                 \
-  BOOST_OUTCOME_TRYV3_FAILURE_LIKELY(unique, retstmt, var, __VA_ARGS__);                                                                                             \
-  BOOST_OUTCOME_TRY2_VAR(var) = ::BOOST_OUTCOME_V2_NAMESPACE::try_operation_extract_value(static_cast<decltype(unique) &&>(unique))
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRYV(...) BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, deduce, __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRYV_FAILURE_LIKELY(...) BOOST_OUTCOME_TRYV3_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, deduce, __VA_ARGS__)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRYV(...) BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, deduce, __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRYV_FAILURE_LIKELY(...) BOOST_OUTCOME_TRYV3_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, deduce, __VA_ARGS__)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRYV2(s, ...) BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, (s, ), __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRYV2_FAILURE_LIKELY(s, ...) BOOST_OUTCOME_TRYV3_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, (s, ), __VA_ARGS__)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRYV2(s, ...) BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, (s, ), __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRYV2_FAILURE_LIKELY(s, ...) BOOST_OUTCOME_TRYV3_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, s(, ), __VA_ARGS__)
-
-
-#if defined(__GNUC__) || defined(__clang__)
-
-#define BOOST_OUTCOME_TRYX2(unique, retstmt, ...)                                                                                                                    \
-  ({                                                                                                                                                           \
-    BOOST_OUTCOME_TRYV2_SUCCESS_LIKELY(unique, retstmt, deduce, __VA_ARGS__);                                                                                        \
-    ::BOOST_OUTCOME_V2_NAMESPACE::try_operation_extract_value(static_cast<decltype(unique) &&>(unique));                                                             \
-  })
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRYX(...) BOOST_OUTCOME_TRYX2(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, __VA_ARGS__)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRYX(...) BOOST_OUTCOME_TRYX2(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, __VA_ARGS__)
+#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 8
+#pragma GCC diagnostic pop
 #endif
 
 /*! AWAITING HUGO JSON CONVERSION TOOL
 SIGNATURE NOT RECOGNISED
 */
-#define BOOST_OUTCOME_TRYA(v, ...) BOOST_OUTCOME_TRY2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, v, __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRYA_FAILURE_LIKELY(v, ...) BOOST_OUTCOME_TRY2_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, v, __VA_ARGS__)
+#define BOOST_OUTCOME_TRYV(...) BOOST_OUTCOME_TRYV2(BOOST_OUTCOME_TRY_UNIQUE_NAME, __VA_ARGS__)
+
+#if defined(__GNUC__) || defined(__clang__)
 
 /*! AWAITING HUGO JSON CONVERSION TOOL
 SIGNATURE NOT RECOGNISED
 */
-#define BOOST_OUTCOME_CO_TRYA(v, ...) BOOST_OUTCOME_TRY2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, v, __VA_ARGS__)
+#define BOOST_OUTCOME_TRYX(...)                                                                                                                                                                                                                                                                                                      \
+  ({                                                                                                                                                                                                                                                                                                                           \
+    auto &&res = (__VA_ARGS__);                                                                                                                                                                                                                                                                                                \
+    if(!BOOST_OUTCOME_V2_NAMESPACE::try_operation_has_value(res))                                                                                                                                                                                                                                                                    \
+      return BOOST_OUTCOME_V2_NAMESPACE::try_operation_return_as(static_cast<decltype(res) &&>(res));                                                                                                                                                                                                                                \
+    BOOST_OUTCOME_V2_NAMESPACE::try_operation_extract_value(static_cast<decltype(res) &&>(res));                                                                                                                                                                                                                                     \
+  })
+#endif
+
 /*! AWAITING HUGO JSON CONVERSION TOOL
 SIGNATURE NOT RECOGNISED
 */
-#define BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(v, ...) BOOST_OUTCOME_TRY2_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, v, __VA_ARGS__)
-
+#define BOOST_OUTCOME_TRYA(v, ...) BOOST_OUTCOME_TRY2(BOOST_OUTCOME_TRY_UNIQUE_NAME, v, __VA_ARGS__)
 
 #define BOOST_OUTCOME_TRY_INVOKE_TRY8(a, b, c, d, e, f, g, h) BOOST_OUTCOME_TRYA(a, b, c, d, e, f, g, h)
 #define BOOST_OUTCOME_TRY_INVOKE_TRY7(a, b, c, d, e, f, g) BOOST_OUTCOME_TRYA(a, b, c, d, e, f, g)
@@ -283,132 +198,9 @@ SIGNATURE NOT RECOGNISED
 #define BOOST_OUTCOME_TRY_INVOKE_TRY3(a, b, c) BOOST_OUTCOME_TRYA(a, b, c)
 #define BOOST_OUTCOME_TRY_INVOKE_TRY2(a, b) BOOST_OUTCOME_TRYA(a, b)
 #define BOOST_OUTCOME_TRY_INVOKE_TRY1(a) BOOST_OUTCOME_TRYV(a)
-
 /*! AWAITING HUGO JSON CONVERSION TOOL
 SIGNATURE NOT RECOGNISED
 */
 #define BOOST_OUTCOME_TRY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(BOOST_OUTCOME_TRY_INVOKE_TRY, __VA_ARGS__)
-
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY8(a, b, c, d, e, f, g, h) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g, h)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY7(a, b, c, d, e, f, g) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY6(a, b, c, d, e, f) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b, c, d, e, f)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY5(a, b, c, d, e) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b, c, d, e)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY4(a, b, c, d) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b, c, d)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY3(a, b, c) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b, c)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY2(a, b) BOOST_OUTCOME_TRYA_FAILURE_LIKELY(a, b)
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY1(a) BOOST_OUTCOME_TRYV_FAILURE_LIKELY(a)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRY_FAILURE_LIKELY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(BOOST_OUTCOME_TRY_FAILURE_LIKELY_INVOKE_TRY, __VA_ARGS__)
-
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY8(a, b, c, d, e, f, g, h) BOOST_OUTCOME_CO_TRYA(a, b, c, d, e, f, g, h)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY7(a, b, c, d, e, f, g) BOOST_OUTCOME_CO_TRYA(a, b, c, d, e, f, g)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY6(a, b, c, d, e, f) BOOST_OUTCOME_CO_TRYA(a, b, c, d, e, f)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY5(a, b, c, d, e) BOOST_OUTCOME_CO_TRYA(a, b, c, d, e)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY4(a, b, c, d) BOOST_OUTCOME_CO_TRYA(a, b, c, d)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY3(a, b, c) BOOST_OUTCOME_CO_TRYA(a, b, c)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY2(a, b) BOOST_OUTCOME_CO_TRYA(a, b)
-#define BOOST_OUTCOME_CO_TRY_INVOKE_TRY1(a) BOOST_OUTCOME_CO_TRYV(a)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(BOOST_OUTCOME_CO_TRY_INVOKE_TRY, __VA_ARGS__)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_TRY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(BOOST_OUTCOME_TRY_INVOKE_TRY, __VA_ARGS__)
-
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY8(a, b, c, d, e, f, g, h) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g, h)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY7(a, b, c, d, e, f, g) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY6(a, b, c, d, e, f) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e, f)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY5(a, b, c, d, e) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY4(a, b, c, d) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b, c, d)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY3(a, b, c) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b, c)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY2(a, b) BOOST_OUTCOME_CO_TRYA_FAILURE_LIKELY(a, b)
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY1(a) BOOST_OUTCOME_CO_TRYV_FAILURE_LIKELY(a)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(BOOST_OUTCOME_CO_TRY_FAILURE_LIKELY_INVOKE_TRY, __VA_ARGS__)
-
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_TRYA(v, ...) BOOST_OUTCOME_TRY2_SUCCESS_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, deduce, auto &&v, __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_TRYA_FAILURE_LIKELY(v, ...) BOOST_OUTCOME_TRY2_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, return, deduce, auto &&v, __VA_ARGS__)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_CO_TRYA(v, ...) BOOST_OUTCOME_TRY2_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_return, deduce, auto &&v, __VA_ARGS__)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_CO_TRYA_FAILURE_LIKELY(v, ...) BOOST_OUTCOME_TRY2_FAILURE_LIKELY(BOOST_OUTCOME_TRY_UNIQUE_NAME, co_retrn, deduce, auto &&v, __VA_ARGS__)
-
-
-#define OUTCOME21_TRY_INVOKE_TRY8(a, b, c, d, e, f, g, h) OUTCOME21_TRYA(a, b, c, d, e, f, g, h)
-#define OUTCOME21_TRY_INVOKE_TRY7(a, b, c, d, e, f, g) OUTCOME21_TRYA(a, b, c, d, e, f, g)
-#define OUTCOME21_TRY_INVOKE_TRY6(a, b, c, d, e, f) OUTCOME21_TRYA(a, b, c, d, e, f)
-#define OUTCOME21_TRY_INVOKE_TRY5(a, b, c, d, e) OUTCOME21_TRYA(a, b, c, d, e)
-#define OUTCOME21_TRY_INVOKE_TRY4(a, b, c, d) OUTCOME21_TRYA(a, b, c, d)
-#define OUTCOME21_TRY_INVOKE_TRY3(a, b, c) OUTCOME21_TRYA(a, b, c)
-#define OUTCOME21_TRY_INVOKE_TRY2(a, b) OUTCOME21_TRYA(a, b)
-#define OUTCOME21_TRY_INVOKE_TRY1(a) BOOST_OUTCOME_TRYV(a)
-
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_TRY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(OUTCOME21_TRY_INVOKE_TRY, __VA_ARGS__)
-
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY8(a, b, c, d, e, f, g, h) OUTCOME21_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g, h)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY7(a, b, c, d, e, f, g) OUTCOME21_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY6(a, b, c, d, e, f) OUTCOME21_TRYA_FAILURE_LIKELY(a, b, c, d, e, f)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY5(a, b, c, d, e) OUTCOME21_TRYA_FAILURE_LIKELY(a, b, c, d, e)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY4(a, b, c, d) OUTCOME21_TRYA_FAILURE_LIKELY(a, b, c, d)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY3(a, b, c) OUTCOME21_TRYA_FAILURE_LIKELY(a, b, c)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY2(a, b) OUTCOME21_TRYA_FAILURE_LIKELY(a, b)
-#define OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY1(a) BOOST_OUTCOME_TRYV_FAILURE_LIKELY(a)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_TRY_FAILURE_LIKELY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(OUTCOME21_TRY_FAILURE_LIKELY_INVOKE_TRY, __VA_ARGS__)
-
-#define OUTCOME21_CO_TRY_INVOKE_TRY8(a, b, c, d, e, f, g, h) OUTCOME21_CO_TRYA(a, b, c, d, e, f, g, h)
-#define OUTCOME21_CO_TRY_INVOKE_TRY7(a, b, c, d, e, f, g) OUTCOME21_CO_TRYA(a, b, c, d, e, f, g)
-#define OUTCOME21_CO_TRY_INVOKE_TRY6(a, b, c, d, e, f) OUTCOME21_CO_TRYA(a, b, c, d, e, f)
-#define OUTCOME21_CO_TRY_INVOKE_TRY5(a, b, c, d, e) OUTCOME21_CO_TRYA(a, b, c, d, e)
-#define OUTCOME21_CO_TRY_INVOKE_TRY4(a, b, c, d) OUTCOME21_CO_TRYA(a, b, c, d)
-#define OUTCOME21_CO_TRY_INVOKE_TRY3(a, b, c) OUTCOME21_CO_TRYA(a, b, c)
-#define OUTCOME21_CO_TRY_INVOKE_TRY2(a, b) OUTCOME21_CO_TRYA(a, b)
-#define OUTCOME21_CO_TRY_INVOKE_TRY1(a) BOOST_OUTCOME_CO_TRYV(a)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_CO_TRY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(OUTCOME21_CO_TRY_INVOKE_TRY, __VA_ARGS__)
-
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY8(a, b, c, d, e, f, g, h) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g, h)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY7(a, b, c, d, e, f, g) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e, f, g)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY6(a, b, c, d, e, f) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e, f)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY5(a, b, c, d, e) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b, c, d, e)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY4(a, b, c, d) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b, c, d)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY3(a, b, c) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b, c)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY2(a, b) OUTCOME21_CO_TRYA_FAILURE_LIKELY(a, b)
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY1(a) BOOST_OUTCOME_CO_TRYV_FAILURE_LIKELY(a)
-/*! AWAITING HUGO JSON CONVERSION TOOL
-SIGNATURE NOT RECOGNISED
-*/
-#define OUTCOME21_CO_TRY_FAILURE_LIKELY(...) BOOST_OUTCOME_TRY_CALL_OVERLOAD(OUTCOME21_CO_TRY_FAILURE_LIKELY_INVOKE_TRY, __VA_ARGS__)
-
-
-#if !defined(__clang__) && defined(__GNUC__) && __GNUC__ >= 8
-#pragma GCC diagnostic pop
-#endif
 
 #endif

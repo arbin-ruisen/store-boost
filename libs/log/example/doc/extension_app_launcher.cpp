@@ -9,7 +9,6 @@
 #include <string>
 #include <utility>
 #include <stdexcept>
-#include <boost/core/ignore_unused.hpp>
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/phoenix.hpp>
 #include <boost/log/trivial.hpp>
@@ -48,8 +47,7 @@ public:
 // The function consumes the log records that come from the frontend
 void app_launcher::consume(logging::record_view const& rec, string_type const& command_line)
 {
-    int res = std::system(command_line.c_str());
-    boost::ignore_unused(res);
+    std::system(command_line.c_str());
 }
 //]
 

@@ -3,10 +3,7 @@
 #~ (See accompanying file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
 import testing ;
-import-search /boost/config/checks ;
-import config : requires ;
-
-project : requirements <library>/boost/rational//boost_rational ;
+import ../../config/checks/config : requires ;
 
 test-suite rational
     :   [ run rational_example.cpp ]

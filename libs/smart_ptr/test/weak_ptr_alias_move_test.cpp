@@ -8,12 +8,14 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 
+#include <boost/core/lightweight_test.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/core/lightweight_test.hpp>
 #include <boost/config.hpp>
 #include <memory>
 #include <cstddef>
+
+#if !defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
 
 class incomplete;
 
@@ -84,3 +86,12 @@ int main()
 
     return boost::report_errors();
 }
+
+#else // defined( BOOST_NO_CXX11_RVALUE_REFERENCES )
+
+int main()
+{
+    return 0;
+}
+
+#endif

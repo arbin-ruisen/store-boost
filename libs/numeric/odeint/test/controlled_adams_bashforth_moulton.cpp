@@ -22,7 +22,7 @@ struct const_sys
     }
 };
 
-typedef std::array< double , 1 > state_type;
+typedef boost::array< double , 1 > state_type;
 typedef double value_type;
 
 BOOST_AUTO_TEST_SUITE( controlled_adams_bashforth_moulton_test )

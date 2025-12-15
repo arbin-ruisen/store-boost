@@ -15,6 +15,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <boost/assign.hpp>
+#include <boost/bind.hpp>
 #include <boost/config.hpp>
 #include "../test_driver/range_overload_test_driver.hpp"
 #include <algorithm>

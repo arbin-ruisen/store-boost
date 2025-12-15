@@ -14,7 +14,6 @@
 #include <boost/thread/thread_only.hpp>
 #include <boost/thread/xtime.hpp>
 
-#include <boost/config.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include "./util.inl"
@@ -42,17 +41,14 @@ void condition_test_thread(condition_test_data* data)
 struct cond_predicate
 {
     cond_predicate(int& var, int val) : _var(var), _val(val) { }
-#if !defined(BOOST_NO_CXX11_DEFAULTED_FUNCTIONS)
-    cond_predicate(cond_predicate const&) = default;
-#endif
 
     bool operator()() { return _var == _val; }
 
     int& _var;
     int _val;
-
 private:
     void operator=(cond_predicate&);
+
 };
 
 void condition_test_waits(condition_test_data* data)

@@ -10,6 +10,5 @@
     ],
     "maintainers": [
         "Christophe Henry <christophe.j.henry -at-  googlemail.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

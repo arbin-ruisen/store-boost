@@ -26,16 +26,16 @@ struct pickle::data_t {
 /// Data used for communicating with the Python `pickle' module.
 pickle::data_t* pickle::data;
 
-object pickle::dumps(object obj, int protocol)
+str pickle::dumps(object obj, int protocol)
 {
   if (!data) initialize_data();
-  return (data->dumps)(obj, protocol);
+  return extract<str>((data->dumps)(obj, protocol));
 }
 
-object pickle::loads(object s)
+object pickle::loads(str s)
 {
   if (!data) initialize_data();
-  return (data->loads)(s);
+  return ((data->loads)(s));
 }
 
 void pickle::initialize_data()

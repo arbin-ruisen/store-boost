@@ -5,12 +5,13 @@
         "Daniel James"
     ],
     "maintainers": [
-        "Christian Mazakas <christian.mazakas -at- gmail.com>",
-        "Joaquín M López Muñoz <joaquin.lopezmunoz -at- gmail.com>"
+        "Daniel James <dnljms -at- gmail.com>"
     ],
     "description": "Unordered associative containers.",
+    "std": [
+        "tr1"
+    ],
     "category": [
         "Containers"
-    ],
-    "cxxstd": "11"
+    ]
 }

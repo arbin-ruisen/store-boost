@@ -5,8 +5,7 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
-// Copyright (c) 2017-2024, Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// Copyright (c) 2017, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
@@ -25,10 +24,12 @@
 #include <boost/geometry/strategies/cartesian/intersection.hpp>
 #include <boost/geometry/strategies/intersection_result.hpp>
 
-#include <boost/geometry/policies/relate/intersection_policy.hpp>
+#include <boost/geometry/policies/relate/intersection_points.hpp>
+#include <boost/geometry/policies/relate/direction.hpp>
+#include <boost/geometry/policies/relate/tupled.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
-#include <boost/geometry/algorithms/detail/overlay/segment_as_subrange.hpp>
+
 
 #include <boost/geometry/geometries/point.hpp>
 #include <boost/geometry/geometries/segment.hpp>
@@ -71,13 +72,21 @@ static void test_segment_intersection(std::string const& case_id,
     bg::assign_values(p3, x3, y3);
     bg::assign_values(p4, x4, y4);
 
-    segment_type s12(p1, p2);
-    segment_type s34(p3, p4);
+    segment_type s12(p1,p2);
+    segment_type s34(p3,p4);
 
-    bg::detail::segment_as_subrange<segment_type> sr12(s12);
-    bg::detail::segment_as_subrange<segment_type> sr34(s34);
+    typedef bg::detail::no_rescale_policy rescale_policy_type;
+    rescale_policy_type rescale_policy;
 
-    typedef bg::segment_intersection_points<P> result_type;
+    typedef bg::segment_intersection_points
+    <
+        P,
+        typename bg::segment_ratio_type
+        <
+            P,
+            rescale_policy_type
+        >::type
+    > result_type;
 
     typedef bg::policies::relate::segments_intersection_points
         <
@@ -87,12 +96,13 @@ static void test_segment_intersection(std::string const& case_id,
     // Get the intersection point (or two points)
     result_type is
         = bg::strategy::intersection::cartesian_segments<>
-            ::apply(sr12, sr34, points_policy_type());
+            ::apply(s12, s34, points_policy_type(), rescale_policy, p1, p2, p3, p4);
 
     // Get just a character for Left/Right/intersects/etc, purpose is more for debugging
     bg::policies::relate::direction_type dir
         = bg::strategy::intersection::cartesian_segments<>
-            ::apply(sr12, sr34, bg::policies::relate::segments_direction());
+            ::apply(s12, s34, bg::policies::relate::segments_direction(),
+                    rescale_policy, p1, p2, p3, p4);
 
     std::size_t expected_count =
         check(is, 0, expected_x1, expected_y1)
@@ -128,10 +138,15 @@ static void test_segment_ratio(std::string const& case_id,
     segment_type s12(p1, p2);
     segment_type s34(p3, p4);
 
-    bg::detail::segment_as_subrange<segment_type> sr12(s12);
-    bg::detail::segment_as_subrange<segment_type> sr34(s34);
+    typedef bg::detail::no_rescale_policy rescale_policy_type;
+    rescale_policy_type rescale_policy;
 
-    typedef bg::segment_intersection_points<P> result_type;
+    typedef typename bg::segment_ratio_type<P, rescale_policy_type>::type ratio_type;
+    typedef bg::segment_intersection_points
+    <
+        P,
+        ratio_type
+    > result_type;
 
     typedef bg::policies::relate::segments_intersection_points
         <
@@ -141,9 +156,7 @@ static void test_segment_ratio(std::string const& case_id,
     // Get the intersection point (or two points)
     result_type is
         = bg::strategy::intersection::cartesian_segments<>
-            ::apply(sr12, sr34, points_policy_type());
-
-    typedef bg::segment_ratio<typename bg::coordinate_type<P>::type> ratio_type;
+            ::apply(s12, s34, points_policy_type(), rescale_policy, p1, p2, p3, p4);
 
     ratio_type expected_a1(expected_pair_a1.first, expected_pair_a1.second);
     ratio_type expected_a2(expected_pair_a2.first, expected_pair_a2.second);
@@ -152,8 +165,8 @@ static void test_segment_ratio(std::string const& case_id,
 
     BOOST_CHECK_EQUAL(is.count, expected_count);
 
-    BOOST_CHECK_EQUAL(is.fractions[0].ra, expected_a1);
-    BOOST_CHECK_EQUAL(is.fractions[0].rb, expected_b1);
+    BOOST_CHECK_EQUAL(is.fractions[0].robust_ra, expected_a1);
+    BOOST_CHECK_EQUAL(is.fractions[0].robust_rb, expected_b1);
     BOOST_CHECK_EQUAL(bg::get<0>(is.intersections[0]), exp_ax1);
     BOOST_CHECK_EQUAL(bg::get<1>(is.intersections[0]), exp_ay1);
 
@@ -161,8 +174,8 @@ static void test_segment_ratio(std::string const& case_id,
     {
         BOOST_CHECK_EQUAL(bg::get<0>(is.intersections[1]), exp_ax2);
         BOOST_CHECK_EQUAL(bg::get<1>(is.intersections[1]), exp_ay2);
-        BOOST_CHECK_EQUAL(is.fractions[1].ra, expected_a2);
-        BOOST_CHECK_EQUAL(is.fractions[1].rb, expected_b2);
+        BOOST_CHECK_EQUAL(is.fractions[1].robust_ra, expected_a2);
+        BOOST_CHECK_EQUAL(is.fractions[1].robust_rb, expected_b2);
     }
 }
 

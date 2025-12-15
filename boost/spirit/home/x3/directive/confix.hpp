@@ -1,8 +1,6 @@
 /*=============================================================================
     Copyright (c) 2009 Chris Hoeppler
     Copyright (c) 2014 Lee Clagett
-    Copyright (c) 2017 wanghan02
-    Copyright (c) 2024 Nana Sakisaka
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -12,7 +10,6 @@
 #define BOOST_SPIRIT_X3_CONFIX_MAY_30_2014_1819PM
 
 #include <boost/spirit/home/x3/core/parser.hpp>
-#include <boost/spirit/home/x3/support/expectation.hpp>
 
 namespace boost { namespace spirit { namespace x3
 {
@@ -25,7 +22,7 @@ namespace boost { namespace spirit { namespace x3
         static bool const is_pass_through_unary = true;
         static bool const handles_container = Subject::handles_container;
 
-        constexpr confix_directive(Prefix const& prefix
+        confix_directive(Prefix const& prefix
                          , Subject const& subject
                          , Postfix const& postfix) :
             base_type(subject),
@@ -46,14 +43,6 @@ namespace boost { namespace spirit { namespace x3
                   this->subject.parse(first, last, context, rcontext, attr) &&
                   postfix.parse(first, last, context, rcontext, unused)))
             {
-            #if !BOOST_SPIRIT_X3_THROW_EXPECTATION_FAILURE
-                if (has_expectation_failure(context))
-                {
-                    // don't rollback iterator (mimicking exception-like behavior)
-                    return false;
-                }
-            #endif
-
                 first = save;
                 return false;
             }
@@ -69,7 +58,7 @@ namespace boost { namespace spirit { namespace x3
     struct confix_gen
     {
         template<typename Subject>
-        constexpr confix_directive<
+        confix_directive<
             Prefix, typename extension::as_parser<Subject>::value_type, Postfix>
         operator[](Subject const& subject) const
         {
@@ -82,7 +71,7 @@ namespace boost { namespace spirit { namespace x3
 
 
     template<typename Prefix, typename Postfix>
-    constexpr confix_gen<typename extension::as_parser<Prefix>::value_type,
+    confix_gen<typename extension::as_parser<Prefix>::value_type,
                typename extension::as_parser<Postfix>::value_type>
     confix(Prefix const& prefix, Postfix const& postfix)
     {

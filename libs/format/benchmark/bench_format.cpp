@@ -28,7 +28,7 @@
 #include <cstring>
 #include <fstream>
 #include <cmath>   // floor
-#include <boost/timer/timer.hpp>
+#include <boost/timer.hpp>
 #include <vector>
 
 #include <boost/format.hpp>
@@ -87,7 +87,7 @@ static int NTests = 300000;
 
 //static std::stringstream nullStream;
 static NulStream nullStream;
-static boost::timer::nanosecond_type tstream, tpf;
+static double tstream, tpf;
 //static const std::string fstring="%3$#x %1$20.10E %2$g %3$d \n";
 static const std::string fstring="%3$0#6x %1$20.10E %2$g %3$0+5d \n";
 static const double     arg1=45.23;
@@ -120,11 +120,11 @@ void test_sprintf()
       cerr << endl << buf;
     }
     // time the loop :
-    boost::timer::cpu_timer chrono;
+    boost::timer chrono;
     for(int i=0; i<NTests; ++i) {
       sprintf(buf, fstring.c_str(), arg1, arg2, arg3);
     }
-    tpf=chrono.elapsed().wall;
+    tpf=chrono.elapsed();
     cout  << left << setw(20) <<"printf time"<< right <<":" << tpf  << endl;
 }
 
@@ -133,16 +133,15 @@ void test_try1()
   using namespace std;
   boost::io::basic_oaltstringstream<char> oss;
   oss << boost::format(fstring) % arg1 % arg2 % arg3;
-  boost::timer::cpu_timer chrono;
+  boost::timer chrono;
   size_t dummy=0;
   for(int i=0; i<NTests; ++i) {
       dummy += oss.cur_size();
   }
-  boost::timer::nanosecond_type t = chrono.elapsed().wall;
+  double t = chrono.elapsed();
   cout  << left << setw(20) <<"try1 time"<< right <<":" << setw(5) << t
         << ",  = " << t / tpf << " * printf "
-        << ",  = " << t / tstream << " * nullStream"
-        << ", accum = " << dummy << endl;
+        << ",  = " << t / tstream << " * nullStream \n";
 }
 
 void test_try2()
@@ -156,16 +155,15 @@ void test_try2()
   oss.clear_buffer();
   oss << s << s;
   s = oss.cur_str();
-  boost::timer::cpu_timer chrono;
+  boost::timer chrono;
   size_t dummy=0;
   for(int i=0; i<NTests; ++i) {
       dummy += oss.cur_size();
   }
-  boost::timer::nanosecond_type t = chrono.elapsed().wall;
+  double t = chrono.elapsed();
   cout  << left << setw(20) <<"try2 time"<< right <<":" << setw(5) << t
         << ",  = " << t / tpf << " * printf "
-        << ",  = " << t / tstream << " * nullStream"
-        << ", accum = " << dummy << endl;
+        << ",  = " << t / tstream << " * nullStream \n";
 }
 
 void do_stream(std::ostream& os) {
@@ -185,7 +183,7 @@ void do_stream(std::ostream& os) {
 void test_nullstream()
 {
     using namespace std;
-    boost::timer::cpu_timer chrono;
+    boost::timer chrono;
     boost::io::basic_oaltstringstream<char> oss;
 
     {   
@@ -209,7 +207,7 @@ void test_nullstream()
 //       nullStream << " " << arg2 << " " << arg3 << " \n" ;
 
 //     }
-    boost::timer::nanosecond_type t = chrono.elapsed().wall;
+    double t = chrono.elapsed();
     cout  << left << setw(20) <<"ostream time"<< right <<":" << setw(5) << t  
           << ",  = " << t / tpf << " * printf \n";
     tstream = t;
@@ -218,7 +216,7 @@ void test_nullstream()
 void test_opti_nullstream()
 {
     using namespace std;
-    boost::timer::cpu_timer chrono;
+    boost::timer chrono;
     boost::io::basic_oaltstringstream<char> oss;
     //static const std::string fstring="%3$#x %1$20.10E %2$g %3$d \n";
 
@@ -253,7 +251,7 @@ void test_opti_nullstream()
       nullStream.flags(f0); nullStream.precision(p0);
       nullStream << " " << arg2 << " " << arg3 << " \n" ;
     }
-    boost::timer::nanosecond_type t = chrono.elapsed().wall;
+    double t = chrono.elapsed();
     cout  << left << setw(20) <<"opti-stream time"<< right <<":" << setw(5) << t  
           << ",  = " << t / tpf << " * printf \n";
     //    tstream = t;
@@ -273,11 +271,11 @@ void test_parsed_once_format()
     // not only is the format-string parsed once,
     // but also the buffer of the internal stringstream is already allocated.
 
-    boost::timer::cpu_timer chrono;        
+    boost::timer chrono;        
     for(int i=0; i<NTests; ++i) {
         nullStream << boost::format(fmter) % arg1 % arg2 % arg3;
     }
-    boost::timer::nanosecond_type t=chrono.elapsed().wall;
+    double t=chrono.elapsed();
     cout  << left << setw(20) <<"parsed-once time"<< right <<":" << setw(5) << t 
           << ",  = " << t / tpf << " * printf "
           << ",  = " << t / tstream << " * nullStream \n";
@@ -292,12 +290,12 @@ void test_reused_format()
     cerr << endl << oss.str();
   }
 
-  boost::timer::cpu_timer chrono;
+  boost::timer chrono;
   boost::format fmter;
   for(int i=0; i<NTests; ++i) {
     nullStream << fmter.parse(fstring) % arg1 % arg2 % arg3;
   }
-  boost::timer::nanosecond_type t = chrono.elapsed().wall;
+  double t = chrono.elapsed();
   cout  << left << setw(20) <<"reused format time"<< right <<":" << setw(5) << t
         << ",  = " << t / tpf << " * printf "
         << ",  = " << t / tstream << " * nullStream \n";
@@ -312,11 +310,11 @@ void test_format()
     cerr << endl << oss.str();
   }
 
-  boost::timer::cpu_timer chrono;
+  boost::timer chrono;
   for(int i=0; i<NTests; ++i) {
     nullStream << boost::format(fstring) % arg1 % arg2 % arg3;
   }
-  boost::timer::nanosecond_type t = chrono.elapsed().wall;
+  double t = chrono.elapsed();
   cout  << left << setw(20) <<"format time"<< right <<":" << setw(5) << t
         << ",  = " << t / tpf << " * printf "
         << ",  = " << t / tstream << " * nullStream \n";

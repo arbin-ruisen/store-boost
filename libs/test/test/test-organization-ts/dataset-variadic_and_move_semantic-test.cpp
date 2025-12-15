@@ -82,7 +82,7 @@ int non_copyable_type::nb_destructs = 0;
 template <class return_t = int>
 class fibonacci_dataset {
 public:
-    static const int arity = 1;
+    enum { arity = 1 };
 
     struct iterator {
 

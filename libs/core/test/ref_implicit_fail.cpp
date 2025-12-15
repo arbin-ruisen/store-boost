@@ -8,7 +8,7 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include <boost/core/ref.hpp>
+#include <boost/ref.hpp>
 
 void f( boost::reference_wrapper< int > )
 {

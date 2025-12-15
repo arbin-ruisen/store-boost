@@ -4,8 +4,7 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
-#include <boost/spirit/include/qi_sequence.hpp>
-
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/spirit/include/qi_operator.hpp>
 #include <boost/spirit/include/qi_char.hpp>
 #include <boost/spirit/include/qi_string.hpp>
@@ -14,8 +13,8 @@
 #include <boost/spirit/include/qi_action.hpp>
 #include <boost/spirit/include/qi_nonterminal.hpp>
 #include <boost/spirit/include/support_argument.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 
 #include <string>
 #include <iostream>
@@ -303,7 +302,7 @@ main()
         int n = 0;
 
         BOOST_TEST(test("x123\"a string\"", (char_ >> int_ >> "\"a string\"")
-            [(ref(c) = _1, ref(n) = _2)]));
+            [ref(c) = _1, ref(n) = _2]));
         BOOST_TEST(c == 'x');
         BOOST_TEST(n == 123);
     }
@@ -314,7 +313,7 @@ main()
         int n = 0;
 
         BOOST_TEST(test("x 123 \"a string\"", (char_ >> int_ >> "\"a string\"")
-            [(ref(c) = _1, ref(n) = _2)], space));
+            [ref(c) = _1, ref(n) = _2], space));
         BOOST_TEST(c == 'x');
         BOOST_TEST(n == 123);
     }

@@ -13,7 +13,7 @@ set -eu
 # it is the name of the branch targeted by the pull request (in many cases this
 # will be master).
 MAIN_BRANCH="0"
-if [[ $DRONE_BRANCH == "master" || $DRONE_BRANCH == "develop" ]]; then
+if [[ $TRAVIS_BRANCH == "master" || $TRAVIS_BRANCH == "develop" ]]; then
     MAIN_BRANCH="1"
 fi
 
@@ -111,7 +111,6 @@ function build_bjam ()
       libs/beast/test/beast/zlib//fat-tests \
       toolset=$TOOLSET \
       variant=$VARIANT \
-      link=static \
       -j${JOBS}
   elif [[ $VARIANT == "debug" ]]; then
     b2 \
@@ -136,26 +135,20 @@ function build_bjam ()
 build_bjam
 
 if [[ $VARIANT == "beast_coverage" ]]; then
-  GCOV=${GCOV:-gcov}
   # for lcov to work effectively, the paths and includes
   # passed to the compiler should not contain "." or "..".
   # (this runs in $BOOST_ROOT)
   lcov --version
   find "$BOOST_ROOT" -name "*.gcda" | xargs rm -f
   rm -f "$BOOST_ROOT/*.info"
-  lcov --gcov-tool $GCOV --no-external -c -i -d "$BOOST_ROOT" -o baseline.info > /dev/null
+  lcov --no-external -c -i -d "$BOOST_ROOT" -o baseline.info > /dev/null
   run_tests "$BIN_DIR" fat-tests
   # https://bugs.launchpad.net/ubuntu/+source/lcov/+bug/1163758
-  lcov --gcov-tool $GCOV --no-external -c -d "$BOOST_ROOT"  -o testrun-all.info > /dev/null 2>&1
-  lcov --gcov-tool $GCOV -a baseline.info -a testrun-all.info -o lcov-diff.info > /dev/null
-  lcov --gcov-tool $GCOV -e "lcov-diff.info" "$INC_DIR/*" -o lcov.info > /dev/null
-  lcov --gcov-tool $GCOV --remove "lcov.info" "$INC_DIR/_experimental/*" -o lcov.info > /dev/null
-  echo "Change working directory for codecov:"
-  pwd
-  pushd .
-  cd libs/beast
-  ~/.local/bin/codecov -X gcov -f ../../lcov.info
-  popd
+  lcov --no-external -c -d "$BOOST_ROOT"  -o testrun-all.info > /dev/null 2>&1
+  lcov -a baseline.info -a testrun-all.info -o lcov-diff.info > /dev/null
+  lcov -e "lcov-diff.info" "$INC_DIR/*" -o lcov.info > /dev/null
+  lcov --remove "lcov.info" "$INC_DIR/_experimental/*" -o lcov.info > /dev/null
+  ~/.local/bin/codecov -X gcov -f lcov.info
   find "$BOOST_ROOT" -name "*.gcda" | xargs rm -f
 
 elif [[ $VARIANT == "beast_valgrind" ]]; then

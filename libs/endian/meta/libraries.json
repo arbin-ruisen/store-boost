@@ -5,13 +5,12 @@
         "Beman Dawes"
     ],
     "maintainers": [
-        "Peter Dimov <pdimov -at- gmail.com>"
+        "Beman Dawes <bdawes -at- acm.org>"
     ],
     "description": "Types and conversion functions for correct byte ordering and more regardless of processor endianness.",
     "category": [
         "IO",
         "Math",
         "Miscellaneous"
-    ],
-    "cxxstd": "11"
+    ]
 }

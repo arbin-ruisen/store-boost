@@ -19,22 +19,12 @@
 #include <boost/move/iterator.hpp>
 #include <boost/move/make_unique.hpp>
 
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-result"
-#endif
-
 #define BOOST_INTRUSIVE_HAS_MEMBER_FUNCTION_CALLABLE_WITH_FUNCNAME rebalance
 #define BOOST_INTRUSIVE_HAS_MEMBER_FUNCTION_CALLABLE_WITH_NS_BEG namespace boost { namespace container { namespace test {
 #define BOOST_INTRUSIVE_HAS_MEMBER_FUNCTION_CALLABLE_WITH_NS_END   }}}
 #define BOOST_INTRUSIVE_HAS_MEMBER_FUNCTION_CALLABLE_WITH_MIN 0
 #define BOOST_INTRUSIVE_HAS_MEMBER_FUNCTION_CALLABLE_WITH_MAX 0
 #include <boost/intrusive/detail/has_member_function_callable_with.hpp>
-
-//#pragma GCC diagnostic ignored "-Wunused-result"
-#if defined(BOOST_GCC) && (BOOST_GCC >= 40600)
-#pragma GCC diagnostic pop
-#endif
 
 namespace boost{
 namespace container {
@@ -122,7 +112,7 @@ int set_test_copyable(boost::container::dtl::true_type)
          return 1;
    }
    {
-      //Now, test copy constructor with allocator
+      //Now, test copy constructor
       MyBoostSet boostsetcopy(boostset, typename MyBoostSet::allocator_type());
       MyStdSet stdsetcopy(stdset);
 
@@ -161,7 +151,8 @@ int set_test ()
    {  //Set(beg, end, compare)
       IntType aux_vect[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect[i] = i/2;
+         IntType move_me(i/2);
+         aux_vect[i] = boost::move(move_me);
       }
       int aux_vect2[50];
       for(int i = 0; i < 50; ++i){
@@ -169,7 +160,8 @@ int set_test ()
       }
       IntType aux_vect3[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect3[i] = i/2;
+         IntType move_me(i/2);
+         aux_vect3[i] = boost::move(move_me);
       }
       ::boost::movelib::unique_ptr<MyBoostSet> const pboostset2 = ::boost::movelib::make_unique<MyBoostSet>
          (boost::make_move_iterator(&aux_vect[0]), boost::make_move_iterator(&aux_vect[0]+50), typename MyBoostSet::key_compare());
@@ -183,7 +175,8 @@ int set_test ()
    {  //Set(beg, end, alloc)
       IntType aux_vect[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect[i] = i/2;
+         IntType move_me(i/2);
+         aux_vect[i] = boost::move(move_me);
       }
       int aux_vect2[50];
       for(int i = 0; i < 50; ++i){
@@ -191,7 +184,8 @@ int set_test ()
       }
       IntType aux_vect3[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect3[i] = i/2;
+         IntType move_me(i/2);
+         aux_vect3[i] = boost::move(move_me);
       }
       ::boost::movelib::unique_ptr<MyBoostSet> const pboostset2 = ::boost::movelib::make_unique<MyBoostSet>
          (boost::make_move_iterator(&aux_vect[0]), boost::make_move_iterator(&aux_vect[0]+50), typename MyBoostSet::allocator_type());
@@ -205,7 +199,8 @@ int set_test ()
    {
       IntType aux_vect[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect[i] = i/2;
+         IntType move_me(i/2);
+         aux_vect[i] = boost::move(move_me);
       }
       int aux_vect2[50];
       for(int i = 0; i < 50; ++i){
@@ -213,7 +208,8 @@ int set_test ()
       }
       IntType aux_vect3[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect3[i] = i/2;
+         IntType move_me(i/2);
+         aux_vect3[i] = boost::move(move_me);
       }
 
       ::boost::movelib::unique_ptr<MyBoostSet> const pboostset2 = ::boost::movelib::make_unique<MyBoostSet>
@@ -243,7 +239,8 @@ int set_test ()
 
       //ordered range insertion
       for(int i = 0; i < 50; ++i){
-         aux_vect[i] = i;
+         IntType move_me(i);
+         aux_vect[i] = boost::move(move_me);
       }
 
       for(int i = 0; i < 50; ++i){
@@ -251,7 +248,8 @@ int set_test ()
       }
 
       for(int i = 0; i < 50; ++i){
-         aux_vect3[i] = i;
+         IntType move_me(i);
+         aux_vect3[i] = boost::move(move_me);
       }
 
       //some comparison operators
@@ -349,60 +347,35 @@ int set_test ()
       return 1;
    }
 
-   {
-      //Swapping test
-      MyBoostSet tmpboosteset2;
-      MyStdSet tmpstdset2;
-      MyBoostMultiSet tmpboostemultiset2;
-      MyStdMultiSet tmpstdmultiset2;
-      boostset.swap(tmpboosteset2);
-      stdset.swap(tmpstdset2);
-      boostmultiset.swap(tmpboostemultiset2);
-      stdmultiset.swap(tmpstdmultiset2);
-      boostset.swap(tmpboosteset2);
-      stdset.swap(tmpstdset2);
-      boostmultiset.swap(tmpboostemultiset2);
-      stdmultiset.swap(tmpstdmultiset2);
-      if(!CheckEqualContainers(boostset, stdset)){
-         std::cout << "Error in boostset.swap(tmpboosteset2)" << std::endl;
-         return 1;
-      }
-      if(!CheckEqualContainers(boostmultiset, stdmultiset)){
-         std::cout << "Error in boostmultiset.swap(tmpboostemultiset2)" << std::endl;
-         return 1;
-      }
+   //Swapping test
+   MyBoostSet tmpboosteset2;
+   MyStdSet tmpstdset2;
+   MyBoostMultiSet tmpboostemultiset2;
+   MyStdMultiSet tmpstdmultiset2;
+   boostset.swap(tmpboosteset2);
+   stdset.swap(tmpstdset2);
+   boostmultiset.swap(tmpboostemultiset2);
+   stdmultiset.swap(tmpstdmultiset2);
+   boostset.swap(tmpboosteset2);
+   stdset.swap(tmpstdset2);
+   boostmultiset.swap(tmpboostemultiset2);
+   stdmultiset.swap(tmpstdmultiset2);
+   if(!CheckEqualContainers(boostset, stdset)){
+      std::cout << "Error in boostset.swap(tmpboosteset2)" << std::endl;
+      return 1;
+   }
+   if(!CheckEqualContainers(boostmultiset, stdmultiset)){
+      std::cout << "Error in boostmultiset.swap(tmpboostemultiset2)" << std::endl;
+      return 1;
    }
 
-   //move constructor/assignment
-   {
-      MyBoostSet tmpboosteset2(boost::move(boostset));
-      if(!CheckEqualContainers(tmpboosteset2, stdset)){
-         std::cout << "Error in boostset move constructor " << std::endl;
-         return 1;
-      }
-      MyBoostMultiSet tmpboostemultiset2(boost::move(boostmultiset));
-      if(!CheckEqualContainers(tmpboostemultiset2, stdmultiset)){
-         std::cout << "Error in boostmultiset move constructor " << std::endl;
-         return 1;
-      }
-
-      boostset = boost::move(tmpboosteset2);
-      if(!CheckEqualContainers(boostset, stdset)){
-         std::cout << "Error in boostset move assignment" << std::endl;
-         return 1;
-      }
-      boostmultiset = boost::move(tmpboostemultiset2);
-      if(!CheckEqualContainers(boostmultiset, stdmultiset)){
-         std::cout << "Error in boostmultiset move assignment" << std::endl;
-         return 1;
-      }
-   }
    //Insertion from other container
    //Initialize values
    {
       IntType aux_vect[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect[i] = -1;
+         IntType move_me(-1);
+         aux_vect[i] = boost::move(move_me);
       }
       int aux_vect2[50];
       for(int i = 0; i < 50; ++i){
@@ -410,7 +383,8 @@ int set_test ()
       }
       IntType aux_vect3[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect3[i] = -1;
+         IntType move_me(-1);
+         aux_vect3[i] = boost::move(move_me);
       }
 
       boostset.insert(boost::make_move_iterator(&aux_vect[0]), boost::make_move_iterator(&aux_vect[0] + 50));
@@ -445,7 +419,8 @@ int set_test ()
    {
       IntType aux_vect[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect[i] = -1;
+         IntType move_me(-1);
+         aux_vect[i] = boost::move(move_me);
       }
       int aux_vect2[50];
       for(int i = 0; i < 50; ++i){
@@ -453,17 +428,20 @@ int set_test ()
       }
       IntType aux_vect3[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect3[i] = -1;
+         IntType move_me(-1);
+         aux_vect3[i] = boost::move(move_me);
       }
 
       IntType aux_vect4[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect4[i] = -1;
+         IntType move_me(-1);
+         aux_vect4[i] = boost::move(move_me);
       }
 
       IntType aux_vect5[50];
       for(int i = 0; i < 50; ++i){
-         aux_vect5[i] = -1;
+         IntType move_me(-1);
+         aux_vect5[i] = boost::move(move_me);
       }
 
       boostset.insert(boost::make_move_iterator(&aux_vect[0]), boost::make_move_iterator(&aux_vect[0] + 50));
@@ -627,7 +605,9 @@ int set_test ()
       typename MyBoostSet::iterator bs_e = boostset.end();
       typename MyStdSet::iterator ss_b   = stdset.begin();
 
+      std::size_t i = 0;
       while(bs_b != bs_e){
+         ++i;
          typename MyBoostSet::iterator bs_i;
          typename MyStdSet::iterator ss_i;
          //find
@@ -748,16 +728,16 @@ int set_test ()
       stdmultiset.clear();
 
       {
-         IntType aux_vect[(std::size_t)MaxElem];
+         IntType aux_vect[MaxElem];
          for(int i = 0; i < MaxElem; ++i){
             aux_vect[i] = i;
          }
 
-         IntType aux_vect2[(std::size_t)MaxElem];
+         IntType aux_vect2[MaxElem];
          for(int i = 0; i < MaxElem; ++i){
             aux_vect2[i] = MaxElem/2+i;
          }
-         IntType aux_vect3[(std::size_t)MaxElem];
+         IntType aux_vect3[MaxElem];
          for(int i = 0; i < MaxElem; ++i){
             aux_vect3[i] = MaxElem*2/2+i;
          }
@@ -789,16 +769,16 @@ int set_test ()
       stdset.clear();
       stdmultiset.clear();
       {
-         IntType aux_vect[(std::size_t)MaxElem];
+         IntType aux_vect[MaxElem];
          for(int i = 0; i < MaxElem; ++i){
             aux_vect[i] = i;
          }
 
-         IntType aux_vect2[(std::size_t)MaxElem];
+         IntType aux_vect2[MaxElem];
          for(int i = 0; i < MaxElem; ++i){
             aux_vect2[i] = MaxElem/2+i;
          }
-         IntType aux_vect3[(std::size_t)MaxElem];
+         IntType aux_vect3[MaxElem];
          for(int i = 0; i < MaxElem; ++i){
             aux_vect3[i] = MaxElem*2/2+i;
          }

@@ -25,7 +25,7 @@ as_unescaped_string(Iterator it, Iterator const& end)
         switch (token_id(*it)) {
         case T_STRINGLIT:
             {
-                String val (util::impl::unescape_lit((*it).get_value()).c_str());
+                string val (util::impl::unescape_lit((*it).get_value()).c_str());
                 val.erase(val.size()-1);
                 val.erase(0, 1);
                 result += val;
@@ -115,6 +115,7 @@ public:
         typename Context::token_type const& option, 
         Container const& values, typename Context::token_type const& act_token)
     {
+        typedef typename Context::token_type token_type;
         typedef typename Context::iterator_type iterator_type;
 
         if (option.get_value() == "pp")  {
@@ -139,10 +140,10 @@ public:
                 Container pragma;
                 iterator_type end = ctx.end();
                 for (iterator_type it = ctx.begin(s.begin(), s.end()); 
-                     it != end && token_id(*it) != T_EOF;
-                     std::advance(it, 2))  // skip over whitespace
+                     it != end && token_id(*it) != T_EOF; ++it) 
                 {
                     pragma.push_back(*it);
+                    it++;
                 }
 
             // prepend the newly generated token sequence to the 'pending' 

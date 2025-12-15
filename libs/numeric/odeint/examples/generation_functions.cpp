@@ -12,11 +12,11 @@
  copy at http://www.boost.org/LICENSE_1_0.txt)
  */
 
-#include <array>
+#include <boost/array.hpp>
 
 #include <boost/numeric/odeint.hpp>
 
-typedef std::array< double , 1 > state_type;
+typedef boost::array< double , 1 > state_type;
 
 using namespace boost::numeric::odeint;
 

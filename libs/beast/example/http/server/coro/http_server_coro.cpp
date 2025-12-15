@@ -17,7 +17,6 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/config.hpp>
 #include <algorithm>
@@ -96,15 +95,18 @@ path_cat(
     return result;
 }
 
-// Return a response for the given request.
-//
-// The concrete type of the response message (which depends on the
-// request), is type-erased in message_generator.
-template <class Body, class Allocator>
-http::message_generator
+// This function produces an HTTP response for the given
+// request. The type of the response object depends on the
+// contents of the request, so the interface requires the
+// caller to pass a generic lambda for receiving the response.
+template<
+    class Body, class Allocator,
+    class Send>
+void
 handle_request(
     beast::string_view doc_root,
-    http::request<Body, http::basic_fields<Allocator>>&& req)
+    http::request<Body, http::basic_fields<Allocator>>&& req,
+    Send&& send)
 {
     // Returns a bad request response
     auto const bad_request =
@@ -148,13 +150,13 @@ handle_request(
     // Make sure we can handle the method
     if( req.method() != http::verb::get &&
         req.method() != http::verb::head)
-        return bad_request("Unknown HTTP-method");
+        return send(bad_request("Unknown HTTP-method"));
 
     // Request path must be absolute and not contain "..".
     if( req.target().empty() ||
         req.target()[0] != '/' ||
         req.target().find("..") != beast::string_view::npos)
-        return bad_request("Illegal request-target");
+        return send(bad_request("Illegal request-target"));
 
     // Build the path to the requested file
     std::string path = path_cat(doc_root, req.target());
@@ -168,11 +170,11 @@ handle_request(
 
     // Handle the case where the file doesn't exist
     if(ec == beast::errc::no_such_file_or_directory)
-        return not_found(req.target());
+        return send(not_found(req.target()));
 
     // Handle an unknown error
     if(ec)
-        return server_error(ec.message());
+        return send(server_error(ec.message()));
 
     // Cache the size since we need it after the move
     auto const size = body.size();
@@ -185,7 +187,7 @@ handle_request(
         res.set(http::field::content_type, mime_type(path));
         res.content_length(size);
         res.keep_alive(req.keep_alive());
-        return res;
+        return send(std::move(res));
     }
 
     // Respond to GET request
@@ -197,7 +199,7 @@ handle_request(
     res.set(http::field::content_type, mime_type(path));
     res.content_length(size);
     res.keep_alive(req.keep_alive());
-    return res;
+    return send(std::move(res));
 }
 
 //------------------------------------------------------------------------------
@@ -209,6 +211,41 @@ fail(beast::error_code ec, char const* what)
     std::cerr << what << ": " << ec.message() << "\n";
 }
 
+// This is the C++11 equivalent of a generic lambda.
+// The function object is used to send an HTTP message.
+struct send_lambda
+{
+    beast::tcp_stream& stream_;
+    bool& close_;
+    beast::error_code& ec_;
+    net::yield_context yield_;
+
+    send_lambda(
+        beast::tcp_stream& stream,
+        bool& close,
+        beast::error_code& ec,
+        net::yield_context yield)
+        : stream_(stream)
+        , close_(close)
+        , ec_(ec)
+        , yield_(yield)
+    {
+    }
+
+    template<bool isRequest, class Body, class Fields>
+    void
+    operator()(http::message<isRequest, Body, Fields>&& msg) const
+    {
+        // Determine if we should close the connection after
+        close_ = msg.need_eof();
+
+        // We need the serializer here because the serializer requires
+        // a non-const file_body, and the message oriented version of
+        // http::write only works with const messages.
+        http::serializer<isRequest, Body, Fields> sr{msg};
+        http::async_write(stream_, sr, yield_[ec_]);
+    }
+};
 
 // Handles an HTTP server connection
 void
@@ -217,12 +254,15 @@ do_session(
     std::shared_ptr<std::string const> const& doc_root,
     net::yield_context yield)
 {
+    bool close = false;
     beast::error_code ec;
 
     // This buffer is required to persist across reads
     beast::flat_buffer buffer;
 
     // This lambda is used to send messages
+    send_lambda lambda{stream, close, ec, yield};
+
     for(;;)
     {
         // Set the timeout.
@@ -236,20 +276,11 @@ do_session(
         if(ec)
             return fail(ec, "read");
 
-        // Handle the request
-        http::message_generator msg =
-            handle_request(*doc_root, std::move(req));
-
-        // Determine if we should close the connection
-        bool keep_alive = msg.keep_alive();
-
         // Send the response
-        beast::async_write(stream, std::move(msg), yield[ec]);
-
+        handle_request(*doc_root, std::move(req), lambda);
         if(ec)
             return fail(ec, "write");
-
-        if(! keep_alive)
+        if(close)
         {
             // This means we should close the connection, usually because
             // the response indicated the "Connection: close" semantic.
@@ -309,10 +340,7 @@ do_listen(
                     &do_session,
                     beast::tcp_stream(std::move(socket)),
                     doc_root,
-                    std::placeholders::_1),
-                    // we ignore the result of the session,
-                    // most errors are handled with error_code
-                    boost::asio::detached);
+                    std::placeholders::_1));
     }
 }
 
@@ -342,18 +370,7 @@ int main(int argc, char* argv[])
             std::ref(ioc),
             tcp::endpoint{address, port},
             doc_root,
-            std::placeholders::_1),
-        // on completion, spawn will call this function
-        [](std::exception_ptr ex)
-        {
-            // if an exception occurred in the coroutine,
-            // it's something critical, e.g. out of memory
-            // we capture normal errors in the ec
-            // so we just rethrow the exception here,
-            // which will cause `ioc.run()` to throw
-            if (ex)
-                std::rethrow_exception(ex);
-        });
+            std::placeholders::_1));
 
     // Run the I/O service on the requested number of threads
     std::vector<std::thread> v;

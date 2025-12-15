@@ -3,6 +3,9 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/config/warning_disable.hpp>
+#include <boost/detail/lightweight_test.hpp>
+
 #include <boost/spirit/include/karma_operator.hpp>
 #include <boost/spirit/include/karma_char.hpp>
 #include <boost/spirit/include/karma_auxiliary.hpp>
@@ -10,8 +13,8 @@
 #include <boost/spirit/include/karma_numeric.hpp>
 #include <boost/spirit/include/karma_nonterminal.hpp>
 #include <boost/spirit/include/karma_action.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 
 #include "test.hpp"
 
@@ -33,7 +36,7 @@ int main()
         start = char_[_1 = 'a'] << int_[_1 = 10] << double_[_1 = 12.4];
         BOOST_TEST(test("a1012.4", start));
 
-        start = (char_ << int_ << double_)[(_1 = 'a', _2 = 10, _3 = 12.4)];
+        start = (char_ << int_ << double_)[_1 = 'a', _2 = 10, _3 = 12.4];
         BOOST_TEST(test("a1012.4", start));
 
         karma::rule<outiter_type> a, b, c;
@@ -52,7 +55,7 @@ int main()
         start = char_[_1 = 'a'] << int_[_1 = 10] << double_[_1 = 12.4];
         BOOST_TEST(test_delimited("a 10 12.4 ", start, space));
 
-        start = (char_ << int_ << double_)[(_1 = 'a', _2 = 10, _3 = 12.4)];
+        start = (char_ << int_ << double_)[_1 = 'a', _2 = 10, _3 = 12.4];
         BOOST_TEST(test_delimited("a 10 12.4 ", start, space));
 
         karma::rule<outiter_type, space_type> a, b, c;

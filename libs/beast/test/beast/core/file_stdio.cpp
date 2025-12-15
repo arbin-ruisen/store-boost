@@ -26,11 +26,7 @@ public:
     void
     run()
     {
-#ifdef BOOST_MSVC
-        test_file<file_stdio, true>();
-#else
         test_file<file_stdio>();
-#endif
     }
 };
 

@@ -16,7 +16,7 @@
 #include <random>
 #include <string>
 
-#include "zlib-1.2.12/zlib.h"
+#include "zlib-1.2.11/zlib.h"
 
 namespace boost {
 namespace beast {
@@ -102,6 +102,7 @@ public:
     {
         z_params zs;
         std::string out;
+        memset(&zs, 0, sizeof(zs));
         inflate_stream is;
         zs.next_in = &in[0];
         zs.avail_in = in.size();

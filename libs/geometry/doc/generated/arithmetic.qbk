@@ -54,14 +54,14 @@ Adds the same value to each coordinate of a point.
 
 [heading Synopsis]
 ``template<typename Point>
-void add_value(Point & p, coordinate_type_t< Point > const & value)``
+void add_value(Point & p, typename detail::param< Point >::type value)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
 [[Point &] [Any type fulfilling a Point Concept ] [p] [point ]]
-[[coordinate_type_t< Point > const &] [] [value] [value to add ]]
+[[typename detail::param< Point >::type] [] [value] [value to add ]]
 ]
 
 
@@ -119,14 +119,14 @@ Assign each coordinate of a point the same value.
 
 [heading Synopsis]
 ``template<typename Point>
-void assign_value(Point & p, coordinate_type_t< Point > const & value)``
+void assign_value(Point & p, typename detail::param< Point >::type value)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
 [[Point &] [Any type fulfilling a Point Concept ] [p] [point ]]
-[[coordinate_type_t< Point > const &] [] [value] [value to assign ]]
+[[typename detail::param< Point >::type] [] [value] [value to assign ]]
 ]
 
 
@@ -152,27 +152,24 @@ Computes the cross product of two vectors.
 All vectors should have the same dimension, 3 or 2.
 
 [heading Synopsis]
-``template<typename P, std::enable_if_t< dimension< P >::value !=3||! traits::make< P >::is_specialized, int >>
-P cross_product(P const & p1, P const & p2)``
+``template<typename ResultP, typename P1, typename P2>
+ResultP cross_product(P1 const & p1, P2 const & p2)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
-[[std::enable_if_t< dimension< P >::value !=3||! traits::make< P >::is_specialized, int >] [] [ - ] [Must be specified]]
-[[P const &] [] [p1] [first vector ]]
-[[P const &] [] [p2] [second vector ]]
+[[ResultP] [] [ - ] [Must be specified]]
+[[P1 const &] [] [p1] [first vector ]]
+[[P2 const &] [] [p2] [second vector ]]
 ]
 
 
 [heading Returns]
-the cross product vector
+the cross product vector 
 
 [heading Header]
 `#include <boost/geometry/arithmetic/cross_product.hpp>`
-
-[heading Examples]
-[cross_product] [cross_product_output]
 
 
 [endsect]
@@ -186,17 +183,15 @@ Computes the cross product of two vectors.
 All vectors should have the same dimension, 3 or 2.
 
 [heading Synopsis]
-``template<typename ResultP, typename P1, typename P2, std::enable_if_t< dimension< ResultP >::value !=3||! traits::make< ResultP >::is_specialized, int >>
-ResultP cross_product(P1 const & p1, P2 const & p2)``
+``template<typename P>
+P cross_product(P const & p1, P const & p2)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
-[[ResultP] [] [ - ] [Must be specified]]
-[[std::enable_if_t< dimension< ResultP >::value !=3||! traits::make< ResultP >::is_specialized, int >] [] [ - ] [Must be specified]]
-[[P1 const &] [] [p1] [first vector ]]
-[[P2 const &] [] [p2] [second vector ]]
+[[P const &] [] [p1] [first vector ]]
+[[P const &] [] [p2] [second vector ]]
 ]
 
 
@@ -250,14 +245,14 @@ Divides each coordinate of the same point by a value.
 
 [heading Synopsis]
 ``template<typename Point>
-void divide_value(Point & p, coordinate_type_t< Point > const & value)``
+void divide_value(Point & p, typename detail::param< Point >::type value)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
 [[Point &] [Any type fulfilling a Point Concept ] [p] [point ]]
-[[coordinate_type_t< Point > const &] [] [value] [value to divide by ]]
+[[typename detail::param< Point >::type] [] [value] [value to divide by ]]
 ]
 
 
@@ -281,7 +276,7 @@ Computes the dot product (or scalar product) of 2 vectors (points).
 
 [heading Synopsis]
 ``template<typename Point1, typename Point2>
-select_coordinate_type< Point1, Point2 >::type dot_product(Point1 const & p1, Point2 const & p2)``
+select_coordinate_type<Point1, Point2>::type dot_product(Point1 const & p1, Point2 const & p2)``
 
 [heading Parameters]
 
@@ -293,7 +288,7 @@ select_coordinate_type< Point1, Point2 >::type dot_product(Point1 const & p1, Po
 
 
 [heading Returns]
-the dot product
+the dot product 
 
 [heading Header]
 Either
@@ -304,9 +299,6 @@ Either
 Or
 
 `#include <boost/geometry/arithmetic/dot_product.hpp>`
-
-[heading Examples]
-[dot_product] [dot_product_output]
 
 
 [endsect]
@@ -352,14 +344,14 @@ Multiplies each coordinate of a point by the same value.
 
 [heading Synopsis]
 ``template<typename Point>
-void multiply_value(Point & p, coordinate_type_t< Point > const & value)``
+void multiply_value(Point & p, typename detail::param< Point >::type value)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
 [[Point &] [Any type fulfilling a Point Concept ] [p] [point ]]
-[[coordinate_type_t< Point > const &] [] [value] [value to multiply by ]]
+[[typename detail::param< Point >::type] [] [value] [value to multiply by ]]
 ]
 
 
@@ -417,14 +409,14 @@ Subtracts the same value to each coordinate of a point.
 
 [heading Synopsis]
 ``template<typename Point>
-void subtract_value(Point & p, coordinate_type_t< Point > const & value)``
+void subtract_value(Point & p, typename detail::param< Point >::type value)``
 
 [heading Parameters]
 
 [table
 [[Type] [Concept] [Name] [Description] ]
 [[Point &] [Any type fulfilling a Point Concept ] [p] [point ]]
-[[coordinate_type_t< Point > const &] [] [value] [value to subtract ]]
+[[typename detail::param< Point >::type] [] [value] [value to subtract ]]
 ]
 
 

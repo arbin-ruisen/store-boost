@@ -8,7 +8,6 @@
 
 #include <boost/config.hpp>
 #include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/declval.hpp>
 
 namespace test {
   template <class Container>
@@ -24,9 +23,7 @@ namespace test {
     BOOST_STATIC_CONSTANT(bool,
       value = sizeof(long) ==
               sizeof(flip(
-                (boost::declval<Container*>())
-                  ->insert(
-                    boost::declval<typename Container::value_type const&>()))));
+                ((Container*)0)->insert(*(typename Container::value_type*)0))));
   };
 }
 

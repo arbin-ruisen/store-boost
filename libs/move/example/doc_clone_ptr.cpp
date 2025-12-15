@@ -8,6 +8,7 @@
 // See http://www.boost.org/libs/move for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/move/detail/config_begin.hpp>
 #include <boost/move/utility_core.hpp>
 
 //[clone_ptr_base_derived
@@ -152,3 +153,5 @@ int main()
    //]
    return 0;
 }
+
+#include <boost/move/detail/config_end.hpp>

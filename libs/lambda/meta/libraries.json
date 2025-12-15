@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Jaakko Jarvi <jarvi -at- cs.tamu.edu>"
-    ],
-    "cxxstd": "03"
+    ]
 }

@@ -72,7 +72,7 @@ inline std::ostream& operator<< (std::ostream& os, const __float128& f) {
 }
 
 
-#include <array>
+#include <boost/array.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/numeric.hpp>

@@ -9,14 +9,16 @@
 
 #include <boost/filesystem.hpp>
 
-namespace boost {
-namespace filesystem {
-void tu2();
+namespace boost
+{
+  namespace filesystem
+  {
+    void tu2();
+  }
 }
-} // namespace boost
 
 int main()
 {
-    boost::filesystem::tu2();
-    return 0;
+  boost::filesystem::tu2();
+  return 0;
 }

@@ -48,11 +48,7 @@ int cpp_main(int argc, char*argv [])
          return 1;
       arg1.type |= dummy_param;
 
-      typedef boost::math::tuple<mp_type, mp_type, mp_type>(*proc_type)(mp_type);
-
-      proc_type p = &generate;
-
-      data.insert(p, arg1);
+      data.insert(&generate, arg1);
 
       std::cout << "Any more data [y/n]?";
       std::getline(std::cin, line);

@@ -4,8 +4,8 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
-// This file was modified by Oracle on 2017-2022.
-// Modifications copyright (c) 2017-2022 Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017, 2018.
+// Modifications copyright (c) 2017-2018 Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
@@ -21,19 +21,20 @@
 
 #include <cstddef>
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
+#include <boost/range.hpp>
 #include <boost/static_assert.hpp>
+
+#include <boost/geometry/core/tags.hpp>
+#include <boost/geometry/core/point_type.hpp>
+#include <boost/geometry/core/ring_type.hpp>
+
+#include <boost/geometry/geometries/concepts/check.hpp>
 
 #include <boost/geometry/algorithms/assign.hpp>
 #include <boost/geometry/algorithms/detail/convert_point_to_point.hpp>
 #include <boost/geometry/algorithms/detail/equals/point_point.hpp>
-#include <boost/geometry/core/tags.hpp>
-#include <boost/geometry/core/point_type.hpp>
-#include <boost/geometry/core/ring_type.hpp>
-#include <boost/geometry/geometries/concepts/check.hpp>
+
 #include <boost/geometry/util/condition.hpp>
-#include <boost/geometry/views/detail/indexed_point_view.hpp>
 
 
 namespace boost { namespace geometry
@@ -47,10 +48,10 @@ namespace detail { namespace point_on_border
 
 struct get_point
 {
-    template <typename Destination, typename Source>
-    static inline bool apply(Destination& destination, Source const& source)
+    template <typename Point>
+    static inline bool apply(Point& destination, Point const& source)
     {
-        detail::conversion::convert_point_to_point(source, destination);
+        destination = source;
         return true;
     }
 };
@@ -67,7 +68,7 @@ struct point_on_range
             return false;
         }
 
-        detail::conversion::convert_point_to_point(*begin, point);
+        geometry::detail::conversion::convert_point_to_point(*begin, point);
         return true;
     }
 
@@ -90,13 +91,12 @@ struct point_on_polygon
 };
 
 
-struct point_on_segment_or_box
+struct point_on_box
 {
-    template<typename Point, typename SegmentOrBox>
-    static inline bool apply(Point& point, SegmentOrBox const& segment_or_box)
+    template<typename Point, typename Box>
+    static inline bool apply(Point& point, Box const& box)
     {
-        detail::indexed_point_view<SegmentOrBox const, 0> view(segment_or_box);
-        detail::conversion::convert_point_to_point(view, point);
+        detail::assign::assign_box_2d_corner<min_corner, min_corner>(box, point);
         return true;
     }
 };
@@ -110,7 +110,12 @@ struct point_on_multi
     {
         // Take a point on the first multi-geometry
         // (i.e. the first that is not empty)
-        for (auto it = boost::begin(multi); it != boost::end(multi); ++it)
+        for (typename boost::range_iterator
+                <
+                    MultiGeometry const
+                >::type it = boost::begin(multi);
+            it != boost::end(multi);
+            ++it)
         {
             if (Policy::apply(point, *it))
             {
@@ -141,11 +146,6 @@ struct point_on_border<point_tag>
 {};
 
 template <>
-struct point_on_border<segment_tag>
-    : detail::point_on_border::point_on_segment_or_box
-{};
-
-template <>
 struct point_on_border<linestring_tag>
     : detail::point_on_border::point_on_range
 {};
@@ -162,14 +162,9 @@ struct point_on_border<polygon_tag>
 
 template <>
 struct point_on_border<box_tag>
-    : detail::point_on_border::point_on_segment_or_box
+    : detail::point_on_border::point_on_box
 {};
 
-
-template <>
-struct point_on_border<multi_point_tag>
-    : detail::point_on_border::point_on_range
-{};
 
 template <>
 struct point_on_border<multi_polygon_tag>
@@ -193,9 +188,6 @@ struct point_on_border<multi_linestring_tag>
 #endif // DOXYGEN_NO_DISPATCH
 
 
-// TODO: We should probably rename this utility because it can return point
-//   which is in the interior of a geometry (for PointLike and LinearRings).
-
 /*!
 \brief Take point on a border
 \ingroup overlay
@@ -214,7 +206,7 @@ inline bool point_on_border(Point& point, Geometry const& geometry)
 
     return dispatch::point_on_border
             <
-                tag_t<Geometry>
+                typename tag<Geometry>::type
             >::apply(point, geometry);
 }
 

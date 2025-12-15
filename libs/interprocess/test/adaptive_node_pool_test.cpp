@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 #define BOOST_CONTAINER_ADAPTIVE_NODE_POOL_CHECK_INVARIANTS
+#include <boost/interprocess/detail/config_begin.hpp>
 #include "node_pool_test.hpp"
 #include <boost/interprocess/allocators/detail/adaptive_node_pool.hpp>
 #include <vector>
@@ -25,3 +26,5 @@ int main ()
 
    return 0;
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

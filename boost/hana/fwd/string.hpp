@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::string`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -15,7 +15,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/fwd/core/to.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
 #ifdef BOOST_HANA_DOXYGEN_INVOKED
     //! @ingroup group-datatypes
     //! Compile-time string.
@@ -187,11 +187,11 @@ namespace boost { namespace hana {
 
     //! Alias to `make<string_tag>`; provided for convenience.
     //! @relates hana::string
-    BOOST_HANA_INLINE_VARIABLE constexpr auto make_string = make<string_tag>;
+    constexpr auto make_string = make<string_tag>;
 
     //! Equivalent to `to<string_tag>`; provided for convenience.
     //! @relates hana::string
-    BOOST_HANA_INLINE_VARIABLE constexpr auto to_string = to<string_tag>;
+    constexpr auto to_string = to<string_tag>;
 
     //! Create a compile-time string from a parameter pack of characters.
     //! @relates hana::string
@@ -205,7 +205,7 @@ namespace boost { namespace hana {
     constexpr string<implementation_defined> string_c{};
 #else
     template <char ...s>
-    BOOST_HANA_INLINE_VARIABLE constexpr string<s...> string_c{};
+    constexpr string<s...> string_c{};
 #endif
 
     //! Create a compile-time string from a string literal.
@@ -265,9 +265,9 @@ namespace boost { namespace hana {
         //!
         //! [Hana.issue80]: https://github.com/boostorg/hana/issues/80
         template <typename CharT, CharT ...s>
-        constexpr auto operator ""_s();
+        constexpr auto operator"" _s();
     }
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_STRING_HPP

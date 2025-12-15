@@ -19,7 +19,6 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/optional.hpp>
 #include <boost/assert.hpp>
-#include <cstdint>
 #include <limits>
 #include <memory>
 #include <type_traits>
@@ -70,14 +69,13 @@ template<bool isRequest>
 class basic_parser
     : private detail::basic_parser_base
 {
-    boost::optional<std::uint64_t>
-        body_limit_ =
-            boost::optional<std::uint64_t>(
-                default_body_limit(is_request{}));   // max payload body
+    std::uint64_t body_limit_ =
+        default_body_limit(is_request{});   // max payload body
     std::uint64_t len_ = 0;                 // size of chunk or body
     std::uint64_t len0_ = 0;                // content length if known
     std::unique_ptr<char[]> buf_;           // temp storage
     std::size_t buf_len_ = 0;               // size of buf_
+    std::size_t skip_ = 0;                  // resume search here
     std::uint32_t header_limit_ = 8192;     // max header size
     unsigned short status_ = 0;             // response status
     state state_ = state::nothing_yet;      // initial state
@@ -109,6 +107,7 @@ class basic_parser
     static unsigned constexpr flagContentLength         = 1<< 10;
     static unsigned constexpr flagChunked               = 1<< 11;
     static unsigned constexpr flagUpgrade               = 1<< 12;
+    static unsigned constexpr flagFinalChunk            = 1<< 13;
 
     static constexpr
     std::uint64_t
@@ -128,10 +127,6 @@ class basic_parser
 
     template<bool OtherIsRequest>
     friend class basic_parser;
-
-#ifndef BOOST_BEAST_DOXYGEN
-    friend class basic_parser_test;
-#endif
 
 protected:
     /// Default constructor
@@ -292,11 +287,10 @@ public:
 
         The default limit is 1MB for requests and 8MB for responses.
 
-        @param v An optional integral value representing the body limit.
-        If this is equal to `boost::none`, then the body limit is disabled.
+        @param v The payload body limit to set
     */
     void
-    body_limit(boost::optional<std::uint64_t> v)
+    body_limit(std::uint64_t v)
     {
         body_limit_ = v;
     }
@@ -628,10 +622,6 @@ protected:
     on_finish_impl(error_code& ec) = 0;
 
 private:
-
-    boost::optional<std::uint64_t>
-    content_length_unchecked() const;
-
     template<class ConstBufferSequence>
     std::size_t
     put_from_stack(
@@ -640,28 +630,23 @@ private:
         error_code& ec);
 
     void
-    inner_parse_start_line(
+    maybe_need_more(
+        char const* p, std::size_t n,
+            error_code& ec);
+
+    void
+    parse_start_line(
         char const*& p, char const* last,
             error_code& ec, std::true_type);
 
     void
-    inner_parse_start_line(
+    parse_start_line(
         char const*& p, char const* last,
             error_code& ec, std::false_type);
 
     void
-    parse_start_line(
-        char const*& p, std::size_t n,
-            error_code& ec);
-
-    void
-    inner_parse_fields(
-        char const*& p, char const* last,
-            error_code& ec);
-
-    void
     parse_fields(
-        char const*& p, std::size_t n,
+        char const*& p, char const* last,
             error_code& ec);
 
     void

@@ -42,20 +42,20 @@ public:
     void
     testPrng(F const& f)
     {
-        auto const mn = (std::numeric_limits<std::uint32_t>::min)();
-        auto const mx = (std::numeric_limits<std::uint32_t>::max)();
+        auto const min = std::numeric_limits<std::uint32_t>::min();
+        auto const max = std::numeric_limits<std::uint32_t>::max();
 
         {
             auto v = f()();
             BEAST_EXPECT(
-                v >= mn &&
-                v <= mx);
+                v >= min &&
+                v <= max);
         }
         {
             auto v = f()();
             BEAST_EXPECT(
-                v >= mn &&
-                v <= mx);
+                v >= min &&
+                v <= max);
         }
     }
 

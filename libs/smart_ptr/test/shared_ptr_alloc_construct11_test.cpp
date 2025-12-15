@@ -5,9 +5,10 @@ Copyright 2017 Glen Joseph Fernandes
 Distributed under the Boost Software License, Version 1.0.
 (http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <boost/make_shared.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <boost/make_shared.hpp>
 
+#if !defined(BOOST_NO_CXX11_ALLOCATOR)
 struct counters {
     unsigned allocate;
     unsigned construct;
@@ -119,3 +120,9 @@ int main()
     }
     return boost::report_errors();
 }
+#else
+int main()
+{
+    return 0;
+}
+#endif

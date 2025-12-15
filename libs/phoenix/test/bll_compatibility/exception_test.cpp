@@ -11,7 +11,7 @@
 
 // -----------------------------------------------------------------------
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>    // see "Header Implementation Option"
 
 #include "boost/lambda/lambda.hpp"
 
@@ -98,7 +98,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 1);
+  BOOST_CHECK(ecount == 1);
 
   ecount = 0;
   for(int i=1; i<=2; i++) 
@@ -113,7 +113,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 2);
+  BOOST_CHECK(ecount == 2);
 
   ecount = 0;
   for(int i=1; i<=3; i++) 
@@ -131,7 +131,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 3);
+  BOOST_CHECK(ecount == 3);
 
   ecount = 0;
   for(int i=1; i<=4; i++) 
@@ -152,7 +152,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 4);
+  BOOST_CHECK(ecount == 4);
 
   ecount = 0;
   for(int i=1; i<=5; i++) 
@@ -176,7 +176,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 5);
+  BOOST_CHECK(ecount == 5);
 
   ecount = 0;
   for(int i=1; i<=6; i++) 
@@ -203,7 +203,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 6);
+  BOOST_CHECK(ecount == 6);
 
   ecount = 0;
   for(int i=1; i<=7; i++) 
@@ -233,7 +233,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 7);
+  BOOST_CHECK(ecount == 7);
 
   ecount = 0;
   for(int i=1; i<=8; i++) 
@@ -266,7 +266,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 8);
+  BOOST_CHECK(ecount == 8);
 
   ecount = 0;
   for(int i=1; i<=9; i++) 
@@ -302,7 +302,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 9);
+  BOOST_CHECK(ecount == 9);
 
 
   // with catch(...) blocks
@@ -317,7 +317,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 1);
+  BOOST_CHECK(ecount == 1);
 
   ecount = 0;
   for(int i=1; i<=2; i++) 
@@ -332,7 +332,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 2);
+  BOOST_CHECK(ecount == 2);
 
   ecount = 0;
   for(int i=1; i<=3; i++) 
@@ -350,7 +350,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 3);
+  BOOST_CHECK(ecount == 3);
 
   ecount = 0;
   for(int i=1; i<=4; i++) 
@@ -371,7 +371,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 4);
+  BOOST_CHECK(ecount == 4);
 
   ecount = 0;
   for(int i=1; i<=5; i++) 
@@ -395,7 +395,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 5);
+  BOOST_CHECK(ecount == 5);
 
   ecount = 0;
   for(int i=1; i<=6; i++) 
@@ -422,7 +422,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 6);
+  BOOST_CHECK(ecount == 6);
 
   ecount = 0;
   for(int i=1; i<=7; i++) 
@@ -452,7 +452,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 7);
+  BOOST_CHECK(ecount == 7);
 
   ecount = 0;
   for(int i=1; i<=8; i++) 
@@ -485,7 +485,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 8);
+  BOOST_CHECK(ecount == 8);
 
   ecount = 0;
   for(int i=1; i<=9; i++) 
@@ -521,7 +521,7 @@ void test_different_number_of_catch_blocks() {
       )
     )(i);
   }
-  BOOST_TEST_EQ(ecount, 9);
+  BOOST_CHECK(ecount == 9);
 }
 
 void test_empty_catch_blocks() {
@@ -551,12 +551,15 @@ void return_type_matching() {
 
   int i = 1;
   
-  BOOST_TEST_EQ(
+  BOOST_CHECK(
+    
     try_catch(
       _1 + 1,
       catch_exception<int>((&_1, rethrow())), // no match, but ok since throws
       catch_exception<char>(_e) // ok, char convertible to int 
-    )(i), 2
+    )(i)
+ 
+    == 2
   );
   
   // note that while e.g. char is convertible to int, it is not convertible
@@ -572,14 +575,14 @@ void return_type_matching() {
     make_void(_1 += 1),
     catch_exception<char>(_e) // since try is void, catch can return anything 
   )(i);
-  BOOST_TEST_EQ(i, 2);
+  BOOST_CHECK(i == 2);
   
   try_catch(
     (_1 += 1, throw_exception('a')),
     catch_exception<char>(_e) // since try throws, it is void, 
                               // so catch can return anything 
   )(i);
-  BOOST_TEST_EQ(i, 3);
+  BOOST_CHECK(i == 3);
 
   char a = 'a';
   try_catch(
@@ -589,11 +592,11 @@ void return_type_matching() {
     ),
     catch_exception<char>( _1 = _e ) 
   )(a);
-  BOOST_TEST_EQ(a, 'b');
+  BOOST_CHECK(a == 'b');
 }
   
-int main()
-{   
+int test_main(int, char *[]) {   
+
   try 
   {
     test_different_number_of_catch_blocks();
@@ -602,12 +605,17 @@ int main()
   }
   catch (int)
   {
-    BOOST_TEST(false);
+    BOOST_CHECK(false);
   }
   catch(...)
   { 
-    BOOST_TEST(false);
+    BOOST_CHECK(false);
   }
 
-  return boost::report_errors();
+
+  return EXIT_SUCCESS;
 }
+
+
+
+

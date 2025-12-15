@@ -18,7 +18,6 @@
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/bind_executor.hpp>
-#include <boost/asio/dispatch.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/strand.hpp>
 #include <boost/make_unique.hpp>
@@ -28,7 +27,6 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <queue>
 #include <string>
 #include <thread>
 #include <vector>
@@ -102,15 +100,18 @@ path_cat(
     return result;
 }
 
-// Return a response for the given request.
-//
-// The concrete type of the response message (which depends on the
-// request), is type-erased in message_generator.
-template <class Body, class Allocator>
-http::message_generator
+// This function produces an HTTP response for the given
+// request. The type of the response object depends on the
+// contents of the request, so the interface requires the
+// caller to pass a generic lambda for receiving the response.
+template<
+    class Body, class Allocator,
+    class Send>
+void
 handle_request(
     beast::string_view doc_root,
-    http::request<Body, http::basic_fields<Allocator>>&& req)
+    http::request<Body, http::basic_fields<Allocator>>&& req,
+    Send&& send)
 {
     // Returns a bad request response
     auto const bad_request =
@@ -154,13 +155,13 @@ handle_request(
     // Make sure we can handle the method
     if( req.method() != http::verb::get &&
         req.method() != http::verb::head)
-        return bad_request("Unknown HTTP-method");
+        return send(bad_request("Unknown HTTP-method"));
 
     // Request path must be absolute and not contain "..".
     if( req.target().empty() ||
         req.target()[0] != '/' ||
         req.target().find("..") != beast::string_view::npos)
-        return bad_request("Illegal request-target");
+        return send(bad_request("Illegal request-target"));
 
     // Build the path to the requested file
     std::string path = path_cat(doc_root, req.target());
@@ -174,11 +175,11 @@ handle_request(
 
     // Handle the case where the file doesn't exist
     if(ec == beast::errc::no_such_file_or_directory)
-        return not_found(req.target());
+        return send(not_found(req.target()));
 
     // Handle an unknown error
     if(ec)
-        return server_error(ec.message());
+        return send(server_error(ec.message()));
 
     // Cache the size since we need it after the move
     auto const size = body.size();
@@ -191,7 +192,7 @@ handle_request(
         res.set(http::field::content_type, mime_type(path));
         res.content_length(size);
         res.keep_alive(req.keep_alive());
-        return res;
+        return send(std::move(res));
     }
 
     // Respond to GET request
@@ -203,7 +204,7 @@ handle_request(
     res.set(http::field::content_type, mime_type(path));
     res.content_length(size);
     res.keep_alive(req.keep_alive());
-    return res;
+    return send(std::move(res));
 }
 
 //------------------------------------------------------------------------------
@@ -290,7 +291,7 @@ private:
             return;
 
         if(ec)
-            return fail(ec, "read");
+            fail(ec, "read");
 
         // Echo the message
         ws_.text(ws_.got_text());
@@ -324,12 +325,100 @@ private:
 // Handles an HTTP server connection
 class http_session : public std::enable_shared_from_this<http_session>
 {
+    // This queue is used for HTTP pipelining.
+    class queue
+    {
+        enum
+        {
+            // Maximum number of responses we will queue
+            limit = 8
+        };
+
+        // The type-erased, saved work item
+        struct work
+        {
+            virtual ~work() = default;
+            virtual void operator()() = 0;
+        };
+
+        http_session& self_;
+        std::vector<std::unique_ptr<work>> items_;
+
+    public:
+        explicit
+        queue(http_session& self)
+            : self_(self)
+        {
+            static_assert(limit > 0, "queue limit must be positive");
+            items_.reserve(limit);
+        }
+
+        // Returns `true` if we have reached the queue limit
+        bool
+        is_full() const
+        {
+            return items_.size() >= limit;
+        }
+
+        // Called when a message finishes sending
+        // Returns `true` if the caller should initiate a read
+        bool
+        on_write()
+        {
+            BOOST_ASSERT(! items_.empty());
+            auto const was_full = is_full();
+            items_.erase(items_.begin());
+            if(! items_.empty())
+                (*items_.front())();
+            return was_full;
+        }
+
+        // Called by the HTTP handler to send a response.
+        template<bool isRequest, class Body, class Fields>
+        void
+        operator()(http::message<isRequest, Body, Fields>&& msg)
+        {
+            // This holds a work item
+            struct work_impl : work
+            {
+                http_session& self_;
+                http::message<isRequest, Body, Fields> msg_;
+
+                work_impl(
+                    http_session& self,
+                    http::message<isRequest, Body, Fields>&& msg)
+                    : self_(self)
+                    , msg_(std::move(msg))
+                {
+                }
+
+                void
+                operator()()
+                {
+                    http::async_write(
+                        self_.stream_,
+                        msg_,
+                        beast::bind_front_handler(
+                            &http_session::on_write,
+                            self_.shared_from_this(),
+                            msg_.need_eof()));
+                }
+            };
+
+            // Allocate and store the work
+            items_.push_back(
+                boost::make_unique<work_impl>(self_, std::move(msg)));
+
+            // If there was no previous work, start this one
+            if(items_.size() == 1)
+                (*items_.front())();
+        }
+    };
+
     beast::tcp_stream stream_;
     beast::flat_buffer buffer_;
     std::shared_ptr<std::string const> doc_root_;
-
-    static constexpr std::size_t queue_limit = 8; // max responses
-    std::queue<http::message_generator> response_queue_;
+    queue queue_;
 
     // The parser is stored in an optional container so we can
     // construct it from scratch it at the beginning of each new message.
@@ -342,24 +431,15 @@ public:
         std::shared_ptr<std::string const> const& doc_root)
         : stream_(std::move(socket))
         , doc_root_(doc_root)
+        , queue_(*this)
     {
-        static_assert(queue_limit > 0,
-                      "queue limit must be positive");
     }
 
     // Start the session
     void
     run()
     {
-        // We need to be executing within a strand to perform async operations
-        // on the I/O objects in this session. Although not strictly necessary
-        // for single-threaded contexts, this example code is written to be
-        // thread-safe by default.
-        net::dispatch(
-            stream_.get_executor(),
-            beast::bind_front_handler(
-                &http_session::do_read,
-                this->shared_from_this()));
+        do_read();
     }
 
 private:
@@ -409,68 +489,34 @@ private:
         }
 
         // Send the response
-        queue_write(handle_request(*doc_root_, parser_->release()));
+        handle_request(*doc_root_, parser_->release(), queue_);
 
         // If we aren't at the queue limit, try to pipeline another request
-        if (response_queue_.size() < queue_limit)
+        if(! queue_.is_full())
             do_read();
     }
 
     void
-    queue_write(http::message_generator response)
-    {
-        // Allocate and store the work
-        response_queue_.push(std::move(response));
-
-        // If there was no previous work, start the write loop
-        if (response_queue_.size() == 1)
-            do_write();
-    }
-
-    // Called to start/continue the write-loop. Should not be called when
-    // write_loop is already active.
-    void
-    do_write()
-    {
-        if(! response_queue_.empty())
-        {
-            bool keep_alive = response_queue_.front().keep_alive();
-
-            beast::async_write(
-                stream_,
-                std::move(response_queue_.front()),
-                beast::bind_front_handler(
-                    &http_session::on_write,
-                    shared_from_this(),
-                    keep_alive));
-        }
-    }
-
-    void
-    on_write(
-        bool keep_alive,
-        beast::error_code ec,
-        std::size_t bytes_transferred)
+    on_write(bool close, beast::error_code ec, std::size_t bytes_transferred)
     {
         boost::ignore_unused(bytes_transferred);
 
         if(ec)
             return fail(ec, "write");
 
-        if(! keep_alive)
+        if(close)
         {
             // This means we should close the connection, usually because
             // the response indicated the "Connection: close" semantic.
             return do_close();
         }
 
-        // Resume the read if it has been paused
-        if(response_queue_.size() == queue_limit)
+        // Inform the queue that a write completed
+        if(queue_.on_write())
+        {
+            // Read another request
             do_read();
-
-        response_queue_.pop();
-
-        do_write();
+        }
     }
 
     void
@@ -542,15 +588,7 @@ public:
     void
     run()
     {
-        // We need to be executing within a strand to perform async operations
-        // on the I/O objects in this session. Although not strictly necessary
-        // for single-threaded contexts, this example code is written to be
-        // thread-safe by default.
-        net::dispatch(
-            acceptor_.get_executor(),
-            beast::bind_front_handler(
-                &listener::do_accept,
-                this->shared_from_this()));
+        do_accept();
     }
 
 private:

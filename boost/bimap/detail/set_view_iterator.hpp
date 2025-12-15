@@ -21,9 +21,10 @@
 // Boost
 
 #ifndef BOOST_BIMAP_DISABLE_SERIALIZATION 
-  #include <boost/core/serialization.hpp>
+  #include <boost/serialization/nvp.hpp>
 #endif // BOOST_BIMAP_DISABLE_SERIALIZATION
 
+#include <boost/iterator/detail/enable_if.hpp>
 #include <boost/iterator/iterator_adaptor.hpp>
 #include <boost/bimap/relation/support/get_pair_functor.hpp>
 
@@ -83,17 +84,13 @@ struct set_view_iterator : public set_view_iterator_base<CoreIterator>::type
 
     private:
 
-    friend class boost::iterators::iterator_core_access;
+    friend class iterator_core_access;
 
     #ifndef BOOST_BIMAP_DISABLE_SERIALIZATION
 
     // Serialization support
 
-    template< class Archive >
-    void serialize(Archive & ar, const unsigned int v)
-    {
-        boost::core::split_member(ar, *this, v);
-    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
 
     friend class ::boost::serialization::access;
 
@@ -163,17 +160,13 @@ struct const_set_view_iterator : public const_set_view_iterator_base<CoreIterato
 
     private:
 
-    friend class boost::iterators::iterator_core_access;
+    friend class iterator_core_access;
 
     #ifndef BOOST_BIMAP_DISABLE_SERIALIZATION
 
     // Serialization support
 
-    template< class Archive >
-    void serialize(Archive & ar, const unsigned int v)
-    {
-        boost::core::split_member(ar, *this, v);
-    }
+    BOOST_SERIALIZATION_SPLIT_MEMBER()
 
     friend class ::boost::serialization::access;
 

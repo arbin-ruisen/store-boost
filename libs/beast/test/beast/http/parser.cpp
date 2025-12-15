@@ -18,6 +18,7 @@
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/multi_buffer.hpp>
 #include <boost/beast/core/ostream.hpp>
+#include <boost/beast/http/read.hpp>
 #include <boost/beast/http/string_body.hpp>
 #include <boost/system/system_error.hpp>
 #include <algorithm>
@@ -327,40 +328,6 @@ public:
     }
 
     void
-    testHeaderFieldLimits()
-    {
-        auto big_field_name  = std::string(fields::max_name_size + 1, 'a');
-        auto big_field_value = std::string(fields::max_value_size + 1, 'a');
-
-        {
-            parser_type<false> p;
-            p.header_limit((std::numeric_limits<std::uint32_t>::max)());
-            error_code ec;
-            flat_buffer b;
-            ostream(b) <<
-                "HTTP/1.1 200 OK\r\n"
-                << big_field_name
-                <<": value\r\n"
-                "\r\n";
-            put(b.data(), p, ec);
-            BEAST_EXPECT(ec == error::header_field_name_too_large);
-        }
-        {
-            parser_type<false> p;
-            p.header_limit((std::numeric_limits<std::uint32_t>::max)());
-            error_code ec;
-            flat_buffer b;
-            ostream(b) <<
-                "HTTP/1.1 200 OK\r\n"
-                << "name: "
-                << big_field_value << "\r\n"
-                << "\r\n";
-            put(b.data(), p, ec);
-            BEAST_EXPECT(ec == error::header_field_value_too_large);
-        }
-    }
-
-    void
     testIssue818()
     {
         // Make sure that the parser clears pre-existing fields
@@ -391,113 +358,14 @@ public:
     }
 
     void
-    testIssue1880()
-    {
-        // A user raised the issue that multiple Content-Length fields and
-        // values are permissible provided all values are the same.
-        // See rfc7230 section-3.3.2
-        // https://tools.ietf.org/html/rfc7230#section-3.3.2
-        // Credit: Dimitry Bulsunov
-
-        auto checkPass = [&](std::string const& message)
-        {
-            response_parser<string_body> parser;
-            error_code ec;
-            parser.put(net::buffer(message), ec);
-            BEAST_EXPECTS(!ec.failed(), ec.message());
-        };
-
-        auto checkFail = [&](std::string const& message)
-        {
-            response_parser<string_body> parser;
-            error_code ec;
-            parser.put(net::buffer(message), ec);
-            BEAST_EXPECTS(ec == error::multiple_content_length, ec.message());
-        };
-
-        // multiple contents lengths the same
-        checkPass(
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 0\r\n"
-            "Content-Length: 0\r\n"
-            "\r\n");
-
-        // multiple contents lengths different
-        checkFail(
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 0\r\n"
-            "Content-Length: 1\r\n"
-            "\r\n");
-
-        // multiple content in same header
-        checkPass(
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 0, 0, 0\r\n"
-            "\r\n");
-
-        // multiple content in same header but mismatch (case 1)
-        checkFail(
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 0, 0, 1\r\n"
-            "\r\n");
-
-        // multiple content in same header but mismatch (case 2)
-        checkFail(
-            "HTTP/1.1 200 OK\r\n"
-            "Content-Length: 0, 0, 0\r\n"
-            "Content-Length: 1\r\n"
-            "\r\n");
-    }
-
-    void
-    testIssue2861()
-    {
-        // Partial parsing of the final chunk when
-        // the final chunk is the only chunk in the body.
-        error_code ec;
-        flat_buffer b;
-        response_parser<string_body> p;
-
-        ostream(b) <<
-            "HTTP/1.1 200 OK\r\n"
-            "Transfer-Encoding: chunked\r\n"
-            "\r\n";
-
-        auto used = p.put(b.data(), ec);
-        b.consume(used);
-        BEAST_EXPECT(! ec);
-        BEAST_EXPECT(! p.is_done());
-
-        ostream(b) << "0\r\n"; // needs an extra CRLF
-        used = p.put(b.data(), ec);
-        BEAST_EXPECT(used == 3);
-        b.consume(used);
-        BEAST_EXPECT(ec == error::need_more);
-
-        ostream(b) << "\r";
-        used = p.put(b.data(), ec);
-        BEAST_EXPECT(used == 0);
-        BEAST_EXPECT(ec == error::need_more);
-
-        ostream(b) << "\n";
-        used = p.put(b.data(), ec);
-        BEAST_EXPECT(used == 2);
-        BEAST_EXPECT(!ec);
-        BEAST_EXPECT(p.is_done());
-    }
-
-    void
     run() override
     {
         testParse();
         testNeedMore<flat_buffer>();
         testNeedMore<multi_buffer>();
-        testHeaderFieldLimits();
         testGotSome();
         testIssue818();
         testIssue1187();
-        testIssue1880();
-        testIssue2861();
     }
 };
 

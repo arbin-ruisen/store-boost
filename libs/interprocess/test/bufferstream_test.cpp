@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/streams/bufferstream.hpp>
 #include <sstream>
 #include <cstring>
@@ -140,3 +141,4 @@ int main ()
    return 0;
 }
 
+#include <boost/interprocess/detail/config_end.hpp>

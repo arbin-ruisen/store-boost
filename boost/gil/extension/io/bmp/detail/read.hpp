@@ -11,16 +11,17 @@
 #include <boost/gil/extension/io/bmp/detail/is_allowed.hpp>
 #include <boost/gil/extension/io/bmp/detail/reader_backend.hpp>
 
-#include <boost/gil/io/detail/dynamic.hpp>
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/bit_operations.hpp>
 #include <boost/gil/io/conversion_policies.hpp>
 #include <boost/gil/io/device.hpp>
+#include <boost/gil/io/dynamic_io_new.hpp>
 #include <boost/gil/io/reader_base.hpp>
 #include <boost/gil/io/row_buffer_helper.hpp>
 #include <boost/gil/io/typedefs.hpp>
 
 #include <boost/assert.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <type_traits>
 #include <vector>
@@ -98,7 +99,7 @@ public:
             io_error( "Image header was not read." );
         }
 
-        using is_read_and_convert_t = typename std::is_same
+        using is_read_and_convert_t = typename is_same
             <
                 ConversionPolicy,
                 detail::read_and_no_convert
@@ -704,12 +705,12 @@ public:
               )
     {}
 
-    template< typename ...Images >
-    void apply( any_image< Images... >& images )
+    template< typename Images >
+    void apply( any_image< Images >& images )
     {
         detail::bmp_type_format_checker format_checker( this->_info._bits_per_pixel );
 
-        if( !detail::construct_matched( images
+        if( !construct_matched( images
                               , format_checker
                               ))
         {
@@ -725,8 +726,8 @@ public:
                                     , parent_t
                                     > op( this );
 
-            variant2::visit( op
-                           ,view( images )
+            apply_operation( view( images )
+                           , op
                            );
         }
     }

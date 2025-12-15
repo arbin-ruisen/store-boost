@@ -84,8 +84,7 @@ int make_arg_type<int&>() { return lvalue; }
 template<>
 int make_arg_type<const int&>() { return const_lvalue; }
 
-const int id_int = 4;
-const int id_copy = 8;
+enum { id_int = 4, id_copy = 8 };
 
 std::vector<int> make_vector() { return std::vector<int>(); }
 

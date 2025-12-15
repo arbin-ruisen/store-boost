@@ -12,19 +12,18 @@
 //  See http://www.boost.org/LICENSE_1_0.txt
 
 #include <boost/ratio/ratio.hpp>
-#include <cstdint>
 
 template <typename T, typename R>
 struct S {
     T val;
 };
 
-std::intmax_t func(S<int, boost::ratio<5,6> > const& s) {
+boost::intmax_t func(S<int, boost::ratio<5,6> > const& s) {
     return s.val*3;    
 }
 
 
-std::intmax_t test() {
+boost::intmax_t test() {
     return func(
             S<int, boost::ratio_add<
                 boost::ratio<1,2>,
@@ -34,3 +33,4 @@ std::intmax_t test() {
             >() 
             );
 }
+

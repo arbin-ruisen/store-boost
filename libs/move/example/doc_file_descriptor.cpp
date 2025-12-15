@@ -9,6 +9,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/move/detail/config_begin.hpp>
+#include <cassert>
+
 //[file_descriptor_def
 
 #include <boost/move/utility_core.hpp>
@@ -22,8 +25,8 @@ class file_descriptor
       return 1;
    }
 
-   void operating_system_close_file(int)
-   {}
+   void operating_system_close_file(int fd)
+   {  (void)fd;   assert(fd != 0); }
    //->
    int os_descr_;
 
@@ -33,10 +36,7 @@ class file_descriptor
    public:
    explicit file_descriptor(const char *filename)              //Constructor
       : os_descr_(operating_system_open_file(filename))
-   {
-      //=if(!os_descr_)
-         //=throw std::runtime_error("file not found");
-   }
+   {  if(!os_descr_) throw std::runtime_error("file not found");  }
 
    ~file_descriptor()                                          //Destructor
    {  if(os_descr_)  operating_system_close_file(os_descr_);  }
@@ -88,3 +88,5 @@ int main()
    return 0;
 }
 //]
+
+#include <boost/move/detail/config_end.hpp>

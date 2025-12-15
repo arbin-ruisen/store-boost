@@ -12,6 +12,8 @@
 #include <boost/config.hpp>
 #include <iostream>
 
+#define BOOST_NO_CXX14_GENERIC_LAMBDAS
+
 //------------------------------------------------------------------------------
 
 // Return a reasonable mime type based on the extension of a file.
@@ -77,15 +79,18 @@ path_cat(
     return result;
 }
 
-// Return a response for the given request.
-//
-// The concrete type of the response message (which depends on the
-// request), is type-erased in message_generator.
-template <class Body, class Allocator>
-http::message_generator
+// This function produces an HTTP response for the given
+// request. The type of the response object depends on the
+// contents of the request, so the interface requires the
+// caller to pass a generic lambda for receiving the response.
+template<
+    class Body, class Allocator,
+    class Send>
+void
 handle_request(
     beast::string_view doc_root,
-    http::request<Body, http::basic_fields<Allocator>>&& req)
+    http::request<Body, http::basic_fields<Allocator>>&& req,
+    Send&& send)
 {
     // Returns a bad request response
     auto const bad_request =
@@ -129,13 +134,13 @@ handle_request(
     // Make sure we can handle the method
     if( req.method() != http::verb::get &&
         req.method() != http::verb::head)
-        return bad_request("Unknown HTTP-method");
+        return send(bad_request("Unknown HTTP-method"));
 
     // Request path must be absolute and not contain "..".
     if( req.target().empty() ||
         req.target()[0] != '/' ||
         req.target().find("..") != beast::string_view::npos)
-        return bad_request("Illegal request-target");
+        return send(bad_request("Illegal request-target"));
 
     // Build the path to the requested file
     std::string path = path_cat(doc_root, req.target());
@@ -149,11 +154,11 @@ handle_request(
 
     // Handle the case where the file doesn't exist
     if(ec == boost::system::errc::no_such_file_or_directory)
-        return not_found(req.target());
+        return send(not_found(req.target()));
 
     // Handle an unknown error
     if(ec)
-        return server_error(ec.message());
+        return send(server_error(ec.message()));
 
     // Cache the size since we need it after the move
     auto const size = body.size();
@@ -166,7 +171,7 @@ handle_request(
         res.set(http::field::content_type, mime_type(path));
         res.content_length(size);
         res.keep_alive(req.keep_alive());
-        return res;
+        return send(std::move(res));
     }
 
     // Respond to GET request
@@ -178,8 +183,42 @@ handle_request(
     res.set(http::field::content_type, mime_type(path));
     res.content_length(size);
     res.keep_alive(req.keep_alive());
-    return res;
+    return send(std::move(res));
 }
+
+//------------------------------------------------------------------------------
+
+struct http_session::send_lambda
+{
+    http_session& self_;
+
+    explicit
+    send_lambda(http_session& self)
+        : self_(self)
+    {
+    }
+
+    template<bool isRequest, class Body, class Fields>
+    void
+    operator()(http::message<isRequest, Body, Fields>&& msg) const
+    {
+        // The lifetime of the message has to extend
+        // for the duration of the async operation so
+        // we use a shared_ptr to manage it.
+        auto sp = boost::make_shared<
+            http::message<isRequest, Body, Fields>>(std::move(msg));
+
+        // Write the response
+        auto self = self_.shared_from_this();
+        http::async_write(
+            self_.stream_,
+            *sp,
+            [self, sp](beast::error_code ec, std::size_t bytes)
+            {
+                self->on_write(ec, bytes, sp->need_eof());
+            });
+    }
+};
 
 //------------------------------------------------------------------------------
 
@@ -261,33 +300,65 @@ on_read(beast::error_code ec, std::size_t)
         return;
     }
 
-    // Handle request
-    http::message_generator msg =
-        handle_request(state_->doc_root(), parser_->release());
-
-    // Determine if we should close the connection
-    bool keep_alive = msg.keep_alive();
-
-    auto self = shared_from_this();
-
     // Send the response
-    beast::async_write(
-        stream_, std::move(msg),
-        [self, keep_alive](beast::error_code ec, std::size_t bytes)
+#ifndef BOOST_NO_CXX14_GENERIC_LAMBDAS
+    //
+    // The following code requires generic
+    // lambdas, available in C++14 and later.
+    //
+    handle_request(
+        state_->doc_root(),
+        std::move(req_),
+        [this](auto&& response)
         {
-            self->on_write(ec, bytes, keep_alive);
+            // The lifetime of the message has to extend
+            // for the duration of the async operation so
+            // we use a shared_ptr to manage it.
+            using response_type = typename std::decay<decltype(response)>::type;
+            auto sp = boost::make_shared<response_type>(std::forward<decltype(response)>(response));
+
+        #if 0
+            // NOTE This causes an ICE in gcc 7.3
+            // Write the response
+            http::async_write(this->stream_, *sp,
+                [self = shared_from_this(), sp](
+                    beast::error_code ec, std::size_t bytes)
+                {
+                    self->on_write(ec, bytes, sp->need_eof()); 
+                });
+        #else
+            // Write the response
+            auto self = shared_from_this();
+            http::async_write(stream_, *sp,
+                [self, sp](
+                    beast::error_code ec, std::size_t bytes)
+                {
+                    self->on_write(ec, bytes, sp->need_eof()); 
+                });
+        #endif
         });
+#else
+    //
+    // This code uses the function object type send_lambda in
+    // place of a generic lambda which is not available in C++11
+    //
+    handle_request(
+        state_->doc_root(),
+        parser_->release(),
+        send_lambda(*this));
+
+#endif
 }
 
 void
 http_session::
-on_write(beast::error_code ec, std::size_t, bool keep_alive)
+on_write(beast::error_code ec, std::size_t, bool close)
 {
     // Handle the error, if any
     if(ec)
         return fail(ec, "write");
 
-    if(! keep_alive)
+    if(close)
     {
         // This means we should close the connection, usually because
         // the response indicated the "Connection: close" semantic.

@@ -3,16 +3,7 @@
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef SYCL_LANGUAGE_VERSION
 #include <pch_light.hpp>
-#else
-#include "sycl/sycl.hpp"
-#endif
-
-#ifndef BOOST_MATH_OVERFLOW_ERROR_POLICY
-#define BOOST_MATH_OVERFLOW_ERROR_POLICY ignore_error
-#endif
-
 #include "test_expint.hpp"
 
 //
@@ -87,12 +78,8 @@ void expected_results()
       ".*",                          // platform
       "float|double|long double",    // test type(s)
       ".*Ei.*",                      // test data group
-#ifndef SYCL_LANGUAGE_VERSION
       ".*", 6, 3);                   // test function
-#else
-      ".*", 10, 3);
-#endif
-   BOOST_IF_CONSTEXPR (std::numeric_limits<long double>::digits > 100)
+   if(std::numeric_limits<long double>::digits > 100)
    {
       add_expected_result(
          ".*",                          // compiler

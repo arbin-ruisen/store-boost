@@ -5,6 +5,7 @@
 exe partys_height_average
     :
         partys_height_average.cpp
+		/boost/date_time//boost_date_time
     :
         <include>../../..
         <include>$(BOOST_ROOT)

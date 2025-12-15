@@ -7,13 +7,10 @@
 
 // For more information, see http://www.boost.org
 
-#include <boost/bind/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/signals2.hpp>
-#define BOOST_TEST_MODULE dead_slot_test
-#include <boost/test/included/unit_test.hpp>
-
-using namespace boost::placeholders;
+#include <boost/bind.hpp>
 
 typedef boost::signals2::signal<int (int)> sig_type;
 
@@ -38,10 +35,12 @@ void do_delayed_connect(boost::shared_ptr<with_constant> &wc,
   BOOST_CHECK(!c.connected());
 }
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char*[])
 {
   sig_type s1;
   boost::shared_ptr<with_constant> wc1(new with_constant(7));
 
   do_delayed_connect(wc1, s1, sig_type::slot_type(&with_constant::add, wc1.get(), _1).track(wc1));
+
+  return 0;
 }

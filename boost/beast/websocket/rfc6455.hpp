@@ -189,7 +189,7 @@ struct close_reason
     /// Construct from a reason string. code is @ref close_code::normal.
     close_reason(string_view s)
         : code(close_code::normal)
-        , reason(s.data(), s.size())
+        , reason(s)
     {
     }
 
@@ -203,7 +203,7 @@ struct close_reason
     /// Construct from a close code and reason string.
     close_reason(close_code code_, string_view s)
         : code(code_)
-        , reason(s.data(), s.size())
+        , reason(s)
     {
     }
 

@@ -8,10 +8,11 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
-#include <boost/container/vector.hpp>
-#include <boost/container/string.hpp>
+#include <boost/interprocess/containers/vector.hpp>
+#include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/offset_ptr.hpp>
 #include <string>
 #include <algorithm>
@@ -29,10 +30,10 @@
 using namespace boost::interprocess;
 
 typedef test::dummy_test_allocator<char>           DummyCharAllocator;
-typedef boost::container::basic_string<char, std::char_traits<char>, DummyCharAllocator> DummyString;
+typedef basic_string<char, std::char_traits<char>, DummyCharAllocator> DummyString;
 typedef test::dummy_test_allocator<DummyString>    DummyStringAllocator;
 typedef test::dummy_test_allocator<wchar_t>              DummyWCharAllocator;
-typedef boost::container::basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator> DummyWString;
+typedef basic_string<wchar_t, std::char_traits<wchar_t>, DummyWCharAllocator> DummyWString;
 typedef test::dummy_test_allocator<DummyWString>         DummyWStringAllocator;
 
 struct StringEqual
@@ -62,11 +63,11 @@ int string_test()
    typedef std::allocator<CharType>  StdAllocatorChar;
    typedef std::basic_string<CharType, std::char_traits<CharType>, StdAllocatorChar> StdString;
    typedef std::allocator<StdString> StdStringAllocator;
-   typedef boost::container::vector<StdString, StdStringAllocator> StdStringVector;
+   typedef vector<StdString, StdStringAllocator> StdStringVector;
    typedef AllocatorType<CharType, managed_shared_memory::segment_manager> ShmemAllocatorChar;
-   typedef boost::container::basic_string<CharType, std::char_traits<CharType>, ShmemAllocatorChar> ShmString;
+   typedef basic_string<CharType, std::char_traits<CharType>, ShmemAllocatorChar> ShmString;
    typedef AllocatorType<ShmString, managed_shared_memory::segment_manager> ShmemStringAllocator;
-   typedef boost::container::vector<ShmString, ShmemStringAllocator> ShmStringVector;
+   typedef vector<ShmString, ShmemStringAllocator> ShmStringVector;
 
    const int MaxSize = 100;
 
@@ -97,10 +98,10 @@ int string_test()
       CharType buffer [20];
 
       //First, push back
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->push_back(auxShmString);
@@ -112,10 +113,10 @@ int string_test()
       }
 
       //Now push back moving
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->push_back(boost::move(auxShmString));
@@ -127,10 +128,10 @@ int string_test()
       }
 
       //push front
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->insert(shmStringVect->begin(), auxShmString);
@@ -142,10 +143,10 @@ int string_test()
       }
 
       //Now push front moving
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          auxShmString = "String";
          auxStdString = "String";
-         std::sprintf(buffer, "%u", (unsigned)i);
+         std::sprintf(buffer, "%i", i);
          auxShmString += buffer;
          auxStdString += buffer;
          shmStringVect->insert(shmStringVect->begin(), boost::move(auxShmString));
@@ -199,10 +200,10 @@ int string_test()
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
       const CharType prefix []    = "Prefix";
-      const std::size_t prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
+      const int  prefix_size  = sizeof(prefix)/sizeof(prefix[0])-1;
       const CharType sufix []     = "Suffix";
 
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          (*shmStringVect)[i].append(sufix);
          (*stdStringVect)[i].append(sufix);
          (*shmStringVect)[i].insert((*shmStringVect)[i].begin(),
@@ -213,28 +214,28 @@ int string_test()
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
          std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
       }
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          std::reverse((*shmStringVect)[i].begin(), (*shmStringVect)[i].end());
          std::reverse((*stdStringVect)[i].begin(), (*stdStringVect)[i].end());
       }
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          std::sort(shmStringVect->begin(), shmStringVect->end());
          std::sort(stdStringVect->begin(), stdStringVect->end());
       }
 
       if(!CheckEqualStringVector(shmStringVect, stdStringVect)) return 1;
 
-      for(std::size_t i = 0; i < MaxSize; ++i){
+      for(int i = 0; i < MaxSize; ++i){
          (*shmStringVect)[i].replace((*shmStringVect)[i].begin(),
                                     (*shmStringVect)[i].end(),
                                     "String");
@@ -264,47 +265,9 @@ bool test_expand_bwd()
    //Now test all back insertion possibilities
    typedef test::expand_bwd_test_allocator<char>
       allocator_type;
-   typedef boost::container::basic_string<char, std::char_traits<char>, allocator_type>
+   typedef basic_string<char, std::char_traits<char>, allocator_type>
       string_type;
    return  test::test_all_expand_bwd<string_type>();
-}
-
-bool vector_of_strings_test()
-{
-   using namespace boost::interprocess;
-   typedef allocator<char, managed_shared_memory::segment_manager> ShmCharAllocator;
-   typedef allocator<int, managed_shared_memory::segment_manager> ShmIntAllocator;
-   typedef boost::container::basic_string<char, std::char_traits<char>, ShmCharAllocator > ShmString;
-   typedef allocator<ShmString, managed_shared_memory::segment_manager> ShmStringAllocator;
-
-   const char *memoryName = "test_memory";
-   shared_memory_object::remove(memoryName);
-   managed_shared_memory shm(create_only, memoryName, 1024 * 1024);
-   shared_memory_object::remove(memoryName);
-
-   ShmStringAllocator stringAllocator(shm.get_segment_manager());
-   ShmIntAllocator intAllocator(shm.get_segment_manager());
-
-   boost::container::vector<ShmString, ShmStringAllocator> vectorOfStrings(stringAllocator);
-   boost::container::vector <int, ShmIntAllocator> vectorOfInts(intAllocator);
-
-   {
-      ShmString z("aaaaaaaa", stringAllocator);
-      vectorOfStrings.push_back(z);
-      vectorOfInts.push_back(7);
-   }
-   {
-      ShmString z("ccccccccccccccccccccccc", stringAllocator);
-      vectorOfStrings.push_back(z);
-   }
-   {
-      ShmString z("bbbb", stringAllocator);
-      vectorOfStrings.push_back(z);
-   }
-
-   return std::strcmp(vectorOfStrings.at(0).c_str(), "aaaaaaaa") == 0
-      &&  std::strcmp(vectorOfStrings.at(1).c_str(), "ccccccccccccccccccccccc") == 0
-      &&  std::strcmp(vectorOfStrings.at(2).c_str(), "bbbb") == 0;
 }
 
 int main()
@@ -320,9 +283,7 @@ int main()
    if(!test_expand_bwd())
       return 1;
 
-   if(!vector_of_strings_test())
-      return 1;
-
    return 0;
 }
 
+#include <boost/interprocess/detail/config_end.hpp>

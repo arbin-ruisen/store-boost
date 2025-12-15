@@ -16,10 +16,8 @@
 #include <boost/detail/lightweight_test.hpp>
 #include <boost/system/error_code.hpp>
 
-int main()
+int main( int, char*[] )
 {
-    boost::system::error_code ec( 0, boost::system::system_category() );
-    (void)ec;
-
-    return ::boost::report_errors();
+  boost::system::error_code ec( 0, boost::system::system_category() );
+  return ::boost::report_errors();
 }

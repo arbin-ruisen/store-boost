@@ -13,6 +13,7 @@
 #include "boost/variant/variant.hpp"
 #include "boost/core/lightweight_test.hpp"
 
+#include <boost/move/move.hpp>
 #include <boost/static_assert.hpp>
 
 #include <string>
@@ -28,7 +29,7 @@ inline void run()
     var_t v = s;
 
     // must spit an error at compile-time because of 'std::string&'
-    std::string new_s = boost::strict_get<std::string&>(std::move(v));
+    std::string new_s = boost::strict_get<std::string&>(boost::move(v));
     UNUSED(new_s);
 #else
     BOOST_STATIC_ASSERT_MSG(false, "Dummy compile-time error to pass the test on C++03");

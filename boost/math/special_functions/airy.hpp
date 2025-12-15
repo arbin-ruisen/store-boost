@@ -1,5 +1,4 @@
 // Copyright John Maddock 2012.
-// Copyright Matt Borland 2024.
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -8,24 +7,19 @@
 #ifndef BOOST_MATH_AIRY_HPP
 #define BOOST_MATH_AIRY_HPP
 
-#include <boost/math/tools/config.hpp>
-#include <boost/math/tools/numeric_limits.hpp>
-#include <boost/math/tools/precision.hpp>
-#include <boost/math/tools/cstdint.hpp>
+#include <limits>
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <boost/math/special_functions/bessel.hpp>
 #include <boost/math/special_functions/cbrt.hpp>
 #include <boost/math/special_functions/detail/airy_ai_bi_zero.hpp>
 #include <boost/math/tools/roots.hpp>
-#include <boost/math/policies/error_handling.hpp>
-#include <boost/math/constants/constants.hpp>
 
 namespace boost{ namespace math{
 
 namespace detail{
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T airy_ai_imp(T x, const Policy& pol)
+T airy_ai_imp(T x, const Policy& pol)
 {
    BOOST_MATH_STD_USING
 
@@ -63,7 +57,7 @@ BOOST_MATH_GPU_ENABLED T airy_ai_imp(T x, const Policy& pol)
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T airy_bi_imp(T x, const Policy& pol)
+T airy_bi_imp(T x, const Policy& pol)
 {
    BOOST_MATH_STD_USING
 
@@ -81,7 +75,7 @@ BOOST_MATH_GPU_ENABLED T airy_bi_imp(T x, const Policy& pol)
    {
       T tg = boost::math::tgamma(constants::twothirds<T>(), pol);
       //T ai = 1 / (pow(T(3), constants::twothirds<T>()) * tg);
-      T bi = 1 / (sqrt(boost::math::cbrt(T(3), pol)) * tg);
+      T bi = 1 / (sqrt(boost::math::cbrt(T(3))) * tg);
       return bi;
    }
    else
@@ -96,7 +90,7 @@ BOOST_MATH_GPU_ENABLED T airy_bi_imp(T x, const Policy& pol)
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T airy_ai_prime_imp(T x, const Policy& pol)
+T airy_ai_prime_imp(T x, const Policy& pol)
 {
    BOOST_MATH_STD_USING
 
@@ -112,7 +106,7 @@ BOOST_MATH_GPU_ENABLED T airy_ai_prime_imp(T x, const Policy& pol)
    else if(fabs(x * x) / 2 < tools::epsilon<T>())
    {
       T tg = boost::math::tgamma(constants::third<T>(), pol);
-      T aip = 1 / (boost::math::cbrt(T(3), pol) * tg);
+      T aip = 1 / (boost::math::cbrt(T(3)) * tg);
       return -aip;
    }
    else
@@ -131,7 +125,7 @@ BOOST_MATH_GPU_ENABLED T airy_ai_prime_imp(T x, const Policy& pol)
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T airy_bi_prime_imp(T x, const Policy& pol)
+T airy_bi_prime_imp(T x, const Policy& pol)
 {
    BOOST_MATH_STD_USING
 
@@ -147,7 +141,7 @@ BOOST_MATH_GPU_ENABLED T airy_bi_prime_imp(T x, const Policy& pol)
    else if(fabs(x * x) / 2 < tools::epsilon<T>())
    {
       T tg = boost::math::tgamma(constants::third<T>(), pol);
-      T bip = sqrt(boost::math::cbrt(T(3), pol)) / tg;
+      T bip = sqrt(boost::math::cbrt(T(3))) / tg;
       return bip;
    }
    else
@@ -162,7 +156,7 @@ BOOST_MATH_GPU_ENABLED T airy_bi_prime_imp(T x, const Policy& pol)
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T airy_ai_zero_imp(int m, const Policy& pol)
+T airy_ai_zero_imp(int m, const Policy& pol)
 {
    BOOST_MATH_STD_USING // ADL of std names, needed for log, sqrt.
 
@@ -181,18 +175,18 @@ BOOST_MATH_GPU_ENABLED T airy_ai_zero_imp(int m, const Policy& pol)
    }
 
    // Set up the initial guess for the upcoming root-finding.
-   const T guess_root = boost::math::detail::airy_zero::airy_ai_zero_detail::initial_guess<T>(m, pol);
+   const T guess_root = boost::math::detail::airy_zero::airy_ai_zero_detail::initial_guess<T>(m);
 
    // Select the maximum allowed iterations based on the number
    // of decimal digits in the numeric type T, being at least 12.
    const int my_digits10 = static_cast<int>(static_cast<float>(policies::digits<T, Policy>() * 0.301F));
 
-   const std::uintmax_t iterations_allowed = static_cast<std::uintmax_t>(BOOST_MATH_GPU_SAFE_MAX(12, my_digits10 * 2));
+   const boost::uintmax_t iterations_allowed = static_cast<boost::uintmax_t>((std::max)(12, my_digits10 * 2));
 
-   std::uintmax_t iterations_used = iterations_allowed;
+   boost::uintmax_t iterations_used = iterations_allowed;
 
    // Use a dynamic tolerance because the roots get closer the higher m gets.
-   T tolerance;  // LCOV_EXCL_LINE
+   T tolerance;
 
    if     (m <=   10) { tolerance = T(0.3F); }
    else if(m <=  100) { tolerance = T(0.1F); }
@@ -215,7 +209,7 @@ BOOST_MATH_GPU_ENABLED T airy_ai_zero_imp(int m, const Policy& pol)
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T airy_bi_zero_imp(int m, const Policy& pol)
+T airy_bi_zero_imp(int m, const Policy& pol)
 {
    BOOST_MATH_STD_USING // ADL of std names, needed for log, sqrt.
 
@@ -233,18 +227,18 @@ BOOST_MATH_GPU_ENABLED T airy_bi_zero_imp(int m, const Policy& pol)
         "The requested rank of the zero is %1%, but must be 1 or more !", static_cast<T>(m), pol);
    }
    // Set up the initial guess for the upcoming root-finding.
-   const T guess_root = boost::math::detail::airy_zero::airy_bi_zero_detail::initial_guess<T>(m, pol);
+   const T guess_root = boost::math::detail::airy_zero::airy_bi_zero_detail::initial_guess<T>(m);
 
    // Select the maximum allowed iterations based on the number
    // of decimal digits in the numeric type T, being at least 12.
    const int my_digits10 = static_cast<int>(static_cast<float>(policies::digits<T, Policy>() * 0.301F));
 
-   const std::uintmax_t iterations_allowed = static_cast<std::uintmax_t>(BOOST_MATH_GPU_SAFE_MAX(12, my_digits10 * 2));
+   const boost::uintmax_t iterations_allowed = static_cast<boost::uintmax_t>((std::max)(12, my_digits10 * 2));
 
-   std::uintmax_t iterations_used = iterations_allowed;
+   boost::uintmax_t iterations_used = iterations_allowed;
 
    // Use a dynamic tolerance because the roots get closer the higher m gets.
-   T tolerance; // LCOV_EXCL_LINE
+   T tolerance;
 
    if     (m <=   10) { tolerance = T(0.3F); }
    else if(m <=  100) { tolerance = T(0.1F); }
@@ -269,7 +263,7 @@ BOOST_MATH_GPU_ENABLED T airy_bi_zero_imp(int m, const Policy& pol)
 } // namespace detail
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_ai(T x, const Policy&)
+inline typename tools::promote_args<T>::type airy_ai(T x, const Policy&)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename tools::promote_args<T>::type result_type;
@@ -285,13 +279,13 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_ai(T x,
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_ai(T x)
+inline typename tools::promote_args<T>::type airy_ai(T x)
 {
    return airy_ai(x, policies::policy<>());
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_bi(T x, const Policy&)
+inline typename tools::promote_args<T>::type airy_bi(T x, const Policy&)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename tools::promote_args<T>::type result_type;
@@ -307,13 +301,13 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_bi(T x,
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_bi(T x)
+inline typename tools::promote_args<T>::type airy_bi(T x)
 {
    return airy_bi(x, policies::policy<>());
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_ai_prime(T x, const Policy&)
+inline typename tools::promote_args<T>::type airy_ai_prime(T x, const Policy&)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename tools::promote_args<T>::type result_type;
@@ -329,13 +323,13 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_ai_prim
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_ai_prime(T x)
+inline typename tools::promote_args<T>::type airy_ai_prime(T x)
 {
    return airy_ai_prime(x, policies::policy<>());
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_bi_prime(T x, const Policy&)
+inline typename tools::promote_args<T>::type airy_bi_prime(T x, const Policy&)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename tools::promote_args<T>::type result_type;
@@ -351,13 +345,13 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_bi_prim
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type airy_bi_prime(T x)
+inline typename tools::promote_args<T>::type airy_bi_prime(T x)
 {
    return airy_bi_prime(x, policies::policy<>());
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline T airy_ai_zero(int m, const Policy& /*pol*/)
+inline T airy_ai_zero(int m, const Policy& /*pol*/)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename policies::evaluation<T, Policy>::type value_type;
@@ -368,7 +362,7 @@ BOOST_MATH_GPU_ENABLED inline T airy_ai_zero(int m, const Policy& /*pol*/)
       policies::discrete_quantile<>,
       policies::assert_undefined<> >::type forwarding_policy;
 
-   static_assert(    false == std::numeric_limits<T>::is_specialized
+   BOOST_STATIC_ASSERT_MSG(    false == std::numeric_limits<T>::is_specialized
                            || (   true  == std::numeric_limits<T>::is_specialized
                                && false == std::numeric_limits<T>::is_integer),
                            "Airy value type must be a floating-point type.");
@@ -377,13 +371,13 @@ BOOST_MATH_GPU_ENABLED inline T airy_ai_zero(int m, const Policy& /*pol*/)
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline T airy_ai_zero(int m)
+inline T airy_ai_zero(int m)
 {
    return airy_ai_zero<T>(m, policies::policy<>());
 }
 
 template <class T, class OutputIterator, class Policy>
-BOOST_MATH_GPU_ENABLED inline OutputIterator airy_ai_zero(
+inline OutputIterator airy_ai_zero(
                          int start_index,
                          unsigned number_of_zeros,
                          OutputIterator out_it,
@@ -391,7 +385,7 @@ BOOST_MATH_GPU_ENABLED inline OutputIterator airy_ai_zero(
 {
    typedef T result_type;
 
-   static_assert(    false == std::numeric_limits<T>::is_specialized
+   BOOST_STATIC_ASSERT_MSG(    false == std::numeric_limits<T>::is_specialized
                            || (   true  == std::numeric_limits<T>::is_specialized
                                && false == std::numeric_limits<T>::is_integer),
                            "Airy value type must be a floating-point type.");
@@ -405,7 +399,7 @@ BOOST_MATH_GPU_ENABLED inline OutputIterator airy_ai_zero(
 }
 
 template <class T, class OutputIterator>
-BOOST_MATH_GPU_ENABLED inline OutputIterator airy_ai_zero(
+inline OutputIterator airy_ai_zero(
                          int start_index,
                          unsigned number_of_zeros,
                          OutputIterator out_it)
@@ -414,7 +408,7 @@ BOOST_MATH_GPU_ENABLED inline OutputIterator airy_ai_zero(
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline T airy_bi_zero(int m, const Policy& /*pol*/)
+inline T airy_bi_zero(int m, const Policy& /*pol*/)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename policies::evaluation<T, Policy>::type value_type;
@@ -425,7 +419,7 @@ BOOST_MATH_GPU_ENABLED inline T airy_bi_zero(int m, const Policy& /*pol*/)
       policies::discrete_quantile<>,
       policies::assert_undefined<> >::type forwarding_policy;
 
-   static_assert(    false == std::numeric_limits<T>::is_specialized
+   BOOST_STATIC_ASSERT_MSG(    false == std::numeric_limits<T>::is_specialized
                            || (   true  == std::numeric_limits<T>::is_specialized
                                && false == std::numeric_limits<T>::is_integer),
                            "Airy value type must be a floating-point type.");
@@ -434,13 +428,13 @@ BOOST_MATH_GPU_ENABLED inline T airy_bi_zero(int m, const Policy& /*pol*/)
 }
 
 template <typename T>
-BOOST_MATH_GPU_ENABLED inline T airy_bi_zero(int m)
+inline T airy_bi_zero(int m)
 {
    return airy_bi_zero<T>(m, policies::policy<>());
 }
 
 template <class T, class OutputIterator, class Policy>
-BOOST_MATH_GPU_ENABLED inline OutputIterator airy_bi_zero(
+inline OutputIterator airy_bi_zero(
                          int start_index,
                          unsigned number_of_zeros,
                          OutputIterator out_it,
@@ -448,7 +442,7 @@ BOOST_MATH_GPU_ENABLED inline OutputIterator airy_bi_zero(
 {
    typedef T result_type;
 
-   static_assert(    false == std::numeric_limits<T>::is_specialized
+   BOOST_STATIC_ASSERT_MSG(    false == std::numeric_limits<T>::is_specialized
                            || (   true  == std::numeric_limits<T>::is_specialized
                                && false == std::numeric_limits<T>::is_integer),
                            "Airy value type must be a floating-point type.");
@@ -462,7 +456,7 @@ BOOST_MATH_GPU_ENABLED inline OutputIterator airy_bi_zero(
 }
 
 template <class T, class OutputIterator>
-BOOST_MATH_GPU_ENABLED inline OutputIterator airy_bi_zero(
+inline OutputIterator airy_bi_zero(
                          int start_index,
                          unsigned number_of_zeros,
                          OutputIterator out_it)

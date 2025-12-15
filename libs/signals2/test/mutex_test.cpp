@@ -12,15 +12,12 @@
 // added to test boost::signals2::mutex.
 // For more information, see http://www.boost.org
 
-// Note boost/test/minimal.hpp can cause windows.h to get included, which
+// note boost/test/minimal.hpp can cause windows.h to get included, which
 // can screw up our checks of _WIN32_WINNT if it is included
 // after boost/signals2/mutex.hpp.  Frank Hess 2009-03-07.
-// We now use boost/test/included/unit_test.hpp, not sure if above still
-// applies, but might as well leave the include where it is.
-#define BOOST_TEST_MODULE mutex_test
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/minimal.hpp>
 
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include <boost/signals2/dummy_mutex.hpp>
 #include <boost/signals2/mutex.hpp>
 #include <boost/thread/locks.hpp>
@@ -28,8 +25,6 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/thread_time.hpp>
 #include <boost/thread/condition.hpp>
-
-using namespace boost::placeholders;
 
 class execution_monitor
 {
@@ -285,8 +280,10 @@ void test_dummy_mutex()
     timed_test(&do_test_dummy_mutex, 2);
 }
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char*[])
 {
     test_mutex();
     test_dummy_mutex();
+
+    return 0;
 }

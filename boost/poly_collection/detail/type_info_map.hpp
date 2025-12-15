@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Joaquin M Lopez Munoz.
+/* Copyright 2016-2018 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -15,7 +15,6 @@
 
 #include <boost/detail/workaround.hpp>
 #include <functional>
-#include <iterator>
 #include <memory>
 #include <type_traits>
 #include <typeinfo>
@@ -32,34 +31,33 @@ namespace detail{
  * std::type_info instances to describe the same type, which implies that
  * std::type_info::operator== and std::type_info::hash_code are costly
  * operations typically relying on the stored type name.
- * type_info_map<T> behaves roughly as a
+ * type_info_ptr_hash<T> behaves roughly as a
  * std::unordered_map<std::type_index,T> but maintains an internal cache of
  * passed std::type_info instances so that lookup is performed (when there's a
  * cache hit) without invoking std::type_info equality and hashing ops.
  */
 
-struct type_info_hash
+struct type_info_ptr_hash
 {
-  std::size_t operator()(const std::type_info& i)const noexcept
-  {return i.hash_code();}
+  std::size_t operator()(const std::type_info* p)const noexcept
+  {return p->hash_code();}
 };
 
-struct type_info_equal_to
+struct type_info_ptr_equal_to
 {
   bool operator()(
-    const std::type_info& i,const std::type_info& j)const noexcept
-  {return i==j;}
+    const std::type_info* p,const std::type_info* q)const noexcept
+  {return *p==*q;}
 };
 
 template<typename T,typename Allocator>
 class type_info_map
 {
   using map_type=std::unordered_map<
-    std::reference_wrapper<const std::type_info>,T,
-    type_info_hash,type_info_equal_to,
+    const std::type_info*,T,
+    type_info_ptr_hash,type_info_ptr_equal_to,
     typename std::allocator_traits<Allocator>::template
-      rebind_alloc<
-        std::pair<const std::reference_wrapper<const std::type_info>,T>>
+      rebind_alloc<std::pair<const std::type_info* const,T>>
   >;
 
 public:
@@ -148,7 +146,7 @@ public:
   {
     auto cit=cache.find(&key);
     if(cit!=cache.end())return cit->second;
-    auto mit=map.find(key);
+    auto mit=map.find(&key);
     if(mit!=map.end())cache.insert({&key,mit});
     return mit; 
   }
@@ -157,14 +155,14 @@ public:
   {
     auto cit=cache.find(&key);
     if(cit!=cache.end())return cit->second;
-    return map.find(key);
+    return map.find(&key);
   }
 
   template<typename P>
   std::pair<iterator,bool> insert(const key_type& key,P&& x)
   {
     auto c=map.bucket_count();
-    auto p=map.emplace(key,std::forward<P>(x));
+    auto p=map.emplace(&key,std::forward<P>(x));
     if(map.bucket_count()!=c)rebuild_cache();
     cache.insert({&key,p.first});
     return p;
@@ -185,6 +183,7 @@ private:
   /* std::unordered_map(const allocator_type&),
    * std::unordered_map(const unordered_map&,const allocator_type&) and
    * std::unordered_map(unordered_map&&,const allocator_type&) not available.
+   * We make move construction decay to copy construction.
    */
 
   template<typename UnorderedMap>
@@ -201,17 +200,10 @@ private:
     const typename std::decay<UnorderedMap>::type::allocator_type& al)
   {
     using RawUnorderedMap=typename std::decay<UnorderedMap>::type;
-    using iterator=typename std::conditional<
-      !std::is_lvalue_reference<UnorderedMap>::value&&
-      !std::is_const<UnorderedMap>::value,
-      std::move_iterator<typename RawUnorderedMap::iterator>,
-      typename RawUnorderedMap::const_iterator
-    >::type;
 
     return RawUnorderedMap{
-      iterator{x.begin()},iterator{x.end()},0,
-      typename RawUnorderedMap::hasher{},typename RawUnorderedMap::key_equal{},
-      al
+      x.begin(),x.end(),0,typename RawUnorderedMap::hasher{},
+      typename RawUnorderedMap::key_equal{},al
     };
   }
 #else
@@ -232,12 +224,12 @@ private:
 
   void build_cache(const cache_type& x)
   {
-    for(const auto& p:x)cache.insert({p.first,map.find(*p.first)});
+    for(const auto& p:x)cache.insert({p.first,map.find(p.first)});
   }
 
   void rebuild_cache()
   {
-    for(auto& p:cache)p.second=map.find(*p.first);
+    for(auto& p:cache)p.second=map.find(p.first);
   }
 
   map_type   map;

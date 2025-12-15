@@ -4,12 +4,14 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying 
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/spirit/include/support_adapt_adt_attributes.hpp>
+#include <boost/config/warning_disable.hpp>
+#include <boost/detail/lightweight_test.hpp>
 
 #include <boost/fusion/include/adapt_adt.hpp>
 #include <boost/optional.hpp>
 
 #include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/support_adapt_adt_attributes.hpp>
 
 #include "test.hpp"
 

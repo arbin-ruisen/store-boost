@@ -7,10 +7,9 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#include <cstdint> // int8_t, ....
 #include <boost/safe_numerics/checked_result.hpp>
-#include <boost/mp11/list.hpp> // mp_list
-#include <boost/mp11/algorithm.hpp>  // mp_iota_c
+#include <boost/mp11/list.hpp>
+#include <boost/mp11/algorithm.hpp>
 
 // values
 // note: In theory explicity specifying the number of elements in the

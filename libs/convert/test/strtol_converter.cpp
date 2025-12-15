@@ -1,17 +1,18 @@
 // Boost.Convert test and usage example
-// Copyright (c) 2009-2020 Vladimir Batov.
+// Copyright (c) 2009-2016 Vladimir Batov.
 // Use, modification and distribution are subject to the Boost Software License,
 // Version 1.0. See http://www.boost.org/LICENSE_1_0.txt.
 
 #include "./test.hpp"
 
-#if !defined(BOOST_CONVERT_CXX14)
+#if defined(BOOST_CONVERT_IS_NOT_SUPPORTED)
 int main(int, char const* []) { return 0; }
 #else
 
 #include <boost/convert.hpp>
 #include <boost/convert/printf.hpp>
 #include <boost/convert/stream.hpp>
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_int_distribution.hpp>
 #include <boost/random/uniform_01.hpp>
@@ -288,7 +289,7 @@ get_random()
 
 static
 void
-compare(std::pair<double, int> pair)
+compare(std::pair<double, int const> pair)
 {
     boost::cnv::strtol cnv1;
     boost::cnv::printf cnv2;

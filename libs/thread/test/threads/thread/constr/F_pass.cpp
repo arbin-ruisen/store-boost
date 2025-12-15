@@ -102,7 +102,7 @@ int main()
     BOOST_TEST(f_run == true);
   }
   f_run = false;
-#if !defined(BOOST_MSVC) && !defined(__MINGW32__)
+#ifndef BOOST_MSVC
   {
     try
     {
@@ -125,7 +125,7 @@ int main()
     BOOST_TEST(G::n_alive == 0);
     BOOST_TEST(G::op_run);
   }
-#if !defined(BOOST_MSVC) && !defined(__MINGW32__)
+#ifndef BOOST_MSVC
   G::op_run = false;
   {
     try

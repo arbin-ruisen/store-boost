@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::zip`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -20,7 +20,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/zip_with.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @cond
     template <typename Xs, typename ...Ys>
     constexpr auto zip_t::operator()(Xs&& xs, Ys&& ...ys) const {
@@ -45,6 +45,6 @@ namespace boost { namespace hana {
             return hana::zip_with(hana::make_tuple, static_cast<Xs&&>(xs)...);
         }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_ZIP_HPP

@@ -26,7 +26,7 @@
 #include <utility>
 #include <iostream>
 
-#include <array>
+#include <boost/array.hpp>
 
 #include <boost/test/unit_test.hpp>
 

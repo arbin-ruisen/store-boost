@@ -16,13 +16,15 @@
 
 #include <boost/ratio/ratio.hpp>
 
-#define STATIC_ASSERT(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
+#if !defined(BOOST_NO_CXX11_STATIC_ASSERT)
+#define NOTHING ""
+#endif
 
 template <long long N, long long D, long long eN, long long eD>
 void test()
 {
-    STATIC_ASSERT(boost::ratio<N, D>::num == eN);
-    STATIC_ASSERT(boost::ratio<N, D>::den == eD);
+    BOOST_RATIO_STATIC_ASSERT((boost::ratio<N, D>::num == eN),  NOTHING, (boost::mpl::integral_c<boost::intmax_t,boost::ratio<N, D>::num>));
+    BOOST_RATIO_STATIC_ASSERT((boost::ratio<N, D>::den == eD), NOTHING, (boost::mpl::integral_c<boost::intmax_t,boost::ratio<N, D>::den>));
 }
 
 int main()

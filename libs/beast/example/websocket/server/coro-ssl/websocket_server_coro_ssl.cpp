@@ -16,15 +16,15 @@
 #include "example/common/server_certificate.hpp"
 
 #include <boost/beast/core.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/beast/websocket/ssl.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/spawn.hpp>
-#include <boost/asio/ssl.hpp>
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <thread>
 #include <vector>
@@ -48,7 +48,8 @@ fail(beast::error_code ec, char const* what)
 // Echoes back all received WebSocket messages
 void
 do_session(
-    websocket::stream<ssl::stream<beast::tcp_stream>>& ws,
+    websocket::stream<
+        beast::ssl_stream<beast::tcp_stream>>& ws,
     net::yield_context yield)
 {
     beast::error_code ec;
@@ -151,12 +152,9 @@ do_listen(
                 acceptor.get_executor(),
                 std::bind(
                     &do_session,
-                    websocket::stream<ssl::stream<
+                    websocket::stream<beast::ssl_stream<
                         beast::tcp_stream>>(std::move(socket), ctx),
-                    std::placeholders::_1),
-                    // we ignore the result of the session,
-                    // most errors are handled with error_code
-                    boost::asio::detached);
+                    std::placeholders::_1));
     }
 }
 
@@ -191,18 +189,7 @@ int main(int argc, char* argv[])
             std::ref(ioc),
             std::ref(ctx),
             tcp::endpoint{address, port},
-            std::placeholders::_1),
-        // on completion, spawn will call this function
-        [](std::exception_ptr ex)
-        {
-            // if an exception occurred in the coroutine,
-            // it's something critical, e.g. out of memory
-            // we capture normal errors in the ec
-            // so we just rethrow the exception here,
-            // which will cause `ioc.run()` to throw
-            if (ex)
-                std::rethrow_exception(ex);
-        });
+            std::placeholders::_1));
 
     // Run the I/O service on the requested number of threads
     std::vector<std::thread> v;

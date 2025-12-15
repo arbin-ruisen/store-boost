@@ -22,7 +22,6 @@
 #include <utility>
 #include <iostream>
 #include <vector>
-#include <type_traits>
 
 #include <boost/numeric/odeint/stepper/euler.hpp>
 #include <boost/numeric/odeint/algebra/range_algebra.hpp>
@@ -56,8 +55,8 @@ namespace odeint {
 template<>
 struct is_resizeable< my_vec >
 {
-    //struct type : public std::true_type { };
-    typedef std::true_type type;
+    //struct type : public boost::true_type { };
+    typedef boost::true_type type;
     const static bool value = type::value;
 };
 } } }

@@ -43,8 +43,6 @@ void test_default_ndebug()
     BOOST_ASSERT_MSG( 0, "msg" );
     BOOST_ASSERT_MSG( !x, "msg" );
     BOOST_ASSERT_MSG( x == 0, "msg" );
-
-    (void)x;
 }
 
 // BOOST_ENABLE_ASSERT_DEBUG_HANDLER, !NDEBUG
@@ -101,8 +99,6 @@ void test_debug_handler_ndebug()
     BOOST_ASSERT_MSG( x == 0, "msg" );
 
     BOOST_TEST( handler_invoked == 0 );
-
-    (void)x;
 }
 
 #undef BOOST_ENABLE_ASSERT_DEBUG_HANDLER

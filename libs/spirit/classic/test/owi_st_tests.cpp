@@ -13,8 +13,7 @@
 #endif
 #undef BOOST_SPIRIT_THREADSAFE
 #include <boost/spirit/home/classic/core/non_terminal/impl/object_with_id.ipp>
-
-#include <boost/core/lightweight_test.hpp>
+#include <boost/detail/lightweight_test.hpp>
 #include <iostream>
 
 using BOOST_SPIRIT_CLASSIC_NS::impl::object_with_id;

@@ -9,6 +9,8 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/move/detail/config_begin.hpp>
+
 //[move_return_example
 #include "movable.hpp"
 #include "copymovable.hpp"
@@ -59,8 +61,10 @@ int main()
    copyable c           = lock_wrapper(factory_functor<copyable>    ());
    non_copy_movable &mr = lock_wrapper(return_reference             ());
    //<-
-   boost::movelib::ignore(m); boost::movelib::ignore(cm); boost::movelib::ignore(c); boost::movelib::ignore(mr);
+   (void)m; (void)cm; (void)c; (void)mr;
    //->
    return 0;
 }
 //]
+
+#include <boost/move/detail/config_end.hpp>

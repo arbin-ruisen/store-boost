@@ -7,12 +7,11 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/interprocess/detail/config_begin.hpp>
+#include <boost/interprocess/detail/workaround.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 // intrusive/detail
 #include <boost/intrusive/detail/minimal_pair_header.hpp>
-// test
-#include "../test/get_process_id_name.hpp"
-
 
 typedef std::pair<double, int> simple_pair;
 
@@ -83,8 +82,8 @@ int construct_test()
    typedef typename NameGenerator::array_type      array_type;
    typedef typename NameGenerator::array_it_type   array_it_type;
 
-   remove_shared_memory_on_destroy remover(test::get_process_id_name());
-   shared_memory_object::remove(test::get_process_id_name());
+   remove_shared_memory_on_destroy remover("MySharedMemory");
+   shared_memory_object::remove("MySharedMemory");
    {
       //A special shared memory where we can
       //construct objects associated with a name.
@@ -92,7 +91,7 @@ int construct_test()
       //the shared memory segment and initialize needed resources
       managed_shared_memory segment
          //create       segment name    segment size
-         (create_only, test::get_process_id_name(), 65536);
+         (create_only, "MySharedMemory", 65536);
 
       //Create an object of MyType initialized to {0.0, 0}
       simple_type *s = segment.construct<simple_type>
@@ -194,3 +193,4 @@ int main ()
 }
 
 //]
+#include <boost/interprocess/detail/config_end.hpp>

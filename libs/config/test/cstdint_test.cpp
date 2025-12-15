@@ -93,7 +93,7 @@ void integral_constant_checker::check()
 // the following function simply verifies that the type
 // of an integral constant is correctly defined:
 //
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 #pragma option -w-8008
 #pragma option -w-8066
 #endif

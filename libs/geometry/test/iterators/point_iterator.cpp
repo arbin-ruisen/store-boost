@@ -3,7 +3,8 @@
 
 // Copyright (c) 2017 Adam Wulkiewicz, Lodz, Poland.
 
-// Copyright (c) 2014-2021, Oracle and/or its affiliates.
+// Copyright (c) 2014-2017, Oracle and/or its affiliates.
+
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -27,11 +28,9 @@
 #include <boost/core/ignore_unused.hpp>
 #include <boost/iterator/iterator_concepts.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/type_traits/is_const.hpp>
 #include <boost/optional.hpp>
-
-#include <boost/geometry/algorithms/equals.hpp>
-#include <boost/geometry/algorithms/make.hpp>
-#include <boost/geometry/algorithms/num_points.hpp>
+#include <boost/type_traits/is_reference.hpp>
 
 #include <boost/geometry/core/point_type.hpp>
 
@@ -40,23 +39,31 @@
 #include <boost/geometry/geometries/register/linestring.hpp>
 #include <boost/geometry/geometries/register/multi_point.hpp>
 
+#include <boost/geometry/algorithms/equals.hpp>
+#include <boost/geometry/algorithms/make.hpp>
+#include <boost/geometry/algorithms/num_points.hpp>
+
+#include <boost/geometry/policies/compare.hpp>
+
+#include <boost/geometry/util/condition.hpp>
+
 #include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/geometry/io/dsv/write.hpp>
 
 #include <boost/geometry/iterators/point_iterator.hpp>
 #include <boost/geometry/iterators/point_reverse_iterator.hpp>
 
-#include <boost/geometry/policies/compare.hpp>
-
 #include <boost/geometry/strategies/strategies.hpp>
-
-#include <boost/geometry/util/condition.hpp>
 
 #include <test_common/with_pointer.hpp>
 #include <test_geometries/copy_on_dereference_geometries.hpp>
 
+// At the end because of conflicts with Boost.QVM
+#include <boost/assign/list_of.hpp>
+
 
 namespace bg = ::boost::geometry;
+namespace ba = ::boost::assign;
 
 typedef bg::model::point<double, 2, bg::cs::cartesian> point_type;
 typedef bg::model::point<double, 3, bg::cs::cartesian> point_type_3d;
@@ -93,7 +100,7 @@ template <typename Geometry>
 inline Geometry from_wkt(std::string const& wkt)
 {
     Geometry geometry;
-    bg::read_wkt(wkt, geometry);
+    boost::geometry::read_wkt(wkt, geometry);
     return geometry;
 }
 
@@ -140,7 +147,7 @@ template
 <
     typename Geometry,
     bool Enable = true,
-    bool IsConst = std::is_const<Geometry>::value
+    bool IsConst = boost::is_const<Geometry>::value
 >
 struct test_iterator_concepts
 {
@@ -449,7 +456,7 @@ struct test_point_iterator_of_geometry
         
         // testing dereferencing/assignment
 
-        bool const is_reference = std::is_reference
+        bool const is_reference = boost::is_reference
             <
                 typename std::iterator_traits<point_iterator>::reference
             >::value;
@@ -528,7 +535,7 @@ BOOST_AUTO_TEST_CASE( test_linestring_point_iterator )
                   );
 
     tester::apply(from_wkt<L>("LINESTRING(3 3,4 4,5 5)"),
-                  TMP{{3,3},{4,4},{5,5}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)
                   );
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
@@ -561,15 +568,15 @@ BOOST_AUTO_TEST_CASE( test_polygon_point_iterator )
                   );
 
     tester::apply(from_wkt<P>("POLYGON((1 1,9 1,9 9,1 9),(5 5,6 5,6 6,5 6))"),
-                  TMP{{1,1},{9,1},{9,9},{1,9},{5,5},{6,5},{6,6},{5,6}}
+                  ba::tuple_list_of(1,1)(9,1)(9,9)(1,9)(5,5)(6,5)(6,6)(5,6)
                   );
 
     tester::apply(from_wkt<P>("POLYGON((3 3,4 4,5 5),(),(),(),(6 6,7 7,8 8),(),(),(9 9),())"),
-                  TMP{{3,3},{4,4},{5,5},{6,6},{7,7},{8,8},{9,9}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)(6,6)(7,7)(8,8)(9,9)
                   );
 
     tester::apply(from_wkt<P>("POLYGON((),(3 3,4 4,5 5),(),(),(6 6,7 7,8 8),(),(),(9 9),())"),
-                  TMP{{3,3},{4,4},{5,5},{6,6},{7,7},{8,8},{9,9}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)(6,6)(7,7)(8,8)(9,9)
                   );
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
@@ -598,7 +605,7 @@ BOOST_AUTO_TEST_CASE( test_multipoint_point_iterator )
                   );
 
     tester::apply(from_wkt<MP>("MULTIPOINT(3 3,4 4,5 5)"),
-                  TMP{{3,3},{4,4},{5,5}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)
                   );
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
@@ -627,7 +634,7 @@ BOOST_AUTO_TEST_CASE( test_multipoint_3d_point_iterator )
                   );
 
     tester::apply(from_wkt<MP>("MULTIPOINT(3 3 3,4 4 4,5 5 5)"),
-                  TMP{{3,3,3},{4,4,4},{5,5,5}}
+                  ba::tuple_list_of(3,3,3)(4,4,4)(5,5,5)
                   );
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
@@ -664,11 +671,11 @@ BOOST_AUTO_TEST_CASE( test_multilinestring_point_iterator )
                   );
 
     tester::apply(from_wkt<ML>("MULTILINESTRING((1 1,2 2,3 3),(3 3,4 4,5 5),(6 6))"),
-                  TMP{{1,1},{2,2},{3,3},{3,3},{4,4},{5,5},{6,6}}
+                  ba::tuple_list_of(1,1)(2,2)(3,3)(3,3)(4,4)(5,5)(6,6)
                   );
 
     tester::apply(from_wkt<ML>("MULTILINESTRING((),(),(1 1,2 2,3 3),(),(),(3 3,4 4,5 5),(),(6 6),(),(),())"),
-                  TMP{{1,1},{2,2},{3,3},{3,3},{4,4},{5,5},{6,6}}
+                  ba::tuple_list_of(1,1)(2,2)(3,3)(3,3)(4,4)(5,5)(6,6)
                   );
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
@@ -709,18 +716,18 @@ BOOST_AUTO_TEST_CASE( test_multipolygon_point_iterator )
                   );
 
     tester::apply(from_wkt<MPL>("MULTIPOLYGON(((3 3,4 4,5 5),(6 6,7 7,8 8),(9 9)),((1 1,2 2,10 10),(11 11,12 12)))"),
-                  TMP{{3,3},{4,4},{5,5},{6,6},{7,7},{8,8},{9,9},
-                      {1,1},{2,2},{10,10},{11,11},{12,12}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)(6,6)(7,7)(8,8)(9,9)\
+                  (1,1)(2,2)(10,10)(11,11)(12,12)
                   );
 
     tester::apply(from_wkt<MPL>("MULTIPOLYGON(((3 3,4 4,5 5),(),(),(),(6 6,7 7,8 8),(),(),(9 9),()),((),(1 1,2 2,10 10),(),(),(),(11 11,12 12),(),(),(13 13),()))"),
-                  TMP{{3,3},{4,4},{5,5},{6,6},{7,7},{8,8},{9,9},
-                      {1,1},{2,2},{10,10},{11,11},{12,12},{13,13}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)(6,6)(7,7)(8,8)(9,9)\
+                  (1,1)(2,2)(10,10)(11,11)(12,12)(13,13)
                   );
 
     tester::apply(from_wkt<MPL>("MULTIPOLYGON(((3 3,4 4,5 5),(),(),(),(6 6,7 7,8 8),(),(),(9 9),()),((),(1 1,2 2,10 10),(),(),(),(11 11,12 12),(),(),(13 13),()),((),(),()))"),
-                  TMP{{3,3},{4,4},{5,5},{6,6},{7,7},{8,8},{9,9},
-                      {1,1},{2,2},{10,10},{11,11},{12,12},{13,13}}
+                  ba::tuple_list_of(3,3)(4,4)(5,5)(6,6)(7,7)(8,8)(9,9)\
+                  (1,1)(2,2)(10,10)(11,11)(12,12)(13,13)
                   );
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
@@ -758,8 +765,8 @@ BOOST_AUTO_TEST_CASE( test_multipoint_of_point_pointers )
     typedef test_point_iterator_of_geometry<MP, TMP> tester;
 
     tester::apply(multipoint,
-                  TMP{{1,-1},{2,-2},{3,-3},{4,-4},{5,-5},{6,-6},
-                      {7,-7},{8,-8},{9,-9}},
+                  ba::tuple_list_of(1,-1)(2,-2)(3,-3)(4,-4)(5,-5)(6,-6)\
+                  (7,-7)(8,-8)(9,-9),
                   zero
                   );
 
@@ -800,8 +807,8 @@ BOOST_AUTO_TEST_CASE( test_linestring_of_point_pointers )
     typedef test_point_iterator_of_geometry<L, TMP> tester;
 
     tester::apply(linestring,
-                  TMP{{1,-1},{2,-2},{3,-3},{4,-4},{5,-5},{6,-6},
-                      {7,-7},{8,-8},{9,-9}},
+                  ba::tuple_list_of(1,-1)(2,-2)(3,-3)(4,-4)(5,-5)(6,-6)\
+                  (7,-7)(8,-8)(9,-9),
                   zero
                   );
 
@@ -842,8 +849,8 @@ BOOST_AUTO_TEST_CASE( test_multipoint_copy_on_dereference )
 
     tester::apply(multipoint,
                   // from_wkt<MP>("MULTIPOINT(1 -1,2 -2,3 -3,4 -4,5 -5,6 -6, 7 -7,8 -8,9 -9)"),
-                  TMP{{1,-1},{2,-2},{3,-3},{4,-4},{5,-5},{6,-6},
-                      {7,-7},{8,-8},{9,-9}}
+                  ba::tuple_list_of(1,-1)(2,-2)(3,-3)(4,-4)(5,-5)(6,-6)\
+                  (7,-7)(8,-8)(9,-9)
                   );
 }
 
@@ -868,7 +875,7 @@ BOOST_AUTO_TEST_CASE( test_linestring_copy_on_dereference )
         > tester;
 
     tester::apply(from_wkt<L>("LINESTRING(1 -1,2 -2,3 -3,4 -4,5 -5,6 -6, 7 -7,8 -8,9 -9)"),
-                  TMP{{1,-1},{2,-2},{3,-3},{4,-4},{5,-5},{6,-6},
-                      {7,-7},{8,-8},{9,-9}}
+                  ba::tuple_list_of(1,-1)(2,-2)(3,-3)(4,-4)(5,-5)(6,-6)\
+                  (7,-7)(8,-8)(9,-9)
                   );
 }

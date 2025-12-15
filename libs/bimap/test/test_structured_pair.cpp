@@ -8,7 +8,7 @@
 
 //  VC++ 8.0 warns on usage of certain Standard Library and API functions that
 //  can be cause buffer overruns or other possible security issues if misused.
-//  See https://web.archive.org/web/20071014014301/http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
+//  See http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
 //  But the wording of the warning is misleading and unsettling, there are no
 //  portable alternative functions, and VC++ 8.0's own libraries use the
 //  functions in question. So turn off the warnings.
@@ -17,7 +17,8 @@
 
 #include <boost/config.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+// Boost.Test
+#include <boost/test/minimal.hpp>
 
 // std
 #include <utility>
@@ -69,7 +70,7 @@ void test_basic()
 
     using namespace boost::bimaps::relation;
 
-    // Instantiate two pairs and test the storage alignmentDataData
+    // Instanciate two pairs and test the storage alignmentDataData
 
     typedef structured_pair< short, double, normal_layout > pair_type;
     typedef structured_pair< double, short, mirror_layout > mirror_type;
@@ -77,13 +78,13 @@ void test_basic()
     pair_type   pa( 2, 3.1416 );
     mirror_type pb( 3.1416, 2 );
 
-    BOOST_TEST( pa.first  == pb.second );
-    BOOST_TEST( pa.second == pb.first  );
+    BOOST_CHECK( pa.first  == pb.second );
+    BOOST_CHECK( pa.second == pb.first  );
 
 }
 
 
-int main()
+int test_main( int, char* [] )
 {
 
     BOOST_BIMAP_CALL_TEST_STATIC_FUNCTION( static_are_storage_compatible_test );
@@ -92,6 +93,6 @@ int main()
 
     test_basic();
 
-    return boost::report_errors();
+    return 0;
 }
 

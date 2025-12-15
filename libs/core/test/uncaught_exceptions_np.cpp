@@ -20,10 +20,6 @@
 
 #include <boost/core/lightweight_test.hpp>
 
-#if defined(_MSC_VER)
-# pragma warning(disable: 4512) // assignment operator could not be generated
-#endif
-
 struct my_exception1 {};
 struct my_exception2 {};
 

@@ -28,7 +28,7 @@
 #include <boost/log/sinks/sink.hpp>
 #include <boost/log/core/record.hpp>
 #ifndef BOOST_LOG_NO_THREADS
-#include <thread>
+#include <boost/thread/thread.hpp>
 #endif // BOOST_LOG_NO_THREADS
 #include "char_definitions.hpp"
 #include "test_sink.hpp"
@@ -221,7 +221,7 @@ BOOST_AUTO_TEST_CASE(attributes)
     }
 #ifndef BOOST_LOG_NO_THREADS
     {
-        std::thread th(&thread_attributes_test);
+        boost::thread th(&thread_attributes_test);
         th.join();
         BOOST_CHECK_EQUAL(pSink->m_RecordCounter, 1UL);
         BOOST_CHECK_EQUAL(pSink->m_Consumed[data::attr1()], 0UL);

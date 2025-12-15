@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::eval`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Evaluate a lazy value and return it.
     //! @relates hana::lazy
     //!
@@ -51,8 +51,8 @@ namespace boost { namespace hana {
         constexpr decltype(auto) operator()(Expr&& expr) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr eval_t eval{};
+    constexpr eval_t eval{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_EVAL_HPP

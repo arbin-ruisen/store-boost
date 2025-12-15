@@ -12,16 +12,15 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 
-#define BOOST_GEOMETRY_ENABLE_ASSERT_HANDLER
-
 #include <geometry_test_common.hpp>
 
+#define BOOST_GEOMETRY_ENABLE_ASSERT_HANDLER
 #include <boost/geometry/core/assert.hpp>
 
 struct assert_failure_exception
     : std::exception
 {
-    const char * what() const noexcept
+    const char * what() const throw()
     {
         return "assertion failure";
     }

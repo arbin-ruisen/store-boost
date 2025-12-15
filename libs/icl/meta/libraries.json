@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Joachim Faulhaber <afojgo -at- gmail.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

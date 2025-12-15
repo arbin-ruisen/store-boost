@@ -7,16 +7,15 @@
 // Official repository: https://github.com/boostorg/beast
 //
 
-#include <boost/config.hpp>
+#include <boost/beast/_experimental/unit_test/suite.hpp>
 
 #ifdef BOOST_MSVC
 #pragma warning(push)
 #pragma warning(disable: 4459) // declaration hides global declaration
 #endif
 
-#include <boost/beast/_experimental/unit_test/suite.hpp>
-
 #include <boost/beast.hpp>
+#include <boost/beast/ssl.hpp>
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/spawn.hpp>

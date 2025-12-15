@@ -28,6 +28,8 @@
 
 #if defined BOOST_THREAD_USES_CHRONO
 
+namespace boost
+{
 template <typename T>
 struct wrap
 {
@@ -37,8 +39,9 @@ struct wrap
 };
 
 template <typename T>
-boost::exception_ptr make_exception_ptr(T v) {
-  return boost::copy_exception(wrap<T>(v));
+exception_ptr make_exception_ptr(T v) {
+  return copy_exception(wrap<T>(v));
+}
 }
 
 void func1(boost::promise<int> p)
@@ -50,7 +53,7 @@ void func1(boost::promise<int> p)
 void func2(boost::promise<int> p)
 {
     boost::this_thread::sleep_for(boost::chrono::milliseconds(500));
-    p.set_exception(::make_exception_ptr(3));
+    p.set_exception(boost::make_exception_ptr(3));
 }
 
 int j = 0;
@@ -65,7 +68,7 @@ void func3(boost::promise<int&> p)
 void func4(boost::promise<int&> p)
 {
     boost::this_thread::sleep_for(boost::chrono::milliseconds(500));
-    p.set_exception(::make_exception_ptr(3.5));
+    p.set_exception(boost::make_exception_ptr(3.5));
 }
 
 void func5(boost::promise<void> p)
@@ -77,7 +80,7 @@ void func5(boost::promise<void> p)
 void func6(boost::promise<void> p)
 {
     boost::this_thread::sleep_for(boost::chrono::milliseconds(500));
-    p.set_exception(::make_exception_ptr(4));
+    p.set_exception(boost::make_exception_ptr(4));
 }
 
 
@@ -103,7 +106,7 @@ int main()
 #if defined BOOST_THREAD_PROVIDES_SIGNATURE_PACKAGED_TASK && defined(BOOST_THREAD_PROVIDES_VARIADIC_THREAD)
           boost::thread(func2, boost::move(p)).detach();
 #else
-          p.set_exception(::make_exception_ptr(3));
+          p.set_exception(boost::make_exception_ptr(3));
 #endif
           try
           {
@@ -111,7 +114,7 @@ int main()
               BOOST_TEST(f.get() == 3);
               BOOST_TEST(false);
           }
-          catch (::wrap<int> const& i)
+          catch (boost::wrap<int> const& i)
           {
               BOOST_TEST(i.value == 3);
           }
@@ -143,7 +146,7 @@ int main()
 #if defined BOOST_THREAD_PROVIDES_SIGNATURE_PACKAGED_TASK && defined(BOOST_THREAD_PROVIDES_VARIADIC_THREAD)
           boost::thread(func4, boost::move(p)).detach();
 #else
-          p.set_exception(::make_exception_ptr(3.5));
+          p.set_exception(boost::make_exception_ptr(3.5));
 #endif
           try
           {
@@ -151,7 +154,7 @@ int main()
               BOOST_TEST(f.get() == 3);
               BOOST_TEST(false);
           }
-          catch (::wrap<double> const& i)
+          catch (boost::wrap<double> const& i)
           {
               BOOST_TEST(i.value == 3.5);
           }
@@ -178,7 +181,7 @@ int main()
 #if defined BOOST_THREAD_PROVIDES_SIGNATURE_PACKAGED_TASK && defined(BOOST_THREAD_PROVIDES_VARIADIC_THREAD)
       boost::thread(func6, boost::move(p)).detach();
 #else
-      p.set_exception(::make_exception_ptr(4));
+      p.set_exception(boost::make_exception_ptr(4));
 #endif
       try
       {
@@ -186,7 +189,7 @@ int main()
           f.get();
           BOOST_TEST(false);
       }
-      catch (::wrap<int> const& i)
+      catch (boost::wrap<int> const& i)
       {
           BOOST_TEST(i.value == 4);
       }

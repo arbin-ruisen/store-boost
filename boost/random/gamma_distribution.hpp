@@ -159,7 +159,7 @@ public:
      * the gamma distribution.
      */
     template<class Engine>
-    result_type operator()(Engine& eng) const
+    result_type operator()(Engine& eng)
     {
 #ifndef BOOST_NO_STDC_NAMESPACE
         // allow for Koenig lookup

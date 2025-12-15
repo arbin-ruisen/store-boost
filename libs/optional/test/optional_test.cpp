@@ -12,22 +12,19 @@
 // Revisions:
 // 12 May 2008 (added more swap tests)
 //
-#ifndef BOOST_NO_IOSTREAM
 #include<iostream>
-#endif // BOOST_NO_IOSTREAM
 #include<stdexcept>
 #include<string>
 
 #define BOOST_ENABLE_ASSERT_HANDLER
 
-#include "boost/config.hpp"
-#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
 #include "boost/bind/apply.hpp" // Included just to test proper interaction with boost::apply<> as reported by Daniel Wallin
-#endif
+#include "boost/mpl/bool.hpp"
+#include "boost/mpl/bool_fwd.hpp"  // For mpl::true_ and mpl::false_
 
 #include "boost/optional/optional.hpp"
 
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 #pragma hdrstop
 #endif
 
@@ -78,7 +75,7 @@ void test_basics( T const* )
   check_uninitialized(def);
 
   // Implicit construction
-  // The first parameter is implicitly converted to optional<T>(a);
+  // The first parameter is implicitely converted to optional<T>(a);
   test_implicit_construction(a,a,z);
 
   // Direct initialization.
@@ -165,7 +162,7 @@ void test_basics( T const* )
 }
 
 template<class T>
-void test_conditional_ctor_and_get_value_or ( T const* )
+void test_conditional_ctor_and_get_valur_or ( T const* )
 {
   TRACE( std::endl << BOOST_CURRENT_FUNCTION  );
 
@@ -451,8 +448,8 @@ void test_throwing_val_assign_on_initialized( T const* )
   {
     // This should:
     //   Attempt to assign 'a' and throw.
-    //   opt is kept initialized but its value not necessarily fully assigned
-    //   (in this test, incompletely assigned is flagged with the value -1 being set)
+    //   opt is kept initialized but its value not neccesarily fully assigned
+    //   (in this test, incompletely assigned is flaged with the value -1 being set)
     set_pending_assign( ARG(T) ) ;
     opt.reset ( a ) ;
     passed = true ;
@@ -576,8 +573,8 @@ void test_throwing_assign_to_initialized( T const* )
   {
     // This should:
     //   Attempt to copy construct 'opt1.value()' into opt0 and throw.
-    //   opt0 is kept initialized but its value not necessarily fully assigned
-    //   (in this test, incompletely assigned is flagged with the value -1 being set)
+    //   opt0 is kept initialized but its value not neccesarily fully assigned
+    //   (in this test, incompletely assigned is flaged with the value -1 being set)
     set_pending_assign( ARG(T) ) ;
     opt0 = opt1 ;
     passed = true ;
@@ -688,7 +685,7 @@ void test_throwing_swap( T const* )
   try
   {
     // This should attempt to swap optionals and fail at opt0.reset(*opt1)
-    // Both opt0 and op1 are left unchanged (unswapped)
+    // Both opt0 and op1 are left unchanged (unswaped)
     swap(opt0,opt1);
 
     passed = true ;
@@ -728,7 +725,7 @@ void test_relops( T const* )
   BOOST_TEST ( !(def0 != def0) ) ;
   BOOST_TEST ( !(opt0 != opt0) ) ;
 
-  // Check when both are uninitialized.
+  // Check when both are uininitalized.
   BOOST_TEST (   def0 == def1  ) ; // both uninitialized compare equal
   BOOST_TEST ( !(def0 <  def1) ) ; // uninitialized is never less    than uninitialized
   BOOST_TEST ( !(def0 >  def1) ) ; // uninitialized is never greater than uninitialized
@@ -836,7 +833,7 @@ void test_with_builtin_types()
   TRACE( std::endl << BOOST_CURRENT_FUNCTION   );
 
   test_basics( ARG(double) );
-  test_conditional_ctor_and_get_value_or( ARG(double) );
+  test_conditional_ctor_and_get_valur_or( ARG(double) );
   test_uninitialized_access( ARG(double) );
   test_no_throwing_swap( ARG(double) );
   test_relops( ARG(double) ) ;
@@ -850,8 +847,6 @@ struct VBase : virtual X
     VBase(int v) : X(v) {}
     // MSVC 8.0 doesn't generate this correctly...
     VBase(const VBase& other) : X(static_cast<const X&>(other)) {}
-
-    VBase& operator=(VBase const& rhs) { X::operator=(rhs); return *this; }
 };
 
 void test_with_class_type()
@@ -860,7 +855,7 @@ void test_with_class_type()
 
   test_basics( ARG(X) );
   test_basics( ARG(VBase) );
-  test_conditional_ctor_and_get_value_or( ARG(X) );
+  test_conditional_ctor_and_get_valur_or( ARG(X) );
   test_direct_value_manip( ARG(X) );
   test_uninitialized_access( ARG(X) );
   test_throwing_direct_init( ARG(X) );
@@ -913,14 +908,13 @@ void test_no_implicit_conversions()
 
 
 // Test for support for classes with overridden operator&
-class CustomAddressOfClass
+class CustomAddressOfClass  
 {
     int n;
 
 public:
     CustomAddressOfClass() : n(0) {}
     CustomAddressOfClass(CustomAddressOfClass const& that) : n(that.n) {}
-    CustomAddressOfClass& operator=(CustomAddressOfClass const& rhs) { n = rhs.n; return *this; }
     explicit CustomAddressOfClass(int m) : n(m) {}
     int* operator& () { return &n; }
     bool operator== (CustomAddressOfClass const& that) const { return n == that.n; }
@@ -956,3 +950,5 @@ int main()
 
   return boost::report_errors();
 }
+
+

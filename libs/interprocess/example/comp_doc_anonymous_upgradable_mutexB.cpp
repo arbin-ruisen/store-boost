@@ -7,7 +7,7 @@
 // See http://www.boost.org/libs/interprocess for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
-
+#include <boost/interprocess/detail/config_begin.hpp>
 
 //[doc_anonymous_upgradable_mutexB
 #include <boost/interprocess/shared_memory_object.hpp>
@@ -16,9 +16,6 @@
 #include "doc_upgradable_mutex_shared_data.hpp"
 #include <iostream>
 #include <cstdio>
-//<-
-#include "../test/get_process_id_name.hpp"
-//->
 
 using namespace boost::interprocess;
 
@@ -27,8 +24,7 @@ int main ()
    //Remove shared memory on destruction
    struct shm_remove
    {
-      ~shm_remove(){ shared_memory_object::remove(test::get_process_id_name()
-      ); }
+      ~shm_remove(){ shared_memory_object::remove("MySharedMemory"); }
    } remover;
    //<-
    (void)remover;
@@ -36,15 +32,15 @@ int main ()
 
    //Open the shared memory object.
    shared_memory_object shm
-      ( open_only                   //only create
-      , test::get_process_id_name() //name
-      , read_write                  //read-write mode
+      (open_only                    //only create
+      ,"MySharedMemory"              //name
+      ,read_write  //read-write mode
       );
 
    //Map the whole shared memory in this process
    mapped_region region
-      ( shm          //What to map
-      , read_write   //Map it as read-write
+      (shm                       //What to map
+      ,read_write //Map it as read-write
       );
 
    //Get the address of the mapped region
@@ -74,4 +70,4 @@ int main ()
 }
 //]
 
-
+#include <boost/interprocess/detail/config_end.hpp>

@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <iostream>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/anonymous_shared_memory.hpp>
@@ -18,7 +19,7 @@ using namespace boost::interprocess;
 
 int main ()
 {
-   BOOST_INTERPROCESS_TRY{
+   try{
       const std::size_t MemSize = 99999*2;
       {
          //Now check anonymous mapping
@@ -43,9 +44,11 @@ int main ()
          }
       }
    }
-   BOOST_INTERPROCESS_CATCH(std::exception &exc){
+   catch(std::exception &exc){
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
       return 1;
-   } BOOST_INTERPROCESS_CATCH_END
+   }
    return 0;
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

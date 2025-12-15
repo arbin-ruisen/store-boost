@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::detail::variadic::foldl1`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana { namespace detail { namespace variadic {
+BOOST_HANA_NAMESPACE_BEGIN namespace detail { namespace variadic {
     //! @cond
     template <unsigned int n, typename = when<true>>
     struct foldl1_impl;
@@ -207,8 +207,8 @@ namespace boost { namespace hana { namespace detail { namespace variadic {
         }
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr foldl1_t foldl1{};
-    BOOST_HANA_INLINE_VARIABLE constexpr auto foldl = foldl1;
-}} }} // end namespace boost::hana
+    constexpr foldl1_t foldl1{};
+    constexpr auto foldl = foldl1;
+}} BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DETAIL_VARIADIC_FOLDL1_HPP

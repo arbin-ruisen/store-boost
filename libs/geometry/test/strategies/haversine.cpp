@@ -26,6 +26,12 @@
 
 #include <boost/geometry/geometries/point.hpp>
 
+#ifdef HAVE_TTMATH
+#  include <boost/geometry/extensions/contrib/ttmath_stub.hpp>
+#endif
+
+
+
 double const average_earth_radius = 6372795.0;
 
 
@@ -241,6 +247,12 @@ int test_main(int, char* [])
     //double t2 = time_normal(20000);
     //std::cout << "Factor: " << (t1 / t2) << std::endl;
     //time_compare<bg::model::point<double, 2, bg::cs::spherical<bg::radian> > >(10000);
+
+#if defined(HAVE_TTMATH)
+    typedef ttmath::Big<1,4> tt;
+    test_all<bg::model::point<tt, 2, bg::cs::spherical_equatorial<bg::degree> >, geographic_policy>();
+#endif
+
 
     test_services
         <

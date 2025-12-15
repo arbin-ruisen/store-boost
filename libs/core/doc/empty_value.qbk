@@ -90,14 +90,12 @@ public:
     empty_value() = default;
 
     template<class... Args>
-    constepxr empty_value(empty_init_t, Args&&... args);
+    explicit empty_value(empty_init_t, Args&&... args);
 
-    constepxr const T& get() const noexcept;
+    const T& get() const noexcept;
 
-    constepxr T& get() noexcept;
+    T& get() noexcept;
 };
-
-inline constexpr empty_init_t empty_init{ };
 
 } /* boost */
 ```
@@ -121,9 +119,8 @@ inline constexpr empty_init_t empty_init{ };
 [section Constructors]
 
 [variablelist
-[[`constepxr empty_value() = default;`][Default initialize the value]]
-[[`template<class... Args>
-constepxr empty_value(empty_init_t, Args&&... args);`]
+[[`empty_value() = default;`][Default initialize the value]]
+[[`template<class... Args> empty_value(empty_init_t, Args&&... args);`]
 [Initialize the value with `std::forward<Args>(args)...`]]]
 
 [endsect]
@@ -131,8 +128,8 @@ constepxr empty_value(empty_init_t, Args&&... args);`]
 [section Member functions]
 
 [variablelist
-[[`constepxr const T& get() const noexcept;`][Returns the value]]
-[[`constepxr T& get() noexcept;`][Returns the value]]]
+[[`const T& get() const noexcept;`][Returns the value]]
+[[`T& get() noexcept;`][Returns the value]]]
 
 [endsect]
 

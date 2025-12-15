@@ -12,6 +12,7 @@
 //[doc_iterator_from_value
 #include <boost/intrusive/list.hpp>
 #include <boost/intrusive/unordered_set.hpp>
+#include <boost/functional/hash.hpp>
 #include <vector>
 
 using namespace boost::intrusive;
@@ -38,9 +39,7 @@ class intrusive_data
 
    //The hash function
    friend std::size_t hash_value(const intrusive_data &i)
-   {  //Use your favorite hash function, like boost::hash or std::hash
-      return std::size_t(i.data_id_);
-   }
+   {  return boost::hash<int>()(i.data_id_);  }
 };
 
 //Definition of the intrusive list that will hold intrusive_data
@@ -58,7 +57,7 @@ typedef boost::intrusive::unordered_set
 int main()
 {
    //Create MaxElem objects
-   const std::size_t MaxElem = 100;
+   const int MaxElem = 100;
    std::vector<intrusive_data> nodes(MaxElem);
 
    //Declare the intrusive containers
@@ -68,7 +67,7 @@ int main()
       (unordered_set_t::bucket_traits(buckets, MaxElem));
 
    //Initialize all the nodes
-   for(std::size_t i = 0; i < MaxElem; ++i) nodes[i].set((int)i);
+   for(int i = 0; i < MaxElem; ++i) nodes[i].set(i);
 
    //Now insert them in both intrusive containers
    list.insert(list.end(), nodes.begin(), nodes.end());
@@ -76,7 +75,7 @@ int main()
 
    //Now check the iterator_to function
    list_t::iterator list_it(list.begin());
-   for(std::size_t i = 0; i < MaxElem; ++i, ++list_it)
+   for(int i = 0; i < MaxElem; ++i, ++list_it)
       if(list.iterator_to(nodes[i])       != list_it ||
          list_t::s_iterator_to(nodes[i])  != list_it)
          return 1;
@@ -84,7 +83,7 @@ int main()
    //Now check unordered_set::s_iterator_to (which is a member function)
    //and unordered_set::s_local_iterator_to (which is an static member function)
    unordered_set_t::iterator unordered_set_it(unordered_set.begin());
-   for(std::size_t i = 0; i < MaxElem; ++i){
+   for(int i = 0; i < MaxElem; ++i){
       unordered_set_it = unordered_set.find(nodes[i]);
       if(unordered_set.iterator_to(nodes[i]) != unordered_set_it)
          return 1;

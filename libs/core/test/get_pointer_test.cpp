@@ -8,10 +8,6 @@
 // http://www.boost.org/LICENSE_1_0.txt
 //
 
-#if defined(__GNUC__)
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations" // std::auto_ptr
-#endif
-
 #include <boost/get_pointer.hpp>
 #include <boost/core/lightweight_test.hpp>
 #include <memory>

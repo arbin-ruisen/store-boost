@@ -103,14 +103,9 @@ struct test_unsigned_pair {
 #include <boost/mp11/algorithm.hpp>
 
 int main(int , char *[]){
-    static_assert(
-        check_symmetry(signed_multiplication_results),
-        "sanity check on test matrix - should be symmetrical"
-    );
-    static_assert(
-        check_symmetry(unsigned_multiplication_results),
-        "sanity check on test matrix - should be symmetrical"
-    );
+    // sanity check on test matrix - should be symetrical
+    check_symmetry(signed_multiplication_results);
+    check_symmetry(unsigned_multiplication_results);
 
     using namespace boost::mp11;
     bool rval = true;

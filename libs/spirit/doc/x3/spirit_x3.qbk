@@ -1,7 +1,6 @@
 [/==============================================================================
     Copyright (C) 2001-2015 Joel de Guzman
     Copyright (C) 2001-2011 Hartmut Kaiser
-    Copyright (C) 2024 Nana Sakisaka
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,7 +8,7 @@
 
 [article Spirit X3
     [quickbook 1.5]
-    [version 3.10]
+    [version 3.0.4]
     [authors [de Guzman, Joel], [Kaiser, Hartmut]]
     [copyright 2001-2018 Joel de Guzman, Hartmut Kaiser]
     [/ purpose Parser Library]
@@ -20,13 +19,13 @@
     ]
 ]
 
-[/ Nov 29, 2021 ]
+[/ May 12, 2015 ]
 
 [/=============================================================================
     Some links and defines
 =============================================================================/]
 
-[def __version__                V3.10]
+[def __version__                V3.0.4]
 
 [/ external]
 
@@ -209,15 +208,6 @@
 This is the documentation of the newest version of __spirit__ (currently,
 __version__).
 
-*WARNING*: C++14 compilers support will be dropped soon.
-
-Spirit X3 in Boost 1.81 (scheduled to November 2022) will use C++17 features.
-
-Supported compilers will be:
-* Clang 4 (currently 3.6)
-* GCC 7 (currently 5)
-* VS 2017 v15.8 (currently 2015 U3)
-
 [include preface.qbk]
 [include introduction.qbk]
 [include include.qbk]s
@@ -238,7 +228,6 @@ Supported compilers will be:
 [include        tutorial/annotation.qbk]
 [include        tutorial/rexpr.qbk]
 [include        tutorial/error_handling.qbk]
-[include        tutorial/non_throwing_expectations.qbk]
 [endsect]
 
 [section    Quick Reference]

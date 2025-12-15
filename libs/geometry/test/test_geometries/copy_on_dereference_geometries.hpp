@@ -160,13 +160,13 @@ namespace traits
 template <typename Point>
 struct tag< multipoint_copy_on_dereference<Point> >
 {
-    using type = multi_point_tag;
+    typedef multi_point_tag type;
 };
 
 template <typename Point>
 struct tag< linestring_copy_on_dereference<Point> >
 {
-    using type = linestring_tag;
+    typedef linestring_tag type;
 };
 
 } // namespace traits

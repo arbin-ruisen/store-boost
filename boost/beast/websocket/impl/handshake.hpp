@@ -80,8 +80,6 @@ public:
             *this, std::move(req)))
     {
         sp->reset(); // VFALCO I don't like this
-        if(res_p)
-            res_p->result(http::status::internal_server_error);
         (*this)({}, 0, false);
     }
 
@@ -95,7 +93,7 @@ public:
         auto sp = wp_.lock();
         if(! sp)
         {
-            BOOST_BEAST_ASSIGN_EC(ec, net::error::operation_aborted);
+            ec = net::error::operation_aborted;
             return this->complete(cont, ec);
         }
         auto& impl = *sp;
@@ -107,28 +105,16 @@ public:
             // write HTTP request
             impl.do_pmd_config(d_.req);
             BOOST_ASIO_CORO_YIELD
-            {
-                BOOST_ASIO_HANDLER_LOCATION((
-                    __FILE__, __LINE__,
-                    "websocket::async_handshake"));
-
-                http::async_write(impl.stream(),
-                    d_.req, std::move(*this));
-            }
+            http::async_write(impl.stream(),
+                d_.req, std::move(*this));
             if(impl.check_stop_now(ec))
                 goto upcall;
 
             // read HTTP response
             BOOST_ASIO_CORO_YIELD
-            {
-                BOOST_ASIO_HANDLER_LOCATION((
-                    __FILE__, __LINE__,
-                    "websocket::async_handshake"));
-
-                http::async_read(impl.stream(),
-                    impl.rd_buf, d_.p,
-                        std::move(*this));
-            }
+            http::async_read(impl.stream(),
+                impl.rd_buf, d_.p,
+                    std::move(*this));
             if(ec == http::error::buffer_overflow)
             {
                 // If the response overflows the internal
@@ -141,14 +127,8 @@ public:
                 impl.rd_buf.clear();
 
                 BOOST_ASIO_CORO_YIELD
-                {
-                    BOOST_ASIO_HANDLER_LOCATION((
-                        __FILE__, __LINE__,
-                        "websocket::async_handshake"));
-
-                    http::async_read(impl.stream(),
-                        d_.fb, d_.p, std::move(*this));
-                }
+                http::async_read(impl.stream(),
+                    d_.fb, d_.p, std::move(*this));
 
                 if(! ec)
                 {
@@ -164,7 +144,7 @@ public:
                     }
                     else
                     {
-                        BOOST_BEAST_ASSIGN_EC(ec, http::error::buffer_overflow);
+                        ec = http::error::buffer_overflow;
                     }
                 }
 
@@ -190,19 +170,10 @@ template<class NextLayer, bool deflateSupported>
 struct stream<NextLayer, deflateSupported>::
     run_handshake_op
 {
-    boost::shared_ptr<impl_type> const& self;
-
-    using executor_type = typename stream::executor_type;
-
-    executor_type
-    get_executor() const noexcept
-    {
-        return self->stream().get_executor();
-    }
-
     template<class HandshakeHandler>
     void operator()(
         HandshakeHandler&& h,
+        boost::shared_ptr<impl_type> const& sp,
         request_type&& req,
         detail::sec_ws_key_type key,
         response_type* res_p)
@@ -219,7 +190,7 @@ struct stream<NextLayer, deflateSupported>::
         handshake_op<
             typename std::decay<HandshakeHandler>::type>(
                 std::forward<HandshakeHandler>(h),
-                    self, std::move(req), key, res_p);
+                    sp, std::move(req), key, res_p);
     }
 };
 
@@ -236,9 +207,6 @@ do_handshake(
     RequestDecorator const& decorator,
     error_code& ec)
 {
-    if(res_p)
-        res_p->result(http::status::internal_server_error);
-
     auto& impl = *impl_;
     impl.change_status(status::handshake);
     impl.reset();
@@ -282,31 +250,25 @@ do_handshake(
             }
             else
             {
-                BOOST_BEAST_ASSIGN_EC(ec, http::error::buffer_overflow);
+                ec = http::error::buffer_overflow;
             }
         }
     }
     if(impl.check_stop_now(ec))
         return;
 
-    if (res_p)
-    {
-        // If res_p is not null, move parser's response into it.
-        *res_p = p.release();
-    }
-    else
-    {
-        // Otherwise point res_p at the response in the parser.
-        res_p = &p.get();
-    }
+    impl.on_response(p.get(), key, ec);
+    if(impl.check_stop_now(ec))
+        return;
 
-    impl.on_response(*res_p, key, ec);
+    if(res_p)
+        *res_p = p.release();
 }
 
 //------------------------------------------------------------------------------
 
 template<class NextLayer, bool deflateSupported>
-template<BOOST_BEAST_ASYNC_TPARAM1 HandshakeHandler>
+template<class HandshakeHandler>
 BOOST_BEAST_ASYNC_RESULT1(HandshakeHandler)
 stream<NextLayer, deflateSupported>::
 async_handshake(
@@ -322,15 +284,16 @@ async_handshake(
     return net::async_initiate<
         HandshakeHandler,
         void(error_code)>(
-            run_handshake_op{impl_},
+            run_handshake_op{},
             handler,
+            impl_,
             std::move(req),
             key,
             nullptr);
 }
 
 template<class NextLayer, bool deflateSupported>
-template<BOOST_BEAST_ASYNC_TPARAM1 HandshakeHandler>
+template<class HandshakeHandler>
 BOOST_BEAST_ASYNC_RESULT1(HandshakeHandler)
 stream<NextLayer, deflateSupported>::
 async_handshake(
@@ -347,8 +310,9 @@ async_handshake(
     return net::async_initiate<
         HandshakeHandler,
         void(error_code)>(
-            run_handshake_op{impl_},
+            run_handshake_op{},
             handler,
+            impl_,
             std::move(req),
             key,
             &res);
@@ -408,6 +372,165 @@ handshake(response_type& res,
         "SyncStream type requirements not met");
     do_handshake(&res,
         host, target, &default_decorate_req, ec);
+}
+
+//------------------------------------------------------------------------------
+
+template<class NextLayer, bool deflateSupported>
+template<class RequestDecorator>
+void
+stream<NextLayer, deflateSupported>::
+handshake_ex(string_view host,
+    string_view target,
+        RequestDecorator const& decorator)
+{
+#ifndef BOOST_BEAST_ALLOW_DEPRECATED
+    static_assert(sizeof(RequestDecorator) == 0,
+        BOOST_BEAST_DEPRECATION_STRING);
+#endif
+    static_assert(is_sync_stream<next_layer_type>::value,
+        "SyncStream type requirements not met");
+    static_assert(detail::is_request_decorator<
+            RequestDecorator>::value,
+        "RequestDecorator requirements not met");
+    error_code ec;
+    handshake_ex(host, target, decorator, ec);
+    if(ec)
+        BOOST_THROW_EXCEPTION(system_error{ec});
+}
+
+template<class NextLayer, bool deflateSupported>
+template<class RequestDecorator>
+void
+stream<NextLayer, deflateSupported>::
+handshake_ex(response_type& res,
+    string_view host,
+        string_view target,
+            RequestDecorator const& decorator)
+{
+#ifndef BOOST_BEAST_ALLOW_DEPRECATED
+    static_assert(sizeof(RequestDecorator) == 0,
+        BOOST_BEAST_DEPRECATION_STRING);
+#endif
+    static_assert(is_sync_stream<next_layer_type>::value,
+        "SyncStream type requirements not met");
+    static_assert(detail::is_request_decorator<
+            RequestDecorator>::value,
+        "RequestDecorator requirements not met");
+    error_code ec;
+    handshake_ex(res, host, target, decorator, ec);
+    if(ec)
+        BOOST_THROW_EXCEPTION(system_error{ec});
+}
+
+template<class NextLayer, bool deflateSupported>
+template<class RequestDecorator>
+void
+stream<NextLayer, deflateSupported>::
+handshake_ex(string_view host,
+    string_view target,
+        RequestDecorator const& decorator,
+            error_code& ec)
+{
+#ifndef BOOST_BEAST_ALLOW_DEPRECATED
+    static_assert(sizeof(RequestDecorator) == 0,
+        BOOST_BEAST_DEPRECATION_STRING);
+#endif
+    static_assert(is_sync_stream<next_layer_type>::value,
+        "SyncStream type requirements not met");
+    static_assert(detail::is_request_decorator<
+            RequestDecorator>::value,
+        "RequestDecorator requirements not met");
+    do_handshake(nullptr,
+        host, target, decorator, ec);
+}
+
+template<class NextLayer, bool deflateSupported>
+template<class RequestDecorator>
+void
+stream<NextLayer, deflateSupported>::
+handshake_ex(response_type& res,
+    string_view host,
+        string_view target,
+            RequestDecorator const& decorator,
+                error_code& ec)
+{
+#ifndef BOOST_BEAST_ALLOW_DEPRECATED
+    static_assert(sizeof(RequestDecorator) == 0,
+        BOOST_BEAST_DEPRECATION_STRING);
+#endif
+    static_assert(is_sync_stream<next_layer_type>::value,
+        "SyncStream type requirements not met");
+    static_assert(detail::is_request_decorator<
+            RequestDecorator>::value,
+        "RequestDecorator requirements not met");
+    do_handshake(&res,
+        host, target, decorator, ec);
+}
+
+template<class NextLayer, bool deflateSupported>
+template<class RequestDecorator, class HandshakeHandler>
+BOOST_BEAST_ASYNC_RESULT1(HandshakeHandler)
+stream<NextLayer, deflateSupported>::
+async_handshake_ex(string_view host,
+    string_view target,
+        RequestDecorator const& decorator,
+            HandshakeHandler&& handler)
+{
+#ifndef BOOST_BEAST_ALLOW_DEPRECATED
+    static_assert(sizeof(RequestDecorator) == 0,
+        BOOST_BEAST_DEPRECATION_STRING);
+#endif
+    static_assert(is_async_stream<next_layer_type>::value,
+        "AsyncStream type requirements not met");
+    static_assert(detail::is_request_decorator<
+            RequestDecorator>::value,
+        "RequestDecorator requirements not met");
+    detail::sec_ws_key_type key;
+    auto req = impl_->build_request(
+        key, host, target, decorator);
+    return net::async_initiate<
+        HandshakeHandler,
+        void(error_code)>(
+            run_handshake_op{},
+            handler,
+            impl_,
+            std::move(req),
+            key,
+            nullptr);
+}
+
+template<class NextLayer, bool deflateSupported>
+template<class RequestDecorator, class HandshakeHandler>
+BOOST_BEAST_ASYNC_RESULT1(HandshakeHandler)
+stream<NextLayer, deflateSupported>::
+async_handshake_ex(response_type& res,
+    string_view host,
+        string_view target,
+            RequestDecorator const& decorator,
+                HandshakeHandler&& handler)
+{
+#ifndef BOOST_BEAST_ALLOW_DEPRECATED
+    static_assert(sizeof(RequestDecorator) == 0,
+        BOOST_BEAST_DEPRECATION_STRING);
+#endif
+    static_assert(is_async_stream<next_layer_type>::value,
+        "AsyncStream type requirements not met");
+    static_assert(detail::is_request_decorator<
+            RequestDecorator>::value,
+        "RequestDecorator requirements not met");
+    detail::sec_ws_key_type key;
+    auto req = impl_->build_request(
+        key, host, target, decorator);
+    return net::async_initiate<
+        HandshakeHandler,
+        void(error_code)>(
+            run_handshake_op{},
+            handler,
+            impl_,
+            std::move(req),
+            key,
+            &res);
 }
 
 } // websocket

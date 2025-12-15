@@ -5,11 +5,7 @@
 
 #define BOOST_EXCEPTION_DISABLE
 #include <boost/throw_exception.hpp>
-#include <boost/core/lightweight_test.hpp>
-
-#if defined(_MSC_VER)
-# pragma warning(disable: 4702) // unreachable code
-#endif
+#include <boost/detail/lightweight_test.hpp>
 
 class my_exception: public std::exception { };
 

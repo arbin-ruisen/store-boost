@@ -26,7 +26,7 @@ int main() {
     Create histogram with container of thread-safe counters for parallel filling in
     several threads. Only filling is thread-safe, other guarantees are not given.
   */
-  auto h = make_histogram_with(dense_storage<accumulators::count<unsigned, true>>(),
+  auto h = make_histogram_with(dense_storage<accumulators::thread_safe<unsigned>>(),
                                axis::integer<>(0, 10));
 
   /*

@@ -8,6 +8,7 @@
 // file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
+#include <iostream>
 // back-end
 #include <boost/msm/back/state_machine.hpp>
 //front-end
@@ -21,7 +22,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/tracking.hpp>
 
-#include <sstream>
+#include <fstream>
 
 namespace msm = boost::msm;
 namespace mpl = boost::mpl;
@@ -215,7 +216,7 @@ namespace
         > {};
         // Replaces the default no-transition response.
         template <class FSM,class Event>
-        void no_transition(Event const&, FSM&,int)
+        void no_transition(Event const& e, FSM&,int state)
         {
             BOOST_FAIL("no_transition called!");
         }
@@ -325,7 +326,7 @@ namespace
         BOOST_CHECK_MESSAGE(p.get_state<player_::Playing&>().exit_counter == 1,"Playing exit not called correctly");
         BOOST_CHECK_MESSAGE(p.get_state<player_::Paused&>().entry_counter == 1,"Paused entry not called correctly");
 
-        std::ostringstream ofs;
+        std::ofstream ofs("fsm.txt");
         // save fsm to archive (current state is Pause, Playing is in Song2)
         {
             boost::archive::text_oarchive oa(ofs);
@@ -336,7 +337,7 @@ namespace
         player p2;
         {
             // create and open an archive for input
-            std::istringstream ifs(ofs.str());
+            std::ifstream ifs("fsm.txt");
             boost::archive::text_iarchive ia(ifs);
             // read class state from archive
             ia >> p2;

@@ -15,7 +15,7 @@
 #define IDL_LEX_ITERATOR_HPP_7926F865_E02F_4950_9EB5_5F453C9FF953_INCLUDED
 
 #include <string>
-#include <iosfwd>
+#include <iostream>
 
 #include <boost/assert.hpp>
 #include <boost/shared_ptr.hpp>
@@ -173,7 +173,7 @@ public:
     :   base_type(
             functor_data_type(
                 unique_functor_type(),
-                idllexer::lex_input_interface_generator<TokenT>
+                cpplexer::lex_input_interface_generator<TokenT>
                     ::new_lexer(first, last, pos, language)
             )
         )

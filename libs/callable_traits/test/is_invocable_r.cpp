@@ -1,5 +1,5 @@
 /*
-Copyright Barrett Adair 2016-2021
+Copyright Barrett Adair 2016-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http ://boost.org/LICENSE_1_0.txt)
 */
@@ -25,17 +25,11 @@ struct invoke_case {
    template<typename Callable>
    void operator()(tag<Callable>) const {
 
-        CT_ASSERT((Expect == boost::callable_traits::is_invocable_r<Ret, Callable, Args...>()));
-#ifndef BOOST_CLBL_TRTS_DISABLE_VARIABLE_TEMPLATES
-        CT_ASSERT((Expect == boost::callable_traits::is_invocable_r_v<Ret, Callable, Args...>));
-#endif
-
-// when available, test parity with std implementation
-#if defined(__cpp_lib_is_invocable)
+// when available, test parity with std implementation (c++2a breaks our expectations but we still match std impl)
+#if defined(__cpp_lib_is_invocable) || __cplusplus >= 201707L
         CT_ASSERT((std::is_invocable_r<Ret, Callable, Args...>() == boost::callable_traits::is_invocable_r<Ret, Callable, Args...>()));
-#  ifndef BOOST_CLBL_TRTS_DISABLE_VARIABLE_TEMPLATES
-        CT_ASSERT((std::is_invocable_r_v<Ret, Callable, Args...> == boost::callable_traits::is_invocable_r_v<Ret, Callable, Args...>));
-#  endif
+#else
+        CT_ASSERT((Expect == boost::callable_traits::is_invocable_r<Ret, Callable, Args...>()));
 #endif
 
    }
@@ -167,32 +161,24 @@ int main() {
         ,invoke_case<false, void, std::reference_wrapper<foo>, int>
     >();
 
-// old MSVC doesn't handle cv + ref qualifiers in expression sfinae correctly
-#ifndef BOOST_CLBL_TRTS_OLD_MSVC
-
-#if __cplusplus <= 201703L
-#define QUIRKY_CASE true
-#else
-#define QUIRKY_CASE false
-#endif
+// MSVC doesn't handle cv + ref qualifiers in expression sfinae correctly
+#ifndef BOOST_CLBL_TRTS_MSVC
 
     run_tests<void(foo::*)() const LREF
-#ifndef BOOST_CLBL_TRTS_MSVC
-        ,invoke_case<!QUIRKY_CASE, void, foo>
-        ,invoke_case<!QUIRKY_CASE, void, foo&&>
-        ,invoke_case<!QUIRKY_CASE, void, foo const>
-        ,invoke_case<!QUIRKY_CASE, void, foo const&&>
-#endif
+        ,invoke_case<false, void, foo>
         ,invoke_case<true, void, foo*>
         ,invoke_case<true, void, foo&>
         ,invoke_case<false, int, foo*>
         ,invoke_case<false, int, foo&>
+        ,invoke_case<false, void, foo&&>
         ,invoke_case<true, void, std::reference_wrapper<foo>>
         ,invoke_case<false, int, std::reference_wrapper<foo>>
+        ,invoke_case<false, void, foo const>
         ,invoke_case<true, void, foo const*>
         ,invoke_case<true, void, foo const&>
         ,invoke_case<false, int, foo const*>
         ,invoke_case<false, int, foo const&>
+        ,invoke_case<false, void, foo const&&>
         ,invoke_case<true, void, std::reference_wrapper<foo const>>
         ,invoke_case<false, int, std::reference_wrapper<foo const>>
         ,invoke_case<false, void, foo, int>
@@ -224,7 +210,7 @@ int main() {
         ,invoke_case<false, void, std::reference_wrapper<foo>, int>
     >();
 
-#endif // #ifndef BOOST_CLBL_TRTS_OLD_MSVC
+#endif // #ifndef BOOST_CLBL_TRTS_MSVC
 
     run_tests<int
         ,invoke_case<false, void, foo>

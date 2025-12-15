@@ -2,13 +2,12 @@
     "key": "config",
     "name": "Config",
     "description": "Helps Boost library developers adapt to compiler idiosyncrasies; not intended for library users.",
-    "documentation": "doc/html/index.html",
+    "documentation": "config.htm",
     "category": [
-        "Workarounds"
+        "workarounds"
     ],
     "authors": "",
     "maintainers": [
         "John Maddock <john -at- johnmaddock.co.uk>"
-    ],
-    "cxxstd": "03"
+    ]
 }

@@ -8,12 +8,9 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #include <boost/bind/protect.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/bind.hpp>
 
-using namespace boost::placeholders;
-
-//
+#include <boost/detail/lightweight_test.hpp>
 
 int f(int x)
 {

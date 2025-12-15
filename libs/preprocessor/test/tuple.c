@@ -11,4 +11,4 @@
 #
 # /* See http://www.boost.org for most recent version. */
 #
-# include "tuple.cxx"
+# include <libs/preprocessor/test/tuple.cxx>

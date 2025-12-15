@@ -21,7 +21,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <iostream>
 #include <boost/random.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 #ifdef BOOST_NO_EXCEPTIONS
 void
@@ -79,7 +79,7 @@ test_distributed_graph_coloring(int n, double p, int s,
   }
 }
 
-int main(int argc, char* argv[])
+int test_main(int argc, char* argv[])
 {
   mpi::environment env(argc, argv);
 
@@ -97,5 +97,5 @@ int main(int argc, char* argv[])
 
   test_distributed_graph_coloring(n, p, s, seed, emit_dot_file);
 
-  return boost::report_errors();
+  return 0;
 }

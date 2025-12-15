@@ -11,12 +11,12 @@
 #define BOOST_BEAST_WEBSOCKET_IMPL_TEARDOWN_HPP
 
 #include <boost/beast/core/async_base.hpp>
+#include <boost/beast/core/bind_handler.hpp>
 #include <boost/beast/core/stream_traits.hpp>
 #include <boost/beast/core/detail/bind_continuation.hpp>
 #include <boost/beast/core/detail/is_invocable.hpp>
-#include <boost/asio/append.hpp>
 #include <boost/asio/coroutine.hpp>
-#include <boost/asio/dispatch.hpp>
+#include <boost/asio/post.hpp>
 #include <memory>
 
 namespace boost {
@@ -56,9 +56,7 @@ public:
             s.get_executor())
         , s_(s)
         , role_(role)
-        , nb_(false)
     {
-        this->set_allowed_cancellation(net::cancellation_type::all);
         (*this)({}, 0, false);
     }
 
@@ -87,16 +85,9 @@ public:
                 if(ec == net::error::would_block)
                 {
                     BOOST_ASIO_CORO_YIELD
-                    {
-                        BOOST_ASIO_HANDLER_LOCATION((
-                            __FILE__, __LINE__,
-                            "websocket::tcp::async_teardown"
-                        ));
-
-                        s_.async_wait(
-                            net::socket_base::wait_read,
-                                beast::detail::bind_continuation(std::move(*this)));
-                    }
+                    s_.async_wait(
+                        net::socket_base::wait_read,
+                            beast::detail::bind_continuation(std::move(*this)));
                     continue;
                 }
                 if(ec)
@@ -122,15 +113,8 @@ public:
             if(! cont)
             {
                 BOOST_ASIO_CORO_YIELD
-                {
-                    BOOST_ASIO_HANDLER_LOCATION((
-                        __FILE__, __LINE__,
-                        "websocket::tcp::async_teardown"
-                        ));
-
-                    const auto ex = this->get_immediate_executor();
-                    net::dispatch(ex, net::append(std::move(*this), ec));
-                }
+                net::post(bind_front_handler(
+                    std::move(*this), ec));
             }
             {
                 error_code ignored;

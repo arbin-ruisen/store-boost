@@ -6,12 +6,8 @@
 # See accompanying file LICENSE_1_0.txt or copy at
 # http://www.boost.org/LICENSE_1_0.txt
 
-require-b2 5.0.1 ;
-import-search /boost/config/checks ;
-import config : requires ;
+import ../../config/checks/config : requires ;
 import testing ;
-
-project : requirements <library>/boost/function//boost_function ;
 
 run bind1st.cpp : : : [ requires cxx98_binders ] ;
 run int_div.cpp ;

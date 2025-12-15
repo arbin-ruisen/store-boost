@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::to` and related utilities.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -13,7 +13,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/config.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @ingroup group-core
     //! Converts an object from one data type to another.
     //!
@@ -108,7 +108,7 @@ namespace boost { namespace hana {
     };
 
     template <typename To>
-    BOOST_HANA_INLINE_VARIABLE constexpr to_t<To> to{};
+    constexpr to_t<To> to{};
 #endif
 
     //! @ingroup group-core
@@ -169,6 +169,6 @@ namespace boost { namespace hana {
     template <typename From, typename To, typename = void>
     struct is_embedded;
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_CORE_TO_HPP

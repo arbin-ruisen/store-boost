@@ -13,6 +13,5 @@
     ],
     "maintainers": [
         "Marshall Clow <marshall -at- idio.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

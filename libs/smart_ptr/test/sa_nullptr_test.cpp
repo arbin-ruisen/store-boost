@@ -9,9 +9,11 @@
 //
 
 #include <boost/shared_array.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/detail/lightweight_test.hpp>
 #include <cstddef>
 #include <memory>
+
+#if !defined( BOOST_NO_CXX11_NULLPTR )
 
 struct X
 {
@@ -99,3 +101,12 @@ int main()
 
     return boost::report_errors();
 }
+
+#else
+
+int main()
+{
+    return 0;
+}
+
+#endif

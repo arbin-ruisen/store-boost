@@ -3,19 +3,18 @@
 // accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/detail/binary_search.hpp>
 #include <vector>
 #include <string>
 #include <memory>
 #include <climits>
 #include <iostream>
-#include <cstddef>
+#include <cassert>
 #include <stdlib.h> // for rand(). Would use cstdlib but VC6.4 doesn't put it in std::
 #include <list>
-#include <utility>
 #include <algorithm>
+#include <boost/detail/binary_search.hpp>
 #include <boost/detail/workaround.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <cstddef>
 
 #if defined(__SGI_STL_PORT) ? defined(__SGI_STL_OWN_IOSTREAMS) : (!defined(__GNUC__) || __GNUC__ > 2)
 # define USE_SSTREAM
@@ -33,7 +32,7 @@ namespace {
 struct mystring : std::string
 {
     typedef std::string base;
-
+    
     mystring(std::string const& x)
         : base(x) {}
 };
@@ -181,13 +180,13 @@ template <class Sequence, class Compare>
 void test_loop(Sequence& x, Compare cmp, unsigned long test_count)
 {
     typedef typename Sequence::const_iterator const_iterator;
-
+    
     for (unsigned long i = 0; i < test_count; ++i)
     {
         random_sorted_sequence(x);
         const const_iterator start = x.begin();
         const const_iterator finish = x.end();
-
+        
         unsigned key = random_number();
         const const_iterator l = searches<Compare>::lower_bound(start, finish, key, cmp);
         const const_iterator u = searches<Compare>::upper_bound(start, finish, key, cmp);
@@ -205,40 +204,38 @@ void test_loop(Sequence& x, Compare cmp, unsigned long test_count)
 
             if (p == u)
             {
-                BOOST_TEST(found_l);
+                assert(found_l);
                 found_u = true;
             }
 
             unsigned value = to_int(*p);
-            BOOST_TEST(value >= last_value);
+            assert(value >= last_value);
             last_value = value;
 
             if (!found_l)
             {
                 ++index;
-                BOOST_TEST(to_int(*p) < key);
+                assert(to_int(*p) < key);
             }
             else if (!found_u)
             {
                 ++count;
-                BOOST_TEST(to_int(*p) == key);
+                assert(to_int(*p) == key);
             }
             else
-            {
-                BOOST_TEST(to_int(*p) > key);
-            }
+                assert(to_int(*p) > key);
         }
-        BOOST_TEST(found_l || l == finish);
-        BOOST_TEST(found_u || u == finish);
+        assert(found_l || l == finish);
+        assert(found_u || u == finish);
 
         std::pair<const_iterator, const_iterator>
             range = searches<Compare>::equal_range(start, finish, key, cmp);
-        BOOST_TEST(range.first == l);
-        BOOST_TEST(range.second == u);
+        assert(range.first == l);
+        assert(range.second == u);
 
         bool found = searches<Compare>::binary_search(start, finish, key, cmp);
         (void)found;
-        BOOST_TEST(found == (u != l));
+        assert(found == (u != l));
         std::cout << "found " << count << " copies of " << key << " at index " << index << "\n";
     }
 }
@@ -259,6 +256,5 @@ int main()
     std::cout << "=== testing bidirectional iterators with compare: ===\n";
     test_loop(y, cmp(), 25);
     std::cerr << "******TEST PASSED******\n";
-
-    return boost::report_errors();
+    return 0;
 }

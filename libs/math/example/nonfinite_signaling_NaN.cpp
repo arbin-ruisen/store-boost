@@ -84,7 +84,7 @@ int main()
     cout << "quiet_NaN input was " << r << endl; // "1"
   }
 
-#if (!defined BOOST_BORLANDC && !defined BOOST_CODEGEARC)
+#if (!defined __BORLANDC__ && !defined __CODEGEARC__)
   // These compilers trap when trying to create a signaling_NaN!
   { // Try Signaling NaN
     stringstream ss; // Both input and output.

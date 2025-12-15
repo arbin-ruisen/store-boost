@@ -9,7 +9,7 @@
 */
 
 #include <vector>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/foreach.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -28,10 +28,10 @@ void do_test(Vector const & vect)
 ///////////////////////////////////////////////////////////////////////////////
 // test_main
 //   
-int main()
+int test_main( int, char*[] )
 {
     std::vector<int> vect;
     do_test(vect);
 
-    return boost::report_errors();
+    return 0;
 }

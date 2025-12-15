@@ -22,7 +22,7 @@ Centroid calculation using algorithm Bashein / Detmer.
 Calculates centroid using triangulation method published by Bashein / Detmer 
 
 [heading Synopsis]
-``template<typename Ignored1, typename Ignored2, typename CalculationType>
+``template<typename Point, typename PointOfSegment, typename CalculationType>
 class strategy::centroid::bashein_detmer
 {
   // ...
@@ -32,22 +32,21 @@ class strategy::centroid::bashein_detmer
 [heading Template parameter(s)]
 [table
 [[Parameter] [Default] [Description]]
-[[typename Ignored1] [void] []]
-[[typename Ignored2] [void] []]
+[[typename Point] [] [point type of centroid to calculate ]]
+[[typename PointOfSegment] [Point] [point type of segments, defaults to Point ]]
 [[typename CalculationType] [void] [numeric type for calculation (e.g. high precision); if [*void] then it is extracted automatically from the coordinate type and (if necessary) promoted to floating point]]
 ]
 
 [heading Member Function(s)]
 [table
 [[Function] [Description] [Parameters]  [Returns]]
-[[``template<typename GeometryPoint, typename ResultPoint>
-void apply(GeometryPoint const & p1, GeometryPoint const & p2, sums< GeometryPoint, ResultPoint > & state)``
+[[``void apply(PointOfSegment const & p1, PointOfSegment const & p2, sums & state)``
 
-] [] [[* GeometryPoint const &]: ['p1]:  
+] [] [[* PointOfSegment const &]: ['p1]:  
 
-[* GeometryPoint const &]: ['p2]:  
+[* PointOfSegment const &]: ['p2]:  
 
-[* sums< GeometryPoint, ResultPoint > &]: ['state]:  
+[* sums &]: ['state]:  
 
 
 
@@ -55,12 +54,11 @@ void apply(GeometryPoint const & p1, GeometryPoint const & p2, sums< GeometryPoi
 
 ]
 ]
-[[``template<typename GeometryPoint, typename ResultPoint>
-bool result(sums< GeometryPoint, ResultPoint > const & state, ResultPoint & centroid)``
+[[``bool result(sums const & state, Point & centroid)``
 
-] [] [[* sums< GeometryPoint, ResultPoint > const &]: ['state]:  
+] [] [[* sums const &]: ['state]:  
 
-[* ResultPoint &]: ['centroid]:  
+[* Point &]: ['centroid]:  
 
 
 

@@ -7,7 +7,7 @@
 #include "expression.hpp"
 #include "error_handler.hpp"
 #include "annotation.hpp"
-#include <boost/phoenix/function.hpp>
+#include <boost/spirit/include/phoenix_function.hpp>
 
 namespace client { namespace parser
 {

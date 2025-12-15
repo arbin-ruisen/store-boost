@@ -1,5 +1,3 @@
-project : requirements <library>/boost/metaparse//boost_metaparse ;
-
 build-project binary_number ;
 build-project calculator ;
 build-project calculator_with_parens ;

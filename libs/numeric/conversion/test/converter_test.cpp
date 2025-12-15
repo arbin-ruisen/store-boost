@@ -22,7 +22,7 @@
 //
 // Borland 5.5 lacks the following math overloads
 //
-#if BOOST_WORKAROUND(BOOST_BORLANDC, <= 0x551)
+#if BOOST_WORKAROUND(__BORLANDC__, <= 0x551)
 namespace std
 {
 
@@ -37,7 +37,7 @@ inline long double floor (long double x) { return std::floorl(x); }
 #include "boost/numeric/conversion/converter.hpp"
 #include "boost/numeric/conversion/cast.hpp"
 
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 #pragma hdrstop
 #endif
 
@@ -368,7 +368,7 @@ void test_round_style( MATCH_FNTPL_ARG(T), MATCH_FNTPL_ARG(S) )
 void test_round_even( double n, double x )
 {
   double r = boost::numeric::RoundEven<double>::nearbyint(n);
-  BOOST_TEST( r == x ) ;
+  BOOST_CHECK( r == x ) ;
 }
 
 void test_round_even()
@@ -419,7 +419,7 @@ void test_converter_as_function_object()
 
   // Match 'w' and 'i' which should be equal.
   bool double_to_int_OK = std::equal(W.begin(),W.end(),I.begin()) ;
-  BOOST_TEST(double_to_int_OK);
+  BOOST_CHECK_MESSAGE(double_to_int_OK, "converter (int,double) as function object");
 
   // Create a sequence of double values from s using a default numeric::converter (which should be the trivial conv).
   std::vector<double> D ;
@@ -431,7 +431,7 @@ void test_converter_as_function_object()
 
   // Match 's' and 'd' which should be equal.
   bool double_to_double_OK = std::equal(S.begin(),S.end(),D.begin()) ;
-  BOOST_TEST(double_to_double_OK);
+  BOOST_CHECK_MESSAGE(double_to_double_OK, "converter (double,double) as function object");
 }
 
 #if BOOST_WORKAROUND(__IBMCPP__, <= 600 ) // VCAPP6
@@ -545,7 +545,7 @@ void test_optimizations()
   //---------------------------------
 }
 
-int main()
+int test_main( int, char* argv[] )
 {
   std::cout << std::setprecision( std::numeric_limits<long double>::digits10 ) ;
 
@@ -556,7 +556,7 @@ int main()
   test_converter_as_function_object();
   test_optimizations() ;
 
-  return boost::report_errors();
+  return 0;
 }
 //---------------------------------------------------------------------------
 

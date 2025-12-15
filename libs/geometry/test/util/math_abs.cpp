@@ -28,6 +28,10 @@
 #include <boost/geometry/util/math.hpp>
 #include <boost/geometry/algorithms/not_implemented.hpp>
 
+#ifdef HAVE_TTMATH
+#  include <boost/geometry/extensions/contrib/ttmath_stub.hpp>
+#endif
+
 namespace bg = boost::geometry;
 namespace bgm = boost::geometry::math;
 
@@ -78,5 +82,21 @@ BOOST_AUTO_TEST_CASE( test_math_abs )
         BOOST_CHECK(eq(bgm::abs(n3), p3));
         BOOST_CHECK(eq(bgm::abs(n4), p4));
     }
+
+#ifdef HAVE_TTMATH
+    {
+        ttmath_big p1 = bgm::pi<ttmath_big>();
+        ttmath::Big<1, 4> p1 = bgm::pi<ttmath::Big<1, 4> >();
+
+        BOOST_CHECK(bgm::abs(p1) == p1);
+        BOOST_CHECK(bgm::abs(p2) == p2);
+
+        ttmath_big n1 = -p1;
+        ttmath::Big<1, 4> n2 = -p2;
+
+        BOOST_CHECK(bgm::abs(n1) == p1);
+        BOOST_CHECK(bgm::abs(n2) == p2);
+    }
+#endif
 }
 

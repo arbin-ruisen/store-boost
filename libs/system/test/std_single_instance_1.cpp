@@ -11,6 +11,9 @@
 #endif
 
 #include <boost/system/error_code.hpp>
+
+#if defined(BOOST_SYSTEM_HAS_SYSTEM_ERROR)
+
 #include <system_error>
 
 namespace lib1
@@ -27,3 +30,11 @@ EXPORT std::error_code get_generic_code()
 }
 
 } // namespace lib1
+
+#else
+
+EXPORT void lib1_f()
+{
+}
+
+#endif

@@ -19,7 +19,7 @@
 #include <boost/graph/distributed/adjacency_list.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/random.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 #include <boost/graph/iteration_macros.hpp>
 
 #include <iostream>
@@ -194,7 +194,7 @@ test_distributed_shortest_paths(int n, double p, int c, int seed)
                         get(&WeightedEdge::weight, g));
 }
 
-int main(int argc, char* argv[])
+int test_main(int argc, char* argv[])
 {
   mpi::environment env(argc, argv);
 
@@ -210,5 +210,5 @@ int main(int argc, char* argv[])
 
   test_distributed_shortest_paths(n, p, c, seed);
 
-  return boost::report_errors();
+  return 0;
 }

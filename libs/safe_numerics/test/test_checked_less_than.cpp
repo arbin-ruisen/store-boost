@@ -44,7 +44,7 @@ bool test_checked_less_than(
         break;
     }
     std::cout
-        << "failed to detect error in comparison "
+        << "failed to detect error in addition "
         << std::hex << result << "(" << std::dec << result << ")"
         << " != "<< v1 << " < " << v2
         << std::endl;
@@ -90,11 +90,6 @@ struct test_unsigned_pair {
 
 int main(){
     using namespace boost::mp11;
-
-    bool x;
-    x = test_checked_less_than(77, -24, '>');
-    x = test_checked_less_than(77, 82, '<');
-
     bool rval = true;
 
     mp_for_each<

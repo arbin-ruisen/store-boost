@@ -12,11 +12,11 @@
 
 #include "../helpers/test.hpp"
 
-#include <boost/tuple/tuple.hpp>
-
 namespace unnecessary_copy_tests {
   struct count_copies
   {
+  private:
+    BOOST_COPYABLE_AND_MOVABLE(count_copies)
   public:
     static int copies;
     static int moves;
@@ -56,7 +56,7 @@ namespace unnecessary_copy_tests {
       trace_op("Copy construct");
     }
 
-    count_copies(count_copies&& x) : tag_(x.tag_), id_(++id_count)
+    count_copies(BOOST_RV_REF(count_copies) x) : tag_(x.tag_), id_(++id_count)
     {
       x.tag_ = -1;
       ++moves;
@@ -64,7 +64,7 @@ namespace unnecessary_copy_tests {
     }
 
     count_copies& operator=(
-      count_copies const& p) // Copy assignment
+      BOOST_COPY_ASSIGN_REF(count_copies) p) // Copy assignment
     {
       tag_ = p.tag_;
       ++copies;
@@ -72,7 +72,7 @@ namespace unnecessary_copy_tests {
       return *this;
     }
 
-    count_copies& operator=(count_copies&& p) // Move assignment
+    count_copies& operator=(BOOST_RV_REF(count_copies) p) // Move assignment
     {
       tag_ = p.tag_;
       ++moves;
@@ -189,13 +189,13 @@ namespace unnecessary_copy_tests {
     T x;
     typename T::value_type a;
     reset();
-    x.insert(std::move(a));
+    x.insert(boost::move(a));
     COPY_COUNT(0);
     MOVE_COUNT(1);
 
     typename T::value_type a2;
     reset();
-    x.insert(std::move(a));
+    x.insert(boost::move(a));
     COPY_COUNT(0);
     MOVE_COUNT((x.size() == 2 ? 1 : 0));
   }
@@ -209,17 +209,25 @@ namespace unnecessary_copy_tests {
     T x;
     typename T::value_type a;
     reset();
-    x.insert(std::move(a));
-
+    x.insert(boost::move(a));
+#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+    COPY_COUNT(1);
+    MOVE_COUNT(0);
+#else
     COPY_COUNT(0);
     MOVE_COUNT(1);
+#endif
 
     typename T::value_type a2;
     reset();
-    x.insert(std::move(a));
-
+    x.insert(boost::move(a));
+#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+    COPY_COUNT((x.size() == 2 ? 1 : 0));
+    MOVE_COUNT(0);
+#else
     COPY_COUNT(0);
     MOVE_COUNT((x.size() == 2 ? 1 : 0));
+#endif
   }
 
   boost::unordered_set<count_copies>* set;
@@ -246,7 +254,11 @@ namespace unnecessary_copy_tests {
     reset();
     T x;
     x.emplace(source<typename T::value_type>());
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
     COPY_COUNT(1);
+#else
+    COPY_COUNT(2);
+#endif
   }
 
   UNORDERED_TEST(
@@ -254,6 +266,7 @@ namespace unnecessary_copy_tests {
   UNORDERED_TEST(
     unnecessary_copy_emplace_rvalue_test, ((set)(multiset)(map)(multimap)))
 
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
   template <class T> void unnecessary_copy_emplace_std_move_test(T*)
   {
     reset();
@@ -268,6 +281,7 @@ namespace unnecessary_copy_tests {
 
   UNORDERED_TEST(
     unnecessary_copy_emplace_std_move_test, ((set)(multiset)(map)(multimap)))
+#endif
 
   template <class T> void unnecessary_copy_emplace_boost_move_test(T*)
   {
@@ -276,9 +290,15 @@ namespace unnecessary_copy_tests {
     typename T::value_type a;
     COPY_COUNT(1);
     MOVE_COUNT_EXTRA(0, 1);
-    x.emplace(std::move(a));
+    x.emplace(boost::move(a));
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
     COPY_COUNT(1);
     MOVE_COUNT(1);
+#else
+    // Since std::pair isn't movable, move only works for sets.
+    COPY_COUNT_RANGE(1, 2);
+    MOVE_COUNT_RANGE(0, 1);
+#endif
   }
 
   UNORDERED_TEST(
@@ -291,7 +311,7 @@ namespace unnecessary_copy_tests {
     typename T::value_type a;
     COPY_COUNT(1);
     MOVE_COUNT(0);
-    x.emplace(std::move(a));
+    x.emplace(boost::move(a));
     COPY_COUNT(1);
     MOVE_COUNT(1);
   }
@@ -308,10 +328,14 @@ namespace unnecessary_copy_tests {
     typename T::value_type a;
     COPY_COUNT(1);
     MOVE_COUNT_EXTRA(0, 1);
-    x.emplace(std::move(a));
-
+    x.emplace(boost::move(a));
+#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+    COPY_COUNT(2);
+    MOVE_COUNT_EXTRA(0, 1);
+#else
     COPY_COUNT(1);
     MOVE_COUNT(1);
+#endif
   }
 
   UNORDERED_TEST(
@@ -338,6 +362,7 @@ namespace unnecessary_copy_tests {
 // 0 arguments
 //
 
+#if !BOOST_UNORDERED_SUN_WORKAROUNDS1
     // The container will have to create a copy in order to compare with
     // the existing element.
     reset();
@@ -346,6 +371,7 @@ namespace unnecessary_copy_tests {
     // source_cost doesn't make much sense here, but it seems to fit.
     COPY_COUNT(1);
     MOVE_COUNT(source_cost);
+#endif
 
     //
     // 1 argument
@@ -367,7 +393,7 @@ namespace unnecessary_copy_tests {
 
     // No move should take place.
     reset();
-    x.emplace(std::move(a));
+    x.emplace(boost::move(a));
     COPY_COUNT(0);
     MOVE_COUNT(0);
 
@@ -424,13 +450,14 @@ namespace unnecessary_copy_tests {
 // 0 arguments
 //
 
+#if !BOOST_UNORDERED_SUN_WORKAROUNDS1
     // COPY_COUNT(1) would be okay here.
     reset();
     x.emplace();
 #if BOOST_WORKAROUND(BOOST_MSVC, == 1700)
     // This is a little odd, Visual C++ 11 seems to move the pair, which
     // results in one copy (for the const key) and one move (for the
-    // non-const mapped value). Since 'emplace(std::move(a))' (see below)
+    // non-const mapped value). Since 'emplace(boost::move(a))' (see below)
     // has the normal result, it must be some odd consequence of how
     // Visual C++ 11 handles calling move for default arguments.
     COPY_COUNT(3);
@@ -438,6 +465,7 @@ namespace unnecessary_copy_tests {
 #else
     COPY_COUNT_EXTRA(2, 1);
     MOVE_COUNT_EXTRA(0, 1);
+#endif
 #endif
 
     reset();
@@ -476,7 +504,7 @@ namespace unnecessary_copy_tests {
     // No move should take place.
     // (since a is already in the container)
     reset();
-    x.emplace(std::move(a));
+    x.emplace(boost::move(a));
     COPY_COUNT(0);
     MOVE_COUNT(0);
 
@@ -514,32 +542,40 @@ namespace unnecessary_copy_tests {
     COPY_COUNT(0);
     MOVE_COUNT(0);
 
+#if BOOST_UNORDERED_TUPLE_ARGS
+
     reset();
-    x.emplace(std::piecewise_construct,
+    x.emplace(boost::unordered::piecewise_construct,
       std::make_tuple(std::ref(b.first)), std::make_tuple(std::ref(b.second)));
     COPY_COUNT(0);
     MOVE_COUNT(0);
 
     std::pair<count_copies const, count_copies> move_source_trial;
     reset();
-    (void)std::make_tuple(std::move(move_source_trial.first));
-    (void)std::make_tuple(std::move(move_source_trial.second));
+    std::make_tuple(std::move(move_source_trial.first));
+    std::make_tuple(std::move(move_source_trial.second));
     int tuple_move_cost = ::unnecessary_copy_tests::count_copies::moves;
     int tuple_copy_cost = ::unnecessary_copy_tests::count_copies::copies;
 
     std::pair<count_copies const, count_copies> move_source;
     reset();
-    x.emplace(std::piecewise_construct,
+    x.emplace(boost::unordered::piecewise_construct,
       std::make_tuple(std::move(move_source.first)),
       std::make_tuple(std::move(move_source.second)));
     COPY_COUNT(tuple_copy_cost);
     MOVE_COUNT(tuple_move_cost);
 
+#if !defined(BOOST_NO_CXX11_HDR_TUPLE) &&                                      \
+  !(defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ < 6) &&               \
+  !(defined(BOOST_MSVC) && BOOST_MSVC < 1700)
     reset();
-    x.emplace(std::piecewise_construct,
+    x.emplace(boost::unordered::piecewise_construct,
       std::forward_as_tuple(b.first), std::forward_as_tuple(b.second));
     COPY_COUNT(0);
     MOVE_COUNT(0);
+#endif
+
+#endif
   }
 }
 

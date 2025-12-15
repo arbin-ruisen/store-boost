@@ -14,8 +14,9 @@
 // test ratio_multiply
 
 #include <boost/ratio/ratio.hpp>
-
-#define STATIC_ASSERT(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
+#if !defined(BOOST_NO_CXX11_STATIC_ASSERT)
+#define NOTHING ""
+#endif
 
 void test()
 {
@@ -23,42 +24,42 @@ void test()
     typedef boost::ratio<1, 1> R1;
     typedef boost::ratio<1, 1> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == 1 && R::den == 1);
+    BOOST_RATIO_STATIC_ASSERT(R::num == 1 && R::den == 1, NOTHING, ());
     }
     {
     typedef boost::ratio<1, 2> R1;
     typedef boost::ratio<1, 1> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == 1 && R::den == 2);
+    BOOST_RATIO_STATIC_ASSERT(R::num == 1 && R::den == 2, NOTHING, ());
     }
     {
     typedef boost::ratio<-1, 2> R1;
     typedef boost::ratio<1, 1> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == -1 && R::den == 2);
+    BOOST_RATIO_STATIC_ASSERT(R::num == -1 && R::den == 2, NOTHING, ());
     }
     {
     typedef boost::ratio<1, -2> R1;
     typedef boost::ratio<1, 1> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == -1 && R::den == 2);
+    BOOST_RATIO_STATIC_ASSERT(R::num == -1 && R::den == 2, NOTHING, ());
     }
     {
     typedef boost::ratio<1, 2> R1;
     typedef boost::ratio<-1, 1> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == -1 && R::den == 2);
+    BOOST_RATIO_STATIC_ASSERT(R::num == -1 && R::den == 2, NOTHING, ());
     }
     {
     typedef boost::ratio<1, 2> R1;
     typedef boost::ratio<1, -1> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == -1 && R::den == 2);
+    BOOST_RATIO_STATIC_ASSERT(R::num == -1 && R::den == 2, NOTHING, ());
     }
     {
     typedef boost::ratio<56987354, 467584654> R1;
     typedef boost::ratio<544668, 22145> R2;
     typedef boost::ratio_multiply<R1, R2> R;
-    STATIC_ASSERT(R::num == 15519594064236LL && R::den == 5177331081415LL);
+    BOOST_RATIO_STATIC_ASSERT(R::num == 15519594064236LL && R::den == 5177331081415LL, NOTHING, ());
     }
 }

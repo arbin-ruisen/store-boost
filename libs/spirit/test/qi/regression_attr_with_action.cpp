@@ -6,6 +6,7 @@
 
 // this is a compile only regression test 
 
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
 
 namespace qi = boost::spirit::qi;

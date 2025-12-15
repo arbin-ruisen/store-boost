@@ -16,7 +16,7 @@
 #include <boost/graph/parallel/distribution.hpp>
 #include <iostream>
 #include <cassert>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 #ifdef BOOST_NO_EXCEPTIONS
 void
@@ -39,7 +39,7 @@ struct never
   result_type operator()(argument_type) { return false; }
 };
 
-int main(int argc, char** argv)
+int test_main(int argc, char** argv)
 {
   boost::mpi::environment env(argc, argv);
 
@@ -280,5 +280,5 @@ int main(int argc, char** argv)
     remove_edge_if(never<Graph3>(), g3);
   }
 
-  return boost::report_errors();
+  return 0;
 }

@@ -21,8 +21,6 @@ int main()
   BOOST_TEST((AOther<AType AnotherType::*>::value));
   BOOST_TEST((BOOST_TTI_HAS_MEMBER_DATA_GEN(ONestStr)<AType::AStructType AnotherType::*>::value));
   
-  BOOST_TEST((CUb<bool AType::BType::CType::CTypeUnion::*>::value));
-  
   return boost::report_errors();
 
   }

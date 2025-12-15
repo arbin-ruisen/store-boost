@@ -27,22 +27,22 @@ struct C2 {};
     
 struct C3 : C2 {};
 struct C1C2 {
-    BOOST_TT_PROC C1C2() {}
-    BOOST_TT_PROC C1C2(C1 const&) {}
-    BOOST_TT_PROC C1C2(C2 const&) {}
-    BOOST_TT_PROC C1C2& operator=(C1C2 const&) {
+    C1C2() {}
+    C1C2(C1 const&) {}
+    C1C2(C2 const&) {}
+    C1C2& operator=(C1C2 const&) {
         return *this;
     }
 };
 
 template <typename C, typename A>
-BOOST_TT_PROC void proc2(typename boost::common_type<A, C>::type const& ) {}
+void proc2(typename boost::common_type<A, C>::type const& ) {}
 
 template <typename C, typename A, typename B>
-BOOST_TT_PROC void proc3(typename boost::common_type<C, A, B>::type const& ) {}
+void proc3(typename boost::common_type<C, A, B>::type const& ) {}
 
 template <typename C, typename A>
-BOOST_TT_PROC void assignation_2() {
+void assignation_2() {
 typedef typename boost::common_type<A, C>::type AC;
     A a;
     C c;
@@ -56,7 +56,7 @@ typedef typename boost::common_type<A, C>::type AC;
 }
 
 template <typename C, typename A, typename B>
-BOOST_TT_PROC void assignation_3() {
+void assignation_3() {
 typedef typename boost::common_type<C, A, B>::type ABC;
     A a;
     B b;
@@ -72,11 +72,11 @@ typedef typename boost::common_type<C, A, B>::type ABC;
     proc3<C, A, B>(c);
 }
 
-BOOST_TT_PROC C1C2 c1c2;
-BOOST_TT_PROC C1 c1;
+C1C2 c1c2;
+C1 c1;
 
-BOOST_TT_PROC int f(C1C2 ) { return 1;}
-BOOST_TT_PROC int f(C1 ) { return 2;}
+int f(C1C2 ) { return 1;}
+int f(C1 ) { return 2;}
 template <typename OSTREAM>
 OSTREAM& operator<<(OSTREAM& os, C1 const&) {return os;}
 

@@ -32,6 +32,11 @@
 
 #include <from_wkt.hpp>
 
+
+#ifdef HAVE_TTMATH
+#include <boost/geometry/extensions/contrib/ttmath_stub.hpp>
+#endif
+
 namespace bg = ::boost::geometry;
 
 //============================================================================
@@ -527,4 +532,7 @@ BOOST_AUTO_TEST_CASE( test_linear_areal_all )
 {
     test_linear_areal<double>();
     test_linear_areal<int>();
+#ifdef HAVE_TTMATH
+    test_linear_areal<ttmath_big>();
+#endif
 }

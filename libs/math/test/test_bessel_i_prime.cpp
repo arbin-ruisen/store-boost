@@ -58,22 +58,7 @@ void expected_results()
       "Mac OS",                      // platform
       largest_type,                  // test type(s)
       ".*",                          // test data group
-#ifdef __aarch64__
-      // Error rates for M1 macs are higher than x86_64 macs
-      ".*", 4000, 1500);               // test function
-#else
       ".*", 3500, 1500);               // test function
-#endif
-   //
-   // Cygwin:
-   //
-   add_expected_result(
-      "GNU.*",                      // Compiler
-      ".*",                         // Stdlib
-      "Cygwin*",                    // Platform
-      largest_type,                 // test type(s)
-      ".*",                         // test data group
-      ".*", 3500, 1000);            // test function
    //
    // G++ on Linux, results vary a bit by processor type,
    // on Itanium results are *much* better than listed here,
@@ -109,7 +94,7 @@ void expected_results()
       ".*",                          // platform
       largest_type,                  // test type(s)
       ".*I'v.*Mathworld.*",          // test data group
-      ".*", 4200, 2000);             // test function
+      ".*", 4000, 2000);             // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
@@ -117,13 +102,6 @@ void expected_results()
       largest_type,                  // test type(s)
       ".*",                          // test data group
       ".*", 900, 300);               // test function
-   add_expected_result(
-      ".*",                          // compiler
-      ".*",                          // stdlib
-      "Win32.*",                     // platform
-      largest_type,                  // test type(s)
-      ".*",                          // test data group
-      ".*", 60, 25);                 // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib
@@ -144,7 +122,7 @@ void expected_results()
       ".*",                          // platform
       "real_concept",                // test type(s)
       ".*I'v.*Mathworld.*",          // test data group
-      ".*", 4500, 2000);             // test function
+      ".*", 4000, 2000);             // test function
    add_expected_result(
       ".*",                          // compiler
       ".*",                          // stdlib

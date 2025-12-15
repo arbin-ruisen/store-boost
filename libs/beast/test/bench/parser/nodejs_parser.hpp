@@ -30,7 +30,7 @@ namespace http {
 
 namespace detail {
 
-class nodejs_message_category final
+class nodejs_message_category
     : public boost::system::error_category
 {
 public:
@@ -369,10 +369,8 @@ write(void const* data,
         &state_, hooks(),
             static_cast<const char*>(data), size);
     if(! ec)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, detail::make_nodejs_error(
-                static_cast<int>(state_.http_errno)));
-    }
+        ec = detail::make_nodejs_error(
+            static_cast<int>(state_.http_errno));
     if(ec)
         return 0;
     return n;
@@ -386,10 +384,8 @@ write_eof(error_code& ec)
     ec_ = &ec;
     http_parser_execute(&state_, hooks(), nullptr, 0);
     if(! ec)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, detail::make_nodejs_error(
-                static_cast<int>(state_.http_errno)));
-    }
+        ec = detail::make_nodejs_error(
+            static_cast<int>(state_.http_errno));
 }
 
 template<class Derived>

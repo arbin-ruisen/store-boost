@@ -8,13 +8,7 @@
     http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
-#if defined(_MSC_VER) && _MSC_VER < 1910
-int main() {}
-#else
-
 #include "real.hpp"
-
-#include <boost/math/concepts/real_concept.hpp>
 
 int
 main()
@@ -31,10 +25,8 @@ main()
         using boost::spirit::x3::real_policies;
         using boost::spirit::x3::parse;
 
-        constexpr real_parser<real_concept, real_policies<real_concept> > custom_real;
+        real_parser<real_concept, real_policies<real_concept> > custom_real;
         real_concept d;
-
-        BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(custom_real);
 
         BOOST_TEST(test("-1234", custom_real));
         BOOST_TEST(test_attr("-1234", custom_real, d) && compare(d, -1234));
@@ -79,4 +71,3 @@ main()
 
     return boost::report_errors();
 }
-#endif

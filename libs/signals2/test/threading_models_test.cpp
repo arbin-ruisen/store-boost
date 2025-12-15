@@ -9,9 +9,12 @@
 
 // For more information, see http://www.boost.org
 
+// note boost/test/minimal.hpp can cause windows.h to get included, which
+// can screw up our checks of _WIN32_WINNT if it is included
+// after boost/signals2/mutex.hpp.  Frank Hess 2009-03-07.
+#include <boost/test/minimal.hpp>
+
 #include <boost/signals2.hpp>
-#define BOOST_TEST_MODULE threading_models_test
-#include <boost/test/included/unit_test.hpp>
 #include <boost/thread/mutex.hpp>
 
 // combiner that returns the number of slots invoked
@@ -72,7 +75,7 @@ public:
   }
 };
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char*[])
 {
   typedef boost::signals2::signal<void (), slot_counter, int, std::less<int>, boost::function<void ()>,
     boost::function<void (const boost::signals2::connection &)>, recursion_checking_dummy_mutex> sig0_rc_type;
@@ -83,4 +86,5 @@ BOOST_AUTO_TEST_CASE(test_main)
   typedef boost::signals2::signal<void (), slot_counter, int, std::less<int>, boost::function<void ()>,
     boost::function<void (const boost::signals2::connection &)>, boost::signals2::dummy_mutex> sig0_st_type;
   simple_test<sig0_st_type>();
+  return 0;
 }

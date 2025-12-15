@@ -1,9 +1,8 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2014-2020, Oracle and/or its affiliates.
+// Copyright (c) 2014-2015, Oracle and/or its affiliates.
 
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
@@ -11,7 +10,7 @@
 #ifndef BOOST_GEOMETRY_ALGORITHMS_DETAIL_IS_VALID_IS_ACCEPTABLE_TURN_HPP
 #define BOOST_GEOMETRY_ALGORITHMS_DETAIL_IS_VALID_IS_ACCEPTABLE_TURN_HPP
 
-#include <boost/range/value_type.hpp>
+#include <boost/range.hpp>
 
 #include <boost/geometry/core/point_order.hpp>
 #include <boost/geometry/core/tag.hpp>
@@ -33,7 +32,7 @@ template
 <
     typename Geometry,
     order_selector Order = geometry::point_order<Geometry>::value,
-    typename Tag = tag_t<Geometry>
+    typename Tag = typename tag<Geometry>::type
 >
 struct acceptable_operation
 {};
@@ -69,7 +68,7 @@ struct acceptable_operation<MultiPolygon, clockwise, multi_polygon_tag>
 
 
 
-template <typename Geometry, typename Tag = tag_t<Geometry>>
+template <typename Geometry, typename Tag = typename tag<Geometry>::type>
 struct is_acceptable_turn
 {};
 
@@ -151,7 +150,7 @@ public:
                 || turn.method == method_touch_interior)
                 && turn.touch_only;
     }
-};
+};   
 
 
 }} // namespace detail::is_valid

@@ -24,7 +24,7 @@
 
 #include <utility>
 
-#include <array>
+#include <boost/array.hpp>
 
 #include <boost/test/unit_test.hpp>
 

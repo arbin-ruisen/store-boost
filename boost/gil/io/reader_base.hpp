@@ -73,7 +73,7 @@ public:
 
 private:
 
-    void setup( point_t const& /* dim */ )
+    void setup( const point_t& /* dim */ )
     {
         //check_coordinates( dim );
 
@@ -88,7 +88,7 @@ private:
         //}
     }
 
-    void check_coordinates( point_t const& /* dim */ )
+    void check_coordinates( const point_t& /* dim */ )
     {
        //using int_t = point_t::value_type;
 

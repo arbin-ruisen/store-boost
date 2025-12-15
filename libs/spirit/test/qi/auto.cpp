@@ -3,7 +3,8 @@
 //  Distributed under the Boost Software License, Version 1.0. (See accompanying
 //  file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/spirit/include/qi_auto.hpp>
+#include <boost/config/warning_disable.hpp>
+#include <boost/detail/lightweight_test.hpp>
 
 #include <boost/fusion/include/std_pair.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -15,6 +16,7 @@
 #include <boost/spirit/include/qi_nonterminal.hpp>
 #include <boost/spirit/include/qi_operator.hpp>
 #include <boost/spirit/include/qi_directive.hpp>
+#include <boost/spirit/include/qi_auto.hpp>
 
 #include "test.hpp"
 
@@ -239,19 +241,6 @@ int main()
         // test fusion sequence
         std::pair<int, double> p (1, 2.0);
         BOOST_TEST(test_rule("1 2.0", p, qi::space));
-    }
-
-    {
-        // test literal char interference
-        using spirit_test::test;
-        BOOST_TEST(test("x", 'x'));
-        BOOST_TEST(test("x", 'x', qi::space));
-        BOOST_TEST(!test("y", 'x'));
-        BOOST_TEST(!test("y", 'x', qi::space));
-        BOOST_TEST(test(L"x", L'x'));
-        BOOST_TEST(test(L"x", L'x', qi::space));
-        BOOST_TEST(!test(L"y", L'x'));
-        BOOST_TEST(!test(L"y", L'x', qi::space));
     }
 
     return boost::report_errors();

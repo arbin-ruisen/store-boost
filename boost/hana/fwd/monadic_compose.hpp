@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::monadic_compose`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Composition of monadic functions.
     //! @ingroup group-Monad
     //!
@@ -68,8 +68,8 @@ namespace boost { namespace hana {
         constexpr auto operator()(F&& f, G&& g) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr monadic_compose_t monadic_compose{};
+    constexpr monadic_compose_t monadic_compose{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_MONADIC_COMPOSE_HPP

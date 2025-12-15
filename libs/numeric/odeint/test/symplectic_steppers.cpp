@@ -28,7 +28,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <array>
+#include <boost/array.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/is_same.hpp>
 
@@ -128,33 +128,33 @@ BOOST_AUTO_TEST_SUITE( symplectic_steppers_test )
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( test_assoc_types , Stepper , vector_steppers< initially_resizer > )
 {
-    static_assert(
+    BOOST_STATIC_ASSERT_MSG(
         ( boost::is_same< typename Stepper::coor_type , diagnostic_state_type >::value ) ,
         "Coordinate type" );
-    static_assert(
+    BOOST_STATIC_ASSERT_MSG(
         ( boost::is_same< typename Stepper::momentum_type , diagnostic_state_type2 >::value ) ,
         "Momentum type" );
-    static_assert(
+    BOOST_STATIC_ASSERT_MSG(
         ( boost::is_same< typename Stepper::coor_deriv_type , diagnostic_deriv_type >::value ) ,
         "Coordinate deriv type" );
-    static_assert(
+    BOOST_STATIC_ASSERT_MSG(
         ( boost::is_same< typename Stepper::momentum_deriv_type , diagnostic_deriv_type2 >::value ) ,
         "Momentum deriv type" );
 
-    static_assert(
+    BOOST_STATIC_ASSERT_MSG(
         ( boost::is_same< typename Stepper::state_type , std::pair< diagnostic_state_type , diagnostic_state_type2 > >::value ) ,
         "State type" );
-    static_assert(
+    BOOST_STATIC_ASSERT_MSG(
         ( boost::is_same< typename Stepper::deriv_type , std::pair< diagnostic_deriv_type , diagnostic_deriv_type2 > >::value ) ,
         "Deriv type" );
 
-    static_assert( ( boost::is_same< typename Stepper::value_type , double >::value ) , "Value type" );
-    static_assert( ( boost::is_same< typename Stepper::time_type , double >::value ) , "Time type" );
-    static_assert( ( boost::is_same< typename Stepper::algebra_type , custom_range_algebra >::value ) , "Algebra type" );
-    static_assert( ( boost::is_same< typename Stepper::operations_type , custom_default_operations >::value ) , "Operations type" );
+    BOOST_STATIC_ASSERT_MSG( ( boost::is_same< typename Stepper::value_type , double >::value ) , "Value type" );
+    BOOST_STATIC_ASSERT_MSG( ( boost::is_same< typename Stepper::time_type , double >::value ) , "Time type" );
+    BOOST_STATIC_ASSERT_MSG( ( boost::is_same< typename Stepper::algebra_type , custom_range_algebra >::value ) , "Algebra type" );
+    BOOST_STATIC_ASSERT_MSG( ( boost::is_same< typename Stepper::operations_type , custom_default_operations >::value ) , "Operations type" );
 
-    static_assert( ( boost::is_same< typename Stepper::resizer_type , initially_resizer >::value ) , "Resizer type" );
-    static_assert( ( boost::is_same< typename Stepper::stepper_category , stepper_tag >::value ) , "Stepper category" );
+    BOOST_STATIC_ASSERT_MSG( ( boost::is_same< typename Stepper::resizer_type , initially_resizer >::value ) , "Resizer type" );
+    BOOST_STATIC_ASSERT_MSG( ( boost::is_same< typename Stepper::stepper_category , stepper_tag >::value ) , "Stepper category" );
 }
 
 

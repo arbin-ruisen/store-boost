@@ -3,9 +3,8 @@
 
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// Copyright (c) 2016-2021 Oracle and/or its affiliates.
+// Copyright (c) 2016 Oracle and/or its affiliates.
 // Contributed and/or modified by Vissarion Fisikopoulos, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -17,15 +16,9 @@
 #include <geometry_test_common.hpp>
 
 #include <boost/geometry/algorithms/length.hpp>
-
-#ifndef BOOST_GEOMETRY_TEST_DEBUG
-#include <boost/geometry/geometries/adapted/boost_variant.hpp>
-#include <boost/geometry/geometries/adapted/boost_variant2.hpp>
-#include <boost/geometry/geometries/geometry_collection.hpp>
-#endif
-
 #include <boost/geometry/io/wkt/wkt.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
+#include <boost/variant/variant.hpp>
 
 template <typename Geometry>
 void test_length(Geometry const& geometry, long double expected_length)
@@ -73,14 +66,8 @@ void test_geometry(std::string const& wkt, double expected_length)
     Geometry geometry;
     bg::read_wkt(wkt, geometry);
     test_length(geometry, expected_length);
-
-#ifndef BOOST_GEOMETRY_TEST_DEBUG
-    using variant_t = boost::variant<Geometry>;
-    using variant2_t = boost::variant2::variant<Geometry>;
-    using gc_t = bg::model::geometry_collection<variant2_t>;
-    test_length(variant_t(geometry), expected_length);
-    test_length(variant2_t(geometry), expected_length);
-    test_length(gc_t{variant2_t(geometry), variant2_t(geometry)}, expected_length * 2);
+#if !defined(BOOST_GEOMETRY_TEST_DEBUG)
+    test_length(boost::variant<Geometry>(geometry), expected_length);
 #endif
 }
 
@@ -90,14 +77,8 @@ void test_geometry(std::string const& wkt, double expected_length, Strategy stra
     Geometry geometry;
     bg::read_wkt(wkt, geometry);
     test_length(geometry, expected_length, strategy);
-
-#ifndef BOOST_GEOMETRY_TEST_DEBUG
-    using variant_t = boost::variant<Geometry>;
-    using variant2_t = boost::variant2::variant<Geometry>;
-    using gc_t = bg::model::geometry_collection<variant2_t>;
-    test_length(variant_t(geometry), expected_length, strategy);
-    test_length(variant2_t(geometry), expected_length, strategy);
-    test_length(gc_t{variant2_t(geometry), variant2_t(geometry)}, expected_length * 2, strategy);
+#if !defined(BOOST_GEOMETRY_TEST_DEBUG)
+    test_length(boost::variant<Geometry>(geometry), expected_length, strategy);
 #endif
 }
 

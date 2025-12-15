@@ -15,7 +15,7 @@
 #ifndef BOOST_LOG_SINKS_BASIC_SINK_FRONTEND_HPP_INCLUDED_
 #define BOOST_LOG_SINKS_BASIC_SINK_FRONTEND_HPP_INCLUDED_
 
-#include <boost/type_traits/integral_constant.hpp>
+#include <boost/mpl/bool.hpp>
 #include <boost/log/detail/config.hpp>
 #include <boost/log/detail/code_conversion.hpp>
 #include <boost/log/detail/attachable_sstream_buf.hpp>
@@ -26,8 +26,7 @@
 #include <boost/log/expressions/filter.hpp>
 #include <boost/log/expressions/formatter.hpp>
 #if !defined(BOOST_LOG_NO_THREADS)
-#include <boost/memory_order.hpp>
-#include <boost/atomic/atomic.hpp>
+#include <boost/thread/exceptions.hpp>
 #include <boost/thread/tss.hpp>
 #include <boost/log/detail/locks.hpp>
 #include <boost/log/detail/light_rw_mutex.hpp>
@@ -123,13 +122,19 @@ public:
      *
      * \param attrs A set of attribute values of a logging record
      */
-    bool will_consume(attribute_value_set const& attrs) BOOST_OVERRIDE
+    bool will_consume(attribute_value_set const& attrs)
     {
         BOOST_LOG_EXPR_IF_MT(boost::log::aux::shared_lock_guard< mutex_type > lock(m_Mutex);)
         try
         {
             return m_Filter(attrs);
         }
+#if !defined(BOOST_LOG_NO_THREADS)
+        catch (thread_interrupted&)
+        {
+            throw;
+        }
+#endif
         catch (...)
         {
             if (m_ExceptionHandler.empty())
@@ -159,6 +164,12 @@ protected:
             BOOST_LOG_EXPR_IF_MT(boost::log::aux::exclusive_lock_guard< BackendMutexT > lock(backend_mutex);)
             backend.consume(rec);
         }
+#if !defined(BOOST_LOG_NO_THREADS)
+        catch (thread_interrupted&)
+        {
+            throw;
+        }
+#endif
         catch (...)
         {
             BOOST_LOG_EXPR_IF_MT(boost::log::aux::shared_lock_guard< mutex_type > lock(m_Mutex);)
@@ -177,6 +188,10 @@ protected:
         {
             if (!backend_mutex.try_lock())
                 return false;
+        }
+        catch (thread_interrupted&)
+        {
+            throw;
         }
         catch (...)
         {
@@ -207,13 +222,19 @@ protected:
 private:
     //! Flushes record buffers in the backend (the actual implementation)
     template< typename BackendMutexT, typename BackendT >
-    void flush_backend_impl(BackendMutexT& backend_mutex, BackendT& backend, boost::true_type)
+    void flush_backend_impl(BackendMutexT& backend_mutex, BackendT& backend, mpl::true_)
     {
         try
         {
             BOOST_LOG_EXPR_IF_MT(boost::log::aux::exclusive_lock_guard< BackendMutexT > lock(backend_mutex);)
             backend.flush();
         }
+#if !defined(BOOST_LOG_NO_THREADS)
+        catch (thread_interrupted&)
+        {
+            throw;
+        }
+#endif
         catch (...)
         {
             BOOST_LOG_EXPR_IF_MT(boost::log::aux::shared_lock_guard< mutex_type > lock(m_Mutex);)
@@ -224,7 +245,7 @@ private:
     }
     //! Flushes record buffers in the backend (stub for backends that don't support flushing)
     template< typename BackendMutexT, typename BackendT >
-    void flush_backend_impl(BackendMutexT&, BackendT&, boost::false_type)
+    void flush_backend_impl(BackendMutexT&, BackendT&, mpl::false_)
     {
     }
 };
@@ -291,7 +312,7 @@ private:
 
         formatting_context() :
 #if !defined(BOOST_LOG_NO_THREADS)
-            m_Version(0u),
+            m_Version(0),
 #endif
             m_FormattingStream(m_FormattedRecord)
         {
@@ -313,7 +334,7 @@ private:
 #if !defined(BOOST_LOG_NO_THREADS)
 
     //! State version
-    boost::atomic< unsigned int > m_Version;
+    volatile unsigned int m_Version;
 
     //! Formatter functor
     formatter_type m_Formatter;
@@ -339,7 +360,7 @@ public:
     explicit basic_formatting_sink_frontend(bool cross_thread) :
         basic_sink_frontend(cross_thread)
 #if !defined(BOOST_LOG_NO_THREADS)
-        , m_Version(0u)
+        , m_Version(0)
 #endif
     {
     }
@@ -353,7 +374,7 @@ public:
 #if !defined(BOOST_LOG_NO_THREADS)
         boost::log::aux::exclusive_lock_guard< mutex_type > lock(this->frontend_mutex());
         m_Formatter = formatter;
-        m_Version.opaque_add(1u, boost::memory_order_relaxed);
+        ++m_Version;
 #else
         m_Context.m_Formatter = formatter;
 #endif
@@ -366,7 +387,7 @@ public:
 #if !defined(BOOST_LOG_NO_THREADS)
         boost::log::aux::exclusive_lock_guard< mutex_type > lock(this->frontend_mutex());
         m_Formatter.reset();
-        m_Version.opaque_add(1u, boost::memory_order_relaxed);
+        ++m_Version;
 #else
         m_Context.m_Formatter.reset();
 #endif
@@ -392,7 +413,7 @@ public:
 #if !defined(BOOST_LOG_NO_THREADS)
         boost::log::aux::exclusive_lock_guard< mutex_type > lock(this->frontend_mutex());
         m_Locale = loc;
-        m_Version.opaque_add(1u, boost::memory_order_relaxed);
+        ++m_Version;
 #else
         m_Context.m_FormattingStream.imbue(loc);
 #endif
@@ -417,11 +438,11 @@ protected:
 
 #if !defined(BOOST_LOG_NO_THREADS)
         context = m_pContext.get();
-        if (!context || context->m_Version != m_Version.load(boost::memory_order_relaxed))
+        if (!context || context->m_Version != m_Version)
         {
             {
                 boost::log::aux::shared_lock_guard< mutex_type > lock(this->frontend_mutex());
-                context = new formatting_context(m_Version.load(boost::memory_order_relaxed), m_Locale, m_Formatter);
+                context = new formatting_context(m_Version, m_Locale, m_Formatter);
             }
             m_pContext.reset(context);
         }
@@ -441,6 +462,12 @@ protected:
             BOOST_LOG_EXPR_IF_MT(boost::log::aux::exclusive_lock_guard< BackendMutexT > lock(backend_mutex);)
             backend.consume(rec, context->m_FormattedRecord);
         }
+#if !defined(BOOST_LOG_NO_THREADS)
+        catch (thread_interrupted&)
+        {
+            throw;
+        }
+#endif
         catch (...)
         {
             BOOST_LOG_EXPR_IF_MT(boost::log::aux::shared_lock_guard< mutex_type > lock(this->frontend_mutex());)
@@ -459,6 +486,10 @@ protected:
         {
             if (!backend_mutex.try_lock())
                 return false;
+        }
+        catch (thread_interrupted&)
+        {
+            throw;
         }
         catch (...)
         {

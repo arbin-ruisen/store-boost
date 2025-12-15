@@ -14,12 +14,12 @@
 //#define BOOST_RATIO_EXTENSIONS
 
 #include <boost/ratio/ratio.hpp>
-#include <cstdint>
 
-std::intmax_t func(boost::ratio<5,6> const& s) {
+boost::intmax_t func(boost::ratio<5,6> const& s) {
     return s.num;    
 }
 
-std::intmax_t test() {
+boost::intmax_t test() {
     return func(boost::ratio<10,12>());
 }
+

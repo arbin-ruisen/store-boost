@@ -12,6 +12,5 @@ int main()
    using namespace boost::multiprecision;
    test_integer_type<boost::multiprecision::mpz_int>();
    test_integer_type<boost::multiprecision::mpq_rational>();
-
    return 0;
 }

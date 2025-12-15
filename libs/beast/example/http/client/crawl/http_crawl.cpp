@@ -46,6 +46,7 @@ using tcp = net::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 // This structure aggregates statistics on all the sites
 class crawl_report
 {
+    net::io_context& ioc_;
     net::strand<
         net::io_context::executor_type> strand_;
     std::atomic<std::size_t> index_;
@@ -54,7 +55,8 @@ class crawl_report
 
 public:
     crawl_report(net::io_context& ioc)
-        : strand_(ioc.get_executor())
+        : ioc_(ioc)
+        , strand_(ioc_.get_executor())
         , index_(0)
         , hosts_(urls_large_data())
     {
@@ -148,7 +150,6 @@ class worker : public std::enable_shared_from_this<worker>
     };
 
     crawl_report& report_;
-    net::strand<net::io_context::executor_type> ex_;
     tcp::resolver resolver_;
     beast::tcp_stream stream_;
     beast::flat_buffer buffer_; // (Must persist between reads)
@@ -163,9 +164,8 @@ public:
         crawl_report& report,
         net::io_context& ioc)
         : report_(report)
-        , ex_(net::make_strand(ioc.get_executor()))
-        , resolver_(ex_)
-        , stream_(ex_)
+        , resolver_(net::make_strand(ioc))
+        , stream_(net::make_strand(ioc))
     {
         // Set up the common fields of the request
         req_.version(11);
@@ -347,13 +347,16 @@ int main(int argc, char* argv[])
         std::cerr <<
             "Usage: http-crawl <threads>\n" <<
             "Example:\n" <<
-            "    http-crawl 100\n";
+            "    http-crawl 100 1\n";
         return EXIT_FAILURE;
     }
     auto const threads = std::max<int>(1, std::atoi(argv[1]));
 
-    // The io_context is used to aggregate the statistics
+    // The io_context is required for all I/O
     net::io_context ioc;
+
+    // The work keeps io_context::run from returning
+    auto work = net::make_work_guard(ioc);
 
     // The report holds the aggregated statistics
     crawl_report report{ioc};
@@ -364,26 +367,17 @@ int main(int argc, char* argv[])
     std::vector<std::thread> workers;
     workers.reserve(threads + 1);
     for(int i = 0; i < threads; ++i)
-    {
-        // Each worker will eventually add some data to the aggregated
-        // report. Outstanding work is tracked in each worker to
-        // represent the forthcoming delivery of this data by that
-        // worker.
-        auto reporting_work = net::require(
-            ioc.get_executor(),
-            net::execution::outstanding_work.tracked);
-
         workers.emplace_back(
-            [&report, reporting_work] {
-                // We use a separate io_context for each worker because
-                // the asio resolver simulates asynchronous operation using
-                // a dedicated worker thread per io_context, and we want to
-                // do a lot of name resolutions in parallel.
-                net::io_context ioc;
-                std::make_shared<worker>(report, ioc)->run();
-                ioc.run();
-            });
-    }
+        [&report]
+        {
+            // We use a separate io_context for each worker because
+            // the asio resolver simulates asynchronous operation using
+            // a dedicated worker thread per io_context, and we want to
+            // do a lot of name resolutions in parallel.
+            net::io_context ioc{1};
+            std::make_shared<worker>(report, ioc)->run();
+            ioc.run();
+        });
 
     // Add another thread to run the main io_context which
     // is used to aggregate the statistics
@@ -395,7 +389,17 @@ int main(int argc, char* argv[])
 
     // Now block until all threads exit
     for(std::size_t i = 0; i < workers.size(); ++i)
-        workers[i].join();
+    {
+        auto& thread = workers[i];
+
+        // If this is the last thread, reset the
+        // work object so that it can return from run.
+        if(i == workers.size() - 1)
+            work.reset();
+
+        // Wait for the thread to exit
+        thread.join();
+    }
 
     std::cout <<
         "Elapsed time:    " << chrono::duration_cast<chrono::seconds>(t.elapsed()).count() << " seconds\n";

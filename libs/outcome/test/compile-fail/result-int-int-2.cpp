@@ -29,6 +29,5 @@ int main()
   using namespace BOOST_OUTCOME_V2_NAMESPACE;
   // Must not be possible to initialise a result with same R and S types
   result<int, int> m(in_place_type<int>);
-  (void) m;
   return 0;
 }

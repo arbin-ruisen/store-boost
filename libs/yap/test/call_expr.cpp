@@ -5,7 +5,7 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 #include <boost/yap/expression.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 #include <sstream>
 
@@ -130,7 +130,7 @@ namespace user {
 }
 
 
-int main()
+int test_main(int, char * [])
 {
     {
         using namespace boost::yap::literals;
@@ -145,17 +145,17 @@ int main()
 
             {
                 user::number result = transform(expr, user::eval_xform_tag{});
-                BOOST_TEST(result.value == 14);
+                BOOST_CHECK(result.value == 14);
             }
 
             {
                 user::number result = transform(expr, user::eval_xform_expr{});
-                BOOST_TEST(result.value == 14);
+                BOOST_CHECK(result.value == 14);
             }
 
             {
                 user::number result = transform(expr, user::eval_xform_both{});
-                BOOST_TEST(result.value == 14);
+                BOOST_CHECK(result.value == 14);
             }
         }
 
@@ -166,17 +166,17 @@ int main()
 
             {
                 user::number result = transform(expr, user::eval_xform_tag{});
-                BOOST_TEST(result.value == 14);
+                BOOST_CHECK(result.value == 14);
             }
 
             {
                 user::number result = transform(expr, user::eval_xform_expr{});
-                BOOST_TEST(result.value == 14);
+                BOOST_CHECK(result.value == 14);
             }
 
             {
                 user::number result = transform(expr, user::eval_xform_both{});
-                BOOST_TEST(result.value == 14);
+                BOOST_CHECK(result.value == 14);
             }
         }
 
@@ -189,10 +189,10 @@ int main()
             auto expr = n(a, x, y);
             {
                 user::number result = evaluate(expr);
-                BOOST_TEST(result.value == 55);
+                BOOST_CHECK(result.value == 55);
             }
         }
     }
 
-    return boost::report_errors();
+    return 0;
 }

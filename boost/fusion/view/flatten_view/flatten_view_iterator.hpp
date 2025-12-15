@@ -19,10 +19,6 @@
 #include <boost/fusion/iterator/deref.hpp>
 #include <boost/fusion/iterator/value_of.hpp>
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4512) // assignment operator could not be generated.
-#endif
 
 namespace boost { namespace fusion
 {
@@ -49,10 +45,6 @@ namespace boost { namespace fusion
         base_type base;
     };
 }}
-
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 namespace boost { namespace fusion { namespace detail
 {

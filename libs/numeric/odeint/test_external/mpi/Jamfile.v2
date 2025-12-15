@@ -7,10 +7,12 @@
 import testing ;
 import mpi : mpi-test ;
 
+use-project boost : $(BOOST_ROOT) ;
+
 project
     : requirements
       <library>/boost/test//boost_unit_test_framework
-      <library>/boost/mpi//boost_mpi
+      <library>/boost//mpi
       <link>static
       <define>BOOST_ALL_NO_LIB=1
     ;

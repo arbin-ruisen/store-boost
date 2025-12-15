@@ -7,6 +7,7 @@
 // See http://www.boost.org/libs/container for documentation.
 //
 //////////////////////////////////////////////////////////////////////////////
+#include <boost/container/detail/config_begin.hpp>
 #include <boost/container/detail/pair.hpp>
 #include "movable_int.hpp"
 #include "emplace_test.hpp"
@@ -151,3 +152,5 @@ int main ()
    #endif   //#!defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && !defined(BOOST_NO_CXX11_HDR_TUPLE)
    return ::boost::report_errors();
 }
+
+#include <boost/container/detail/config_end.hpp>

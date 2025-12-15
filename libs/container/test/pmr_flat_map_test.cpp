@@ -9,6 +9,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <boost/container/pmr/flat_map.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/container/detail/type_traits.hpp>
 
 int main()
@@ -17,9 +18,9 @@ int main()
    using boost::container::dtl::is_same;
 
    typedef flat_map<int, float, std::less<int>, pmr::polymorphic_allocator<std::pair<int, float> > > intcontainer_t;
-   BOOST_CONTAINER_STATIC_ASSERT(( is_same<intcontainer_t, pmr::flat_map_of<int, float>::type >::value ));
+   BOOST_STATIC_ASSERT(( is_same<intcontainer_t, pmr::flat_map_of<int, float>::type >::value ));
    #if !defined(BOOST_NO_CXX11_TEMPLATE_ALIASES)
-      BOOST_CONTAINER_STATIC_ASSERT(( is_same<intcontainer_t, pmr::flat_map<int, float> >::value ));
+      BOOST_STATIC_ASSERT(( is_same<intcontainer_t, pmr::flat_map<int, float> >::value ));
    #endif
    return 0;
 }

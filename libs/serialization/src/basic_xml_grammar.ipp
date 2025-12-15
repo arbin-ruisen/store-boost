@@ -60,53 +60,52 @@ namespace xml { // anonymous
 
 template<class T>
 struct assign_impl {
-    T & m_t;
-    void operator()(const T & rhs) const {
-        m_t = rhs;
+    T & t;
+    void operator()(const T t_) const {
+        t = t_;
     }
-    assign_impl(T &  rhs)
-        : m_t(rhs)
+    assign_impl(T &  t_)
+        : t(t_)
     {}
 };
 
 template<>
 struct assign_impl<std::string> {
-    std::string & m_t;
+    std::string & t;
     void operator()(
         std::string::const_iterator b, 
         std::string::const_iterator e
     ) const {
-        m_t.resize(0);
+        t.resize(0);
         while(b != e){
-            m_t += * b;
+            t += * b;
             ++b;
         }
     }
-    assign_impl(const assign_impl & rhs)
-        : m_t(rhs.m_t)
-    {}
-    assign_impl & operator=(assign_impl & rhs);
-    assign_impl(std::string & rhs)
-        : m_t(rhs)
+    assign_impl<std::string> & operator=(
+        assign_impl<std::string> & rhs
+    );
+    assign_impl(std::string & t_)
+        : t(t_)
     {}
 };
 
 #ifndef BOOST_NO_STD_WSTRING
 template<>
 struct assign_impl<std::wstring> {
-    std::wstring & m_t;
+    std::wstring & t;
     void operator()(
         std::wstring::const_iterator b, 
         std::wstring::const_iterator e
     ) const {
-        m_t.resize(0);
+        t.resize(0);
         while(b != e){
-            m_t += * b;
+            t += * b;
             ++b;
         }
     }
-    assign_impl(std::wstring & rhs)
-        : m_t(rhs)
+    assign_impl(std::wstring & t_)
+        : t(t_)
     {}
 };
 #endif

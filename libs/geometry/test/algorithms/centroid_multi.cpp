@@ -186,6 +186,10 @@ int test_main(int, char* [])
     //test_2d<bg::model::d2::point_xy<long long> >(true);
     //test_2d<bg::model::d2::point_xy<long double> >();
 
+#ifdef HAVE_TTMATH
+    test_2d<bg::model::d2::point_xy<ttmath_big> >();
+#endif
+
     test_exceptions<bg::model::d2::point_xy<double> >();
     test_empty<bg::model::d2::point_xy<double> >();
 

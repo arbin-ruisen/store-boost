@@ -16,7 +16,6 @@
         "Memory"
     ],
     "maintainers": [
-        "Peter Dimov <pdimov -at- gmail.com>"
-    ],
-    "cxxstd": "11"
+        "Peter Dimov <pdimov -at- pdimov.com>"
+    ]
 }

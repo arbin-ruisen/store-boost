@@ -25,15 +25,7 @@
 //
 
 #include <boost/smart_ptr/detail/sp_typeinfo_.hpp>
-#include <boost/smart_ptr/detail/sp_obsolete.hpp>
 #include <boost/config.hpp>
-
-#if defined(BOOST_SP_REPORT_IMPLEMENTATION)
-
-#include <boost/config/pragma_message.hpp>
-BOOST_PRAGMA_MESSAGE("Using CodeWarrior/PowerPC sp_counted_base")
-
-#endif
 
 namespace boost
 {
@@ -62,11 +54,7 @@ inline long atomic_decrement( register long * pw )
 
     asm
     {
-#if defined(__PPCZen__) || defined(__PPCe500__) || defined(__PPCe500v2__)
-    msync
-#else
     sync
-#endif
 
 loop:
 

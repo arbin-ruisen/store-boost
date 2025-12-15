@@ -5,9 +5,12 @@ Copyright 2017 Glen Joseph Fernandes
 Distributed under the Boost Software License, Version 1.0.
 (http://www.boost.org/LICENSE_1_0.txt)
 */
-#include <boost/smart_ptr/make_local_shared.hpp>
-#include <boost/core/lightweight_test.hpp>
 #include <boost/config.hpp>
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && \
+    !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES) && \
+    !defined(BOOST_NO_CXX11_UNIFIED_INITIALIZATION_SYNTAX)
+#include <boost/core/lightweight_test.hpp>
+#include <boost/smart_ptr/make_local_shared.hpp>
 
 template<class T = void>
 struct creator {
@@ -82,3 +85,9 @@ int main()
     }
     return boost::report_errors();
 }
+#else
+int main()
+{
+    return 0;
+}
+#endif

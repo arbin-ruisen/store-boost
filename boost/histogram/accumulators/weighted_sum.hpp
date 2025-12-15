@@ -7,9 +7,7 @@
 #ifndef BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_SUM_HPP
 #define BOOST_HISTOGRAM_ACCUMULATORS_WEIGHTED_SUM_HPP
 
-#include <boost/core/nvp.hpp>
-#include <boost/histogram/detail/square.hpp>
-#include <boost/histogram/fwd.hpp> // for weighted_sum<>
+#include <boost/histogram/fwd.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -17,93 +15,74 @@ namespace histogram {
 namespace accumulators {
 
 /// Holds sum of weights and its variance estimate
-template <class ValueType>
+template <typename RealType>
 class weighted_sum {
 public:
-  using value_type = ValueType;
-  using const_reference = const value_type&;
-
   weighted_sum() = default;
-
-  /// Initialize sum to value and allow implicit conversion
-  weighted_sum(const_reference value) noexcept : weighted_sum(value, value) {}
-
-  /// Allow implicit conversion from sum<T>
-  template <class T>
-  weighted_sum(const weighted_sum<T>& s) noexcept
-      : weighted_sum(s.value(), s.variance()) {}
-
-  /// Initialize sum to value and variance
-  weighted_sum(const_reference value, const_reference variance) noexcept
+  explicit weighted_sum(const RealType& value) noexcept
+      : sum_of_weights_(value), sum_of_weights_squared_(value) {}
+  weighted_sum(const RealType& value, const RealType& variance) noexcept
       : sum_of_weights_(value), sum_of_weights_squared_(variance) {}
 
   /// Increment by one.
-  weighted_sum& operator++() {
-    ++sum_of_weights_;
-    ++sum_of_weights_squared_;
-    return *this;
-  }
+  weighted_sum& operator++() { return operator+=(1); }
 
-  /// Increment by weight.
-  weighted_sum& operator+=(const weight_type<value_type>& w) {
-    sum_of_weights_ += w.value;
-    sum_of_weights_squared_ += detail::square(w.value);
+  /// Increment by value.
+  template <typename T>
+  weighted_sum& operator+=(const T& value) {
+    sum_of_weights_ += value;
+    sum_of_weights_squared_ += value * value;
     return *this;
   }
 
   /// Added another weighted sum.
-  weighted_sum& operator+=(const weighted_sum& rhs) {
-    sum_of_weights_ += rhs.sum_of_weights_;
-    sum_of_weights_squared_ += rhs.sum_of_weights_squared_;
-    return *this;
-  }
-
-  /// Divide by another weighted sum.
-  weighted_sum& operator/=(const weighted_sum& rhs) {
-    const auto v = sum_of_weights_;
-    const auto w = sum_of_weights_squared_;
-    const auto rv = rhs.sum_of_weights_;
-    const auto rw = rhs.sum_of_weights_squared_;
-    sum_of_weights_ /= rv;
-    // error propagation for independent a, b:
-    // c = a / b: var(c) = (var(a)/a^2 + var(b)/b^2) c^2
-    using detail::square;
-    sum_of_weights_squared_ = (w / square(v) + rw / square(rv)) * square(sum_of_weights_);
+  template <typename T>
+  weighted_sum& operator+=(const weighted_sum<T>& rhs) {
+    sum_of_weights_ += static_cast<RealType>(rhs.sum_of_weights_);
+    sum_of_weights_squared_ += static_cast<RealType>(rhs.sum_of_weights_squared_);
     return *this;
   }
 
   /// Scale by value.
-  weighted_sum& operator*=(const_reference x) {
+  weighted_sum& operator*=(const RealType& x) {
     sum_of_weights_ *= x;
     sum_of_weights_squared_ *= x * x;
     return *this;
   }
 
-  bool operator==(const weighted_sum& rhs) const noexcept {
+  bool operator==(const RealType& rhs) const noexcept {
+    return sum_of_weights_ == rhs && sum_of_weights_squared_ == rhs;
+  }
+
+  template <typename T>
+  bool operator==(const weighted_sum<T>& rhs) const noexcept {
     return sum_of_weights_ == rhs.sum_of_weights_ &&
            sum_of_weights_squared_ == rhs.sum_of_weights_squared_;
   }
 
-  bool operator!=(const weighted_sum& rhs) const noexcept { return !operator==(rhs); }
-
-  /// Return value of the sum.
-  const_reference value() const noexcept { return sum_of_weights_; }
-
-  /// Return estimated variance of the sum.
-  const_reference variance() const noexcept { return sum_of_weights_squared_; }
-
-  // lossy conversion must be explicit
-  explicit operator const_reference() const { return sum_of_weights_; }
-
-  template <class Archive>
-  void serialize(Archive& ar, unsigned /* version */) {
-    ar& make_nvp("sum_of_weights", sum_of_weights_);
-    ar& make_nvp("sum_of_weights_squared", sum_of_weights_squared_);
+  template <typename T>
+  bool operator!=(const T& rhs) const noexcept {
+    return !operator==(rhs);
   }
 
+  /// Return value of the sum.
+  const RealType& value() const noexcept { return sum_of_weights_; }
+
+  /// Return estimated variance of the sum.
+  const RealType& variance() const noexcept { return sum_of_weights_squared_; }
+
+  // lossy conversion must be explicit
+  template <class T>
+  explicit operator T() const {
+    return static_cast<T>(sum_of_weights_);
+  }
+
+  template <class Archive>
+  void serialize(Archive&, unsigned /* version */);
+
 private:
-  value_type sum_of_weights_{};
-  value_type sum_of_weights_squared_{};
+  RealType sum_of_weights_ = RealType();
+  RealType sum_of_weights_squared_ = RealType();
 };
 
 } // namespace accumulators

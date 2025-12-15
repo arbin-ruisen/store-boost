@@ -7,17 +7,11 @@
 // Official repository: https://github.com/boostorg/beast
 //
 
-#include <boost/config.hpp>
-
-#ifdef BOOST_MSVC
-#pragma warning(push)
-#pragma warning(disable: 4702) // unreachable code
-#endif
-
 // Test that header file is self-contained.
 #include <boost/beast/core/saved_handler.hpp>
-#include <boost/asio/bind_cancellation_slot.hpp>
+
 #include <boost/beast/_experimental/unit_test/suite.hpp>
+#include <stdexcept>
 
 namespace boost {
 namespace beast {
@@ -52,7 +46,7 @@ public:
         }
 
         void
-        operator()(system::error_code = {})
+        operator()()
         {
             failed_ = false;
         }
@@ -80,7 +74,7 @@ public:
         }
 
         void
-        operator()(system::error_code = {})
+        operator()()
         {
             invoked_ = true;
         }
@@ -96,7 +90,7 @@ public:
         }
 
         void
-        operator()(system::error_code = {})
+        operator()()
         {
         }
     };
@@ -125,7 +119,7 @@ public:
         {
             saved_handler sh;
             try
-            { 
+            {
                 sh.emplace(throwing_handler{});
                 fail();
             }
@@ -138,87 +132,9 @@ public:
     }
 
     void
-    testSavedHandlerCancellation()
-    {
-        {
-            net::cancellation_signal sig;          
-
-            saved_handler sh;
-            BEAST_EXPECT(! sh.has_value());
-
-            sh.emplace(
-                    net::bind_cancellation_slot(
-                        sig.slot(), handler{}));
-            BEAST_EXPECT(sh.has_value());
-            BEAST_EXPECT(sig.slot().has_handler());
-            sig.emit(net::cancellation_type::all);
-            BEAST_EXPECT(! sh.has_value());
-            BEAST_EXPECT(!sig.slot().has_handler());
-
-
-            sh.emplace(
-                    net::bind_cancellation_slot(
-                        sig.slot(), handler{}));
-            BEAST_EXPECT(sh.has_value());
-            BEAST_EXPECT(sig.slot().has_handler());
-            sig.emit(net::cancellation_type::total);
-            BEAST_EXPECT(sh.has_value());
-            BEAST_EXPECT(sig.slot().has_handler());
-            sig.emit(net::cancellation_type::terminal);
-            BEAST_EXPECT(! sh.has_value());
-            BEAST_EXPECT(!sig.slot().has_handler());
-
-            sh.emplace(
-                    net::bind_cancellation_slot(
-                        sig.slot(), handler{}), 
-                        net::cancellation_type::total);
-            BEAST_EXPECT(sh.has_value());
-            BEAST_EXPECT(sig.slot().has_handler());
-            sig.emit(net::cancellation_type::total);
-            BEAST_EXPECT(! sh.has_value());
-            BEAST_EXPECT(!sig.slot().has_handler());
-
-            {
-                saved_handler sh_inner;
-                sh_inner.emplace(
-                    net::bind_cancellation_slot(
-                        sig.slot(), handler{}));
-
-                sh = std::move(sh_inner);
-            }
-            BEAST_EXPECT(sh.has_value());
-            BEAST_EXPECT(sig.slot().has_handler());
-            sig.emit(net::cancellation_type::all);
-            BEAST_EXPECT(! sh.has_value());
-            BEAST_EXPECT(!sig.slot().has_handler());
-
-        }
-        {
-            saved_handler sh;
-            net::cancellation_signal sig;          
-
-            try
-            { 
-                sh.emplace(
-                    net::bind_cancellation_slot(
-                        sig.slot(), 
-                        throwing_handler{}));
-                fail();
-            }
-            catch(std::exception const&)
-            {
-                pass();
-            }
-            BEAST_EXPECT(!sig.slot().has_handler());
-            BEAST_EXPECT(! sh.has_value());
-        }
-    }
-
-    void
     run() override
     {
         testSavedHandler();
-        testSavedHandlerCancellation();
     }
 };
 
@@ -226,7 +142,3 @@ BEAST_DEFINE_TESTSUITE(beast,core,saved_handler);
 
 } // beast
 } // boost
-
-#ifdef BOOST_MSVC
-#pragma warning(pop)
-#endif

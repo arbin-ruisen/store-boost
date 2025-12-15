@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::zip_with`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Zip one sequence or more with a given function.
     //! @ingroup group-Sequence
     //!
@@ -55,8 +55,8 @@ namespace boost { namespace hana {
         constexpr auto operator()(F&& f, Xs&& xs, Ys&& ...ys) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr zip_with_t zip_with{};
+    constexpr zip_with_t zip_with{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_ZIP_WITH_HPP

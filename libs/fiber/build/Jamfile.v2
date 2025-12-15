@@ -9,27 +9,19 @@ import feature ;
 import modules ;
 import testing ;
 import toolset ;
-import-search /boost/config/checks ;
-import config : requires ;
-import-search /boost/context ;
-import boost-context-features ;
+import ../../config/checks/config : requires ;
 
-constant boost_dependencies_private :
-    /boost/algorithm//boost_algorithm
-    /boost/filesystem//boost_filesystem
-    /boost/format//boost_format
-    ;
+feature.feature numa : on : optional propagated composite ;
+feature.compose <numa>on : <define>BOOST_USE_NUMA ;
 
-project
-    : common-requirements <library>$(boost_dependencies)
+project boost/fiber
     : requirements
-      <library>$(boost_dependencies_private)
       <library>/boost/context//boost_context
       <library>/boost/filesystem//boost_filesystem
       <target-os>solaris:<linkflags>"-llgrp"
       <target-os>windows:<define>_WIN32_WINNT=0x0601
-      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>shared:<define>BOOST_FIBERS_DYN_LINK=1
@@ -39,7 +31,6 @@ project
       <link>shared:<define>BOOST_FIBERS_DYN_LINK=1
       <optimization>speed:<define>BOOST_DISABLE_ASSERTS
       <variant>release:<define>BOOST_DISABLE_ASSERTS
-      <define>BOOST_FIBERS_NO_LIB=1
     : source-location ../src
     ;
 
@@ -66,7 +57,6 @@ lib boost_fiber
       condition_variable.cpp
       context.cpp
       fiber.cpp
-      waker.cpp
       future.cpp
       mutex.cpp
       properties.cpp
@@ -74,7 +64,7 @@ lib boost_fiber
       recursive_timed_mutex.cpp
       timed_mutex.cpp
       scheduler.cpp
-    : <link>shared:<library>/boost/context//boost_context
+    : <link>shared:<library>../../context/build//boost_context
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
@@ -137,9 +127,8 @@ explicit numa_sources ;
 lib boost_fiber_numa
     : numa_sources
       numa/algo/work_stealing.cpp
-    :
+    : 
     <conditional>@numa
-    <library>boost_fiber
     [ requires cxx11_auto_declarations
                cxx11_constexpr
                cxx11_defaulted_functions
@@ -154,3 +143,6 @@ lib boost_fiber_numa
                cxx11_thread_local
                cxx11_variadic_templates ]
     ;
+
+
+boost-install boost_fiber boost_fiber_numa ;

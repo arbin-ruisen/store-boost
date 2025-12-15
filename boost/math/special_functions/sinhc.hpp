@@ -15,14 +15,16 @@
 #pragma once
 #endif
 
+#include <boost/math/tools/config.hpp>
 #include <boost/math/tools/precision.hpp>
-#include <boost/math/policies/error_handling.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
-#include <boost/math/special_functions/fpclassify.hpp>
-#include <limits>
+#include <boost/config/no_tr1/cmath.hpp>
+#include <boost/limits.hpp>
 #include <string>
 #include <stdexcept>
-#include <cmath>
+
+#include <boost/config.hpp>
+
 
 // These are the the "Hyperbolic Sinus Cardinal" functions.
 
@@ -34,21 +36,23 @@ namespace boost
        {
         // This is the "Hyperbolic Sinus Cardinal" of index Pi.
 
-        template<typename T, typename Policy>
-        inline T    sinhc_pi_imp(const T x, const Policy&)
+        template<typename T>
+        inline T    sinhc_pi_imp(const T x)
         {
+#if defined(BOOST_NO_STDC_NAMESPACE) && !defined(__SUNPRO_CC)
+            using    ::abs;
+            using    ::sinh;
+            using    ::sqrt;
+#else    /* BOOST_NO_STDC_NAMESPACE */
             using    ::std::abs;
             using    ::std::sinh;
             using    ::std::sqrt;
+#endif    /* BOOST_NO_STDC_NAMESPACE */
 
             static T const    taylor_0_bound = tools::epsilon<T>();
             static T const    taylor_2_bound = sqrt(taylor_0_bound);
             static T const    taylor_n_bound = sqrt(taylor_2_bound);
 
-            if((boost::math::isinf)(x))
-            {
-               return policies::raise_overflow_error<T>("sinhc(%1%)", nullptr, Policy());
-            }
             if    (abs(x) >= taylor_n_bound)
             {
                 return(sinh(x)/x);
@@ -78,26 +82,35 @@ namespace boost
 
        } // namespace detail
 
-       template <class T, class Policy>
-       inline typename tools::promote_args<T>::type sinhc_pi(T x, const Policy& pol)
-       {
-          typedef typename tools::promote_args<T>::type result_type;
-          return policies::checked_narrowing_cast<T, Policy>(detail::sinhc_pi_imp(static_cast<result_type>(x), pol), "sinhc(%1%)");
-       }
-
        template <class T>
        inline typename tools::promote_args<T>::type sinhc_pi(T x)
        {
           typedef typename tools::promote_args<T>::type result_type;
-          return sinhc_pi(static_cast<result_type>(x), policies::policy<>());
+          return detail::sinhc_pi_imp(static_cast<result_type>(x));
        }
 
+       template <class T, class Policy>
+       inline typename tools::promote_args<T>::type sinhc_pi(T x, const Policy&)
+       {
+          return boost::math::sinhc_pi(x);
+       }
+
+#ifdef    BOOST_NO_TEMPLATE_TEMPLATES
+#else    /* BOOST_NO_TEMPLATE_TEMPLATES */
         template<typename T, template<typename> class U>
         inline U<T>    sinhc_pi(const U<T> x)
         {
-            using std::abs;
-            using std::sinh;
-            using std::sqrt;
+#if defined(BOOST_FUNCTION_SCOPE_USING_DECLARATION_BREAKS_ADL) || defined(__GNUC__)
+            using namespace std;
+#elif    defined(BOOST_NO_STDC_NAMESPACE) && !defined(__SUNPRO_CC)
+            using    ::abs;
+            using    ::sinh;
+            using    ::sqrt;
+#else    /* BOOST_NO_STDC_NAMESPACE */
+            using    ::std::abs;
+            using    ::std::sinh;
+            using    ::std::sqrt;
+#endif    /* BOOST_NO_STDC_NAMESPACE */
 
             using    ::std::numeric_limits;
 
@@ -135,6 +148,7 @@ namespace boost
                 return(result);
             }
         }
+#endif    /* BOOST_NO_TEMPLATE_TEMPLATES */
     }
 }
 

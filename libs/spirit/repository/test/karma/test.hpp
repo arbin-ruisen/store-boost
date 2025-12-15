@@ -15,8 +15,6 @@
 #include <boost/spirit/include/karma_generate.hpp>
 #include <boost/spirit/include/karma_what.hpp>
 
-#include <boost/core/lightweight_test.hpp>
-
 namespace spirit_test
 {
     ///////////////////////////////////////////////////////////////////////////

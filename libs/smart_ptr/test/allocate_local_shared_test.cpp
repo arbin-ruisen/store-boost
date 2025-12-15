@@ -6,11 +6,20 @@
 // See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt
 
+#include <boost/config.hpp>
+
+#if defined( BOOST_NO_CXX11_RVALUE_REFERENCES ) || defined( BOOST_NO_CXX11_VARIADIC_TEMPLATES )
+
+int main()
+{
+}
+
+#else
+
+#include <boost/core/lightweight_test.hpp>
 #include <boost/smart_ptr/make_local_shared.hpp>
 #include <boost/smart_ptr/local_shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
-#include <boost/core/lightweight_test.hpp>
-#include <boost/config.hpp>
 #include <cstddef>
 
 class X
@@ -222,3 +231,5 @@ int main()
 
     return boost::report_errors();
 }
+
+#endif

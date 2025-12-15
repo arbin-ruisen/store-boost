@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::detail::unpack_flatten`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -21,7 +21,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana { namespace detail {
+BOOST_HANA_NAMESPACE_BEGIN namespace detail {
     template <std::size_t ...Lengths>
     struct flatten_indices {
         // avoid empty arrays by appending 0 to `lengths`
@@ -65,6 +65,6 @@ namespace boost { namespace hana { namespace detail {
         return Indices::apply(static_cast<Xs&&>(xs), static_cast<F&&>(f),
                         std::make_index_sequence<Indices::flat_length>{});
     }
-} }} // end namespace boost::hana
+} BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DETAIL_UNPACK_FLATTEN_HPP

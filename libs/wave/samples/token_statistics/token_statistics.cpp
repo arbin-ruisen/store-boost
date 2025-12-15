@@ -26,8 +26,6 @@
 
 #include "collect_token_statistics.hpp"
 
-#include <iostream>
-
 ///////////////////////////////////////////////////////////////////////////////
 //  import required names
 using namespace boost::spirit::classic;

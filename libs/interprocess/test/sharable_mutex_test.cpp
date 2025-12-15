@@ -8,11 +8,13 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include "mutex_test_template.hpp"
 #include "sharable_mutex_test_template.hpp"
 #include <boost/interprocess/sync/interprocess_sharable_mutex.hpp>
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "util.hpp"
 
 int main ()
@@ -25,3 +27,5 @@ int main ()
 
    return 0;
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

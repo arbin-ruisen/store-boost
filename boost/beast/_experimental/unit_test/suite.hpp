@@ -16,11 +16,6 @@
 #include <sstream>
 #include <string>
 
-#if defined(BOOST_GCC) && BOOST_GCC >= 70000 && BOOST_GCC < 80000
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wnoexcept-type"
-#endif
-
 namespace boost {
 namespace beast {
 namespace unit_test {
@@ -197,10 +192,6 @@ public:
         , testcase(*this)
     {
     }
-
-    virtual ~suite() = default;
-    suite(suite const&) = delete;
-    suite& operator=(suite const&) = delete;
 
     /** Invokes the test using the specified runner.
 
@@ -644,31 +635,6 @@ run(runner& r)
     (::boost::beast::unit_test::suite::this_suite()->fail((reason), __FILE__, __LINE__), false))
 #endif
 
-/** Ensure an exception is thrown
-*/
-#define BEAST_THROWS( EXPR, EXCEP ) \
-    try { \
-        EXPR; \
-        BEAST_FAIL(); \
-    } \
-    catch(EXCEP const&) { \
-        BEAST_PASS(); \
-    } \
-    catch(...) { \
-        BEAST_FAIL(); \
-    }
-
-/** Ensure an exception is not thrown
-*/
-#define BEAST_NO_THROW( EXPR ) \
-    try { \
-        EXPR; \
-        BEAST_PASS(); \
-    } \
-    catch(...) { \
-        BEAST_FAIL(); \
-    }
-
 } // unit_test
 } // beast
 } // boost
@@ -734,10 +700,6 @@ run(runner& r)
 
 #endif
 
-#endif
-
-#if defined(BOOST_GCC) && BOOST_GCC >= 70000 && BOOST_GCC < 80000
-#pragma GCC diagnostic pop
 #endif
 
 //------------------------------------------------------------------------------

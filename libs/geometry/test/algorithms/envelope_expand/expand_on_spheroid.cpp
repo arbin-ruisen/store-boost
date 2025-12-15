@@ -1,7 +1,8 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 // Unit Test
 
-// Copyright (c) 2015-2021, Oracle and/or its affiliates.
+// Copyright (c) 2015-2018, Oracle and/or its affiliates.
+
 // Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
@@ -16,17 +17,14 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <cstddef>
+
 #include <iostream>
 #include <string>
 
 #include <geometry_test_common.hpp>
 #include <from_wkt.hpp>
 
-#include <boost/geometry/algorithms/assign.hpp>
-#include <boost/geometry/algorithms/envelope.hpp>
-#include <boost/geometry/algorithms/expand.hpp>
-#include <boost/geometry/algorithms/make.hpp>
-#include <boost/geometry/algorithms/transform.hpp>
+#include <boost/type_traits/is_same.hpp>
 
 #include <boost/geometry/core/coordinate_dimension.hpp>
 #include <boost/geometry/core/tag.hpp>
@@ -34,13 +32,18 @@
 
 #include <boost/geometry/geometries/geometries.hpp>
 
+#include <boost/geometry/views/detail/indexed_point_view.hpp>
+
+#include <boost/geometry/util/condition.hpp>
+
 #include <boost/geometry/io/dsv/write.hpp>
 #include <boost/geometry/io/wkt/wkt.hpp>
 
-#include <boost/geometry/util/condition.hpp>
-#include <boost/geometry/util/is_inverse_spheroidal_coordinates.hpp>
-
-#include <boost/geometry/views/detail/indexed_point_view.hpp>
+#include <boost/geometry/algorithms/assign.hpp>
+#include <boost/geometry/algorithms/envelope.hpp>
+#include <boost/geometry/algorithms/expand.hpp>
+#include <boost/geometry/algorithms/make.hpp>
+#include <boost/geometry/algorithms/transform.hpp>
 
 #include "test_envelope_expand_on_spheroid.hpp"
 
@@ -138,7 +141,11 @@ private:
                                      double height_max2,
                                      double tolerance)
         {
-            using box_units_type = bg::detail::coordinate_system_units_t<Box>;
+            typedef typename bg::coordinate_system
+                <
+                    Box
+                >::type::units box_units_type;
+
             std::string const units_str = units2string<box_units_type>();
 
             Box detected;
@@ -340,7 +347,7 @@ public:
 
         basic_tester
             <
-                std::is_same
+                boost::is_same
                     <
                         typename bg::tag<Geometry>::type,
                         bg::box_tag
@@ -980,13 +987,13 @@ void test_expand_box()
                   from_wkt<G>("BOX(90 -20,190 55)"),
                   90, -20, 190, 90);
 
-    // both boxes are the north pole
+    // both boxes are the north pole 
     tester::apply("b14",
                   from_wkt<B>("BOX(-90 90,80 90)"),
                   from_wkt<G>("BOX(90 90,190 90)"),
                   0, 90, 0, 90);
 
-    // both boxes are the south pole
+    // both boxes are the south pole 
     tester::apply("b15",
                   from_wkt<B>("BOX(-90 -90,80 -90)"),
                   from_wkt<G>("BOX(90 -90,190 -90)"),
@@ -1057,7 +1064,7 @@ void test_expand_make_inverse()
     typedef bg::model::segment<point_type> segment_type;
     typedef test_expand_on_spheroid tester;
 
-    box_type box = bg::make_inverse<box_type>();
+    box_type box = boost::geometry::make_inverse<box_type>();
 
     tester::apply("bi01",
                   box,

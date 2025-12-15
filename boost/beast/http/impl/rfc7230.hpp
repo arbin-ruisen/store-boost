@@ -88,8 +88,8 @@ private:
 
     BOOST_BEAST_DECL
     static
-    void
-    unquote(string_view sr, std::string & s);
+    std::string
+    unquote(string_view sr);
 
     BOOST_BEAST_DECL
     void

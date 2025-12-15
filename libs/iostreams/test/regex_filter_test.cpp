@@ -171,7 +171,7 @@ void regex_filter_test()
     }
 }
 
-#if !defined(BOOST_IOSTREAMS_NO_WIDE_STREAMS) && !defined(BOOST_NO_WREGEX)
+#ifndef BOOST_IOSTREAMS_NO_WIDE_STREAMS 
 
 void wregex_filter_test()
 {
@@ -322,7 +322,7 @@ test_suite* init_unit_test_suite(int, char* [])
 {
     test_suite* test = BOOST_TEST_SUITE("regex_filter test");
     test->add(BOOST_TEST_CASE(&regex_filter_test));
-#if !defined(BOOST_IOSTREAMS_NO_WIDE_STREAMS) && !defined(BOOST_NO_WREGEX)
+#ifndef BOOST_IOSTREAMS_NO_WIDE_STREAMS
     test->add(BOOST_TEST_CASE(&wregex_filter_test));
 #endif
     return test;

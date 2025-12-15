@@ -13,9 +13,8 @@
             "Function-objects"
         ],
         "maintainers": [
-            "Peter Dimov <pdimov -at- gmail.com>"
-        ],
-        "cxxstd": "11"
+            "Peter Dimov <pdimov -at- pdimov.com>"
+        ]
     },
     {
         "key": "bind/mem_fn",
@@ -30,7 +29,6 @@
         ],
         "category": [
             "Function-objects"
-        ],
-        "cxxstd": "11"
+        ]
     }
 ]

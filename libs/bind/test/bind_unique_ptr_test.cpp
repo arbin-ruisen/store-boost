@@ -1,20 +1,10 @@
 #include <boost/config.hpp>
-#include <boost/config/pragma_message.hpp>
 
-#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES)
+#if defined( BOOST_NO_CXX11_RVALUE_REFERENCES ) || defined( BOOST_NO_CXX11_SMART_PTR )
 
-BOOST_PRAGMA_MESSAGE( "Skipping test because BOOST_NO_CXX11_RVALUE_REFERENCES is defined" )
-int main() {}
-
-#elif defined(BOOST_NO_CXX11_SMART_PTR)
-
-BOOST_PRAGMA_MESSAGE( "Skipping test because BOOST_NO_CXX11_SMART_PTR is defined" )
-int main() {}
-
-#elif defined(BOOST_GCC) && BOOST_GCC < 40600
-
-BOOST_PRAGMA_MESSAGE( "Skipping test because BOOST_GCC is less than 40600" )
-int main() {}
+int main()
+{
+}
 
 #else
 
@@ -28,11 +18,9 @@ int main() {}
 //  http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include <boost/bind/bind.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/bind.hpp>
+#include <boost/detail/lightweight_test.hpp>
 #include <memory>
-
-using namespace boost::placeholders;
 
 //
 
@@ -216,4 +204,4 @@ int main()
     return boost::report_errors();
 }
 
-#endif
+#endif // #if defined( BOOST_NO_CXX11_RVALUE_REFERENCES ) || defined( BOOST_NO_CXX11_SMART_PTR )

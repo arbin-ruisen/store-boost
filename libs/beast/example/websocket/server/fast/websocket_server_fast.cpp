@@ -30,7 +30,6 @@
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/beast/websocket.hpp>
-#include <boost/asio/detached.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/strand.hpp>
 #include <algorithm>
@@ -210,7 +209,7 @@ public:
             return;
 
         if(ec)
-            return fail(ec, "read");
+            fail(ec, "read");
 
         // Echo the message
         ws_.text(ws_.got_text());
@@ -412,7 +411,7 @@ do_coro_listen(
                 &do_coro_session,
                 websocket::stream<
                     beast::tcp_stream>(std::move(socket)),
-                std::placeholders::_1), boost::asio::detached);
+                std::placeholders::_1));
     }
 }
 
@@ -464,7 +463,7 @@ int main(int argc, char* argv[])
             tcp::endpoint{
                 address,
                 static_cast<unsigned short>(port + 2u)},
-            std::placeholders::_1), boost::asio::detached);
+            std::placeholders::_1));
 
     // Run the I/O service on the requested number of threads
     std::vector<std::thread> v;

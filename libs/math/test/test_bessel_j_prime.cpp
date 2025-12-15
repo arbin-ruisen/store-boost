@@ -270,7 +270,7 @@ void expected_results()
       ".*",                          // compiler
       ".*",                          // stdlib
       ".*",                          // platform
-      "float|double",                // test type(s)
+      "float",                       // test type(s)
       "Bessel J': Mathworld Data",    // test data group
       ".*", 30, 20);                 // test function
    //

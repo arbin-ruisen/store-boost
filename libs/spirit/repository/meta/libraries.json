@@ -14,6 +14,5 @@
     "maintainers": [
         "Joel de Guzman <joel -at- boost-consulting.com>",
         "Hartmut Kaiser <hartmut.kaiser -at- gmail.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

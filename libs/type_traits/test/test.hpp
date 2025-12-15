@@ -18,11 +18,7 @@
 #include <iostream>
 #include <typeinfo>
 
-#ifdef TEST_CUDA_DEVICE
-#define TEST_VIA_STATIC_ASSERT
-#endif
-
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 // we have to turn off these warnings otherwise we get swamped by the things:
 #pragma option -w-8008 -w-8066
 #endif
@@ -89,9 +85,6 @@ int error_count = 0;
 #define BOOST_TEST_MESSAGE(message)\
    do{ std::cout << __FILE__ << ":" << __LINE__ << ": " << message << std::endl; }while(0)
 
-#ifdef TEST_CUDA_DEVICE
-#define BOOST_CHECK(pred) pred
-#else
 #define BOOST_CHECK(pred)\
    do{ \
       if(!(pred)){\
@@ -99,19 +92,10 @@ int error_count = 0;
          ++error_count;\
       } \
    }while(0)
-#endif
 
-#ifdef TEST_CUDA_DEVICE
-#define TT_TEST_BEGIN(trait_name)\
-   __global__ void test_proc(){
-#define TT_TEST_END }
-#define BOOST_TT_PROC __device__
-#else
 #define TT_TEST_BEGIN(trait_name)\
    int main(){
 #define TT_TEST_END return error_count; }
-#define BOOST_TT_PROC
-#endif
 
 #if !defined(BOOST_NO_CXX11_TEMPLATE_ALIASES) && !BOOST_WORKAROUND(BOOST_GCC, < 40704)
 
@@ -161,13 +145,13 @@ int error_count = 0;
 #define BOOST_DUMMY_MACRO_PARAM /**/
 
 #define BOOST_DECL_TRANSFORM_TEST(name, type, from, to)\
-BOOST_TT_PROC void name(){ TRANSFORM_CHECK(type, from, to) }
+void name(){ TRANSFORM_CHECK(type, from, to) }
 #define BOOST_DECL_TRANSFORM_TEST3(name, type, from)\
-BOOST_TT_PROC void name(){ TRANSFORM_CHECK(type, from, BOOST_DUMMY_MACRO_PARAM) }
+void name(){ TRANSFORM_CHECK(type, from, BOOST_DUMMY_MACRO_PARAM) }
 #define BOOST_DECL_TRANSFORM_TEST2(name, type, to)\
-BOOST_TT_PROC void name(){ TRANSFORM_CHECK(type, BOOST_DUMMY_MACRO_PARAM, to) }
+void name(){ TRANSFORM_CHECK(type, BOOST_DUMMY_MACRO_PARAM, to) }
 #define BOOST_DECL_TRANSFORM_TEST0(name, type)\
-BOOST_TT_PROC void name(){ TRANSFORM_CHECK(type, BOOST_DUMMY_MACRO_PARAM, BOOST_DUMMY_MACRO_PARAM) }
+void name(){ TRANSFORM_CHECK(type, BOOST_DUMMY_MACRO_PARAM, BOOST_DUMMY_MACRO_PARAM) }
 
 
 
@@ -193,7 +177,7 @@ struct UDT
    int f2();
    int f3(int);
    int f4(int, float);
-#ifdef __cpp_noexcept_function_type
+#if __cpp_noexcept_function_type
    void f5()noexcept;
    int f6(int)noexcept(true);
    double f7()noexcept(false);
@@ -209,7 +193,7 @@ typedef int (UDT::*mf3)(int);
 typedef int (UDT::*mf4)(int, float);
 typedef int (UDT::*mp);
 typedef int (UDT::*cmf)(int) const;
-#ifdef __cpp_noexcept_function_type
+#if __cpp_noexcept_function_type
 typedef void (UDT::*mf5)()noexcept;
 typedef int (UDT::*mf6)(int)noexcept;
 typedef double (UDT::*mf7)()noexcept;

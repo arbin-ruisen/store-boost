@@ -1,15 +1,17 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 // Unit Test
 
-// Copyright (c) 2014-2021, Oracle and/or its affiliates.
+// Copyright (c) 2014, Oracle and/or its affiliates.
+
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
 
 #ifndef BOOST_GEOMETRY_TEST_TEST_GEOMETRIES_CUSTOM_LON_LAT_POINT_HPP
 #define BOOST_GEOMETRY_TEST_TEST_GEOMETRIES_CUSTOM_LON_LAT_POINT_HPP
+
+#include <boost/mpl/int.hpp>
 
 #include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/coordinate_dimension.hpp>
@@ -32,7 +34,7 @@ namespace boost { namespace geometry { namespace traits
 template <typename CoordinateType, typename CoordinateSystem>
 struct tag<rw_lon_lat_point<CoordinateType, CoordinateSystem> >
 {
-    using type = point_tag;
+    typedef point_tag type;
 };
 
 template <typename CoordinateType, typename CoordinateSystem>
@@ -49,7 +51,7 @@ struct coordinate_system<rw_lon_lat_point<CoordinateType, CoordinateSystem> >
 
 template <typename CoordinateType, typename CoordinateSystem>
 struct dimension<rw_lon_lat_point<CoordinateType, CoordinateSystem> >
-    : std::integral_constant<int, 2>
+    : boost::mpl::int_<2>
 {};
 
 template
@@ -90,7 +92,7 @@ namespace boost { namespace geometry { namespace traits
 template <typename CoordinateType, typename CoordinateSystem>
 struct tag<ro_lon_lat_point<CoordinateType, CoordinateSystem> >
 {
-    using type = point_tag;
+    typedef point_tag type;
 };
 
 template <typename CoordinateType, typename CoordinateSystem>
@@ -107,7 +109,7 @@ struct coordinate_system<ro_lon_lat_point<CoordinateType, CoordinateSystem> >
 
 template <typename CoordinateType, typename CoordinateSystem>
 struct dimension<ro_lon_lat_point<CoordinateType, CoordinateSystem> >
-    : std::integral_constant<int, 2>
+    : boost::mpl::int_<2>
 {};
 
 template

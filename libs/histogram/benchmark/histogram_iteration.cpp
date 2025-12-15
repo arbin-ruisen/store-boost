@@ -15,10 +15,10 @@
 #include <vector>
 #include "../test/throw_exception.hpp"
 
-#include <cassert>
+#include <boost/assert.hpp>
 struct assert_check {
   assert_check() {
-    assert(false); // don't run with asserts enabled
+    BOOST_ASSERT(false); // don't run with asserts enabled
   }
 } _;
 

@@ -2,7 +2,7 @@
 @file
 Defines the `Logical` and `Comparable` models of `boost::hana::integral_constant`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -31,7 +31,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //////////////////////////////////////////////////////////////////////////
     // integral_constant
     //////////////////////////////////////////////////////////////////////////
@@ -157,8 +157,7 @@ namespace boost { namespace hana {
 
             if (N > 2) {
                 bool starts_with_zero = arr[0] == '0';
-                bool is_hex =
-                    starts_with_zero && (arr[1] == 'x' || arr[1] == 'X');
+                bool is_hex = starts_with_zero && arr[1] == 'x';
                 bool is_binary = starts_with_zero && arr[1] == 'b';
 
                 if (is_hex) {
@@ -195,7 +194,7 @@ namespace boost { namespace hana {
 
     namespace literals {
         template <char ...c>
-        constexpr auto operator ""_c() {
+        constexpr auto operator"" _c() {
             return hana::llong<ic_detail::parse<sizeof...(c)>({c...})>{};
         }
     }
@@ -267,6 +266,6 @@ namespace boost { namespace hana {
         apply(hana::false_ const&, Then&&, Else&& e)
         { return static_cast<Else&&>(e); }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_BOOL_HPP

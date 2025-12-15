@@ -53,3 +53,4 @@ template struct BOOST_SYMBOL_VISIBLE boost::wave::grammars::chlit_grammar_gen<un
 #endif
 
 #endif // #if BOOST_WAVE_SEPARATE_GRAMMAR_INSTANTIATION != 0
+

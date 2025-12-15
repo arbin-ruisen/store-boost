@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Joaquin M Lopez Munoz.
+/* Copyright 2016-2018 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -12,7 +12,6 @@
 #include "any_types.hpp"
 #include "base_types.hpp"
 #include "function_types.hpp"
-#include "variant_types.hpp"
 #include "test_utilities.hpp"
 
 using namespace test_utilities;
@@ -50,7 +49,7 @@ void test_comparison()
     const PolyCollection& cp2=p2;
     ValueFactory          v;
 
-    register_types<Types...>(p1);
+    p1.template register_types<Types...>();
     fill<
       constraints<is_not_equality_comparable>,
       Types...
@@ -124,7 +123,7 @@ void test_comparison()
     const PolyCollection& cp2=p2;
     ValueFactory          v;
 
-    register_types<Types...>(p1);
+    p1.template register_types<Types...>();
     fill<
       constraints<is_equality_comparable,is_copy_constructible>,
       Types...
@@ -170,9 +169,5 @@ void test_comparison()
     function_types::collection,auto_increment,
     function_types::t1,function_types::t2,function_types::t3,
     function_types::t4,function_types::t5>();
-  test_comparison<
-    variant_types::collection,auto_increment,
-    variant_types::t1,variant_types::t2,variant_types::t3,
-    variant_types::t4,variant_types::t5>();
   test_stateless_lambda_comparability_check();
 }

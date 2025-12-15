@@ -5,6 +5,7 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/spirit/home/x3.hpp>
 
 #include <iostream>
@@ -20,8 +21,6 @@ main()
     using boost::spirit::x3::ascii::char_;
     using boost::spirit::x3::lexeme;
     using boost::spirit::x3::no_skip;
-
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(no_skip['x']);
 
     // without skipping no_skip is equivalent to lexeme
     {

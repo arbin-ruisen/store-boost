@@ -11,11 +11,11 @@ namespace fibers {
 
 class future_error_category : public std::error_category {
 public:
-    const char* name() const noexcept override {
+    virtual const char* name() const noexcept {
         return "fiber-future";
     }
 
-    std::error_condition default_error_condition( int ev) const noexcept override {
+    virtual std::error_condition default_error_condition( int ev) const noexcept {
         switch ( static_cast< future_errc >( ev) ) {
             case future_errc::broken_promise:
                 return std::error_condition{
@@ -39,12 +39,12 @@ public:
         }
     }
 
-    bool equivalent( std::error_code const& code, int condition) const noexcept override {
+    virtual bool equivalent( std::error_code const& code, int condition) const noexcept {
         return * this == code.category() &&
             static_cast< int >( default_error_condition( code.value() ).value() ) == condition;
     }
 
-    std::string message( int ev) const override {
+    virtual std::string message( int ev) const {
         switch ( static_cast< future_errc >( ev) ) {
             case future_errc::broken_promise:
                 return std::string{ "The associated promise has been destructed prior "

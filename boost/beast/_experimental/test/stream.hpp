@@ -11,16 +11,17 @@
 #define BOOST_BEAST_TEST_STREAM_HPP
 
 #include <boost/beast/core/detail/config.hpp>
+#include <boost/beast/core/bind_handler.hpp>
 #include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/core/role.hpp>
 #include <boost/beast/core/string.hpp>
 #include <boost/beast/_experimental/test/fail_count.hpp>
-#include <boost/beast/_experimental/test/detail/stream_state.hpp>
 #include <boost/asio/async_result.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/error.hpp>
-#include <boost/asio/any_io_executor.hpp>
+#include <boost/asio/executor_work_guard.hpp>
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/assert.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -105,45 +106,71 @@ namespace test {
         @li <em>AsyncReadStream</em>
         @li <em>AsyncWriteStream</em>
 */
-template<class Executor = net::any_io_executor>
-class basic_stream;
-
-template<class Executor>
-void
-teardown(
-    role_type,
-    basic_stream<Executor>& s,
-    boost::system::error_code& ec);
-
-template<class Executor, class TeardownHandler>
-void
-async_teardown(
-    role_type role,
-    basic_stream<Executor>& s,
-    TeardownHandler&& handler);
-
-template<class Executor>
-class basic_stream
+class stream
 {
-public:
-    /// The type of the executor associated with the object.
-    using executor_type =
-        Executor;
+    struct state;
 
-      /// Rebinds the socket type to another executor.
-    template <typename Executor1>
-    struct rebind_executor
+    boost::shared_ptr<state> in_;
+    boost::weak_ptr<state> out_;
+
+    enum class status
     {
-        /// The socket type when rebound to the specified executor.
-        typedef basic_stream<Executor1> other;
+        ok,
+        eof,
     };
 
-private:
-    template<class Executor2>
-    friend class basic_stream;
+    class service;
+    struct service_impl;
 
-    boost::shared_ptr<detail::stream_state> in_;
-    boost::weak_ptr<detail::stream_state> out_;
+    struct read_op_base
+    {
+        virtual ~read_op_base() = default;
+        virtual void operator()(error_code ec) = 0;
+    };
+
+    struct state
+    {
+        friend class stream;
+
+        net::io_context& ioc;
+        boost::weak_ptr<service_impl> wp;
+        std::mutex m;
+        flat_buffer b;
+        std::condition_variable cv;
+        std::unique_ptr<read_op_base> op;
+        status code = status::ok;
+        fail_count* fc = nullptr;
+        std::size_t nread = 0;
+        std::size_t nread_bytes = 0;
+        std::size_t nwrite = 0;
+        std::size_t nwrite_bytes = 0;
+        std::size_t read_max =
+            (std::numeric_limits<std::size_t>::max)();
+        std::size_t write_max =
+            (std::numeric_limits<std::size_t>::max)();
+
+        BOOST_BEAST_DECL
+        state(
+            net::io_context& ioc_,
+            boost::weak_ptr<service_impl> wp_,
+            fail_count* fc_);
+
+
+        BOOST_BEAST_DECL
+        ~state();
+
+        BOOST_BEAST_DECL
+        void
+        remove() noexcept;
+
+        BOOST_BEAST_DECL
+        void
+        notify_read();
+
+        BOOST_BEAST_DECL
+        void
+        cancel_read();
+    };
 
     template<class Handler, class Buffers>
     class read_op;
@@ -151,11 +178,12 @@ private:
     struct run_read_op;
     struct run_write_op;
 
+    BOOST_BEAST_DECL
     static
     void
     initiate_read(
-        boost::shared_ptr<detail::stream_state> const& in,
-        std::unique_ptr<detail::stream_read_op_base>&& op,
+        boost::shared_ptr<state> const& in,
+        std::unique_ptr<read_op_base>&& op,
         std::size_t buf_size);
 
 #if ! BOOST_BEAST_DOXYGEN
@@ -164,7 +192,7 @@ private:
     template<class>
     friend class boost::asio::ssl::stream;
     // DEPRECATED
-    using lowest_layer_type = basic_stream;
+    using lowest_layer_type = stream;
     // DEPRECATED
     lowest_layer_type&
     lowest_layer() noexcept
@@ -192,66 +220,36 @@ public:
         the peer will see the error `net::error::connection_reset`
         when performing any reads or writes.
     */
-    ~basic_stream();
+    BOOST_BEAST_DECL
+    ~stream();
 
     /** Move Constructor
 
         Moving the stream while asynchronous operations are pending
         results in undefined behavior.
     */
-    basic_stream(basic_stream&& other);
-
-    /** Move Constructor
-
-        Moving the stream while asynchronous operations are pending
-        results in undefined behavior.
-    */
-    template<class Executor2>
-    basic_stream(basic_stream<Executor2>&& other)
-    : in_(std::move(other.in_))
-    , out_(std::move(other.out_))
-    {
-        BOOST_ASSERT(in_->exec.template target<Executor2>() != nullptr);
-        in_->exec = executor_type(*in_->exec.template target<Executor2>());
-    }
+    BOOST_BEAST_DECL
+    stream(stream&& other);
 
     /** Move Assignment
 
         Moving the stream while asynchronous operations are pending
         results in undefined behavior.
     */
-    basic_stream&
-    operator=(basic_stream&& other);
-
-    template<class Executor2>
-    basic_stream&
-    operator==(basic_stream<Executor2>&& other);
+    BOOST_BEAST_DECL
+    stream&
+    operator=(stream&& other);
 
     /** Construct a stream
 
         The stream will be created in a disconnected state.
 
-        @param context The `io_context` object that the stream will use to
+        @param ioc The `io_context` object that the stream will use to
         dispatch handlers for any asynchronous operations.
     */
-    template <class ExecutionContext,
-        class = typename std::enable_if<
-            std::is_convertible<ExecutionContext&, net::execution_context&>::value>::type>
+    BOOST_BEAST_DECL
     explicit
-    basic_stream(ExecutionContext& context)
-    : basic_stream(context.get_executor())
-    {
-    }
-
-    /** Construct a stream
-
-        The stream will be created in a disconnected state.
-
-        @param exec The `executor` object that the stream will use to
-        dispatch handlers for any asynchronous operations.
-    */
-    explicit
-    basic_stream(executor_type exec);
+    stream(net::io_context& ioc);
 
     /** Construct a stream
 
@@ -265,7 +263,8 @@ public:
         fail count.  When the fail count reaches its internal limit,
         a simulated failure error will be raised.
     */
-    basic_stream(
+    BOOST_BEAST_DECL
+    stream(
         net::io_context& ioc,
         fail_count& fc);
 
@@ -279,7 +278,8 @@ public:
         @param s A string which will be appended to the input area, not
         including the null terminator.
     */
-    basic_stream(
+    BOOST_BEAST_DECL
+    stream(
         net::io_context& ioc,
         string_view s);
 
@@ -298,18 +298,27 @@ public:
         @param s A string which will be appended to the input area, not
         including the null terminator.
     */
-    basic_stream(
+    BOOST_BEAST_DECL
+    stream(
         net::io_context& ioc,
         fail_count& fc,
         string_view s);
 
     /// Establish a connection
+    BOOST_BEAST_DECL
     void
-    connect(basic_stream& remote);
+    connect(stream& remote);
+
+    /// The type of the executor associated with the object.
+    using executor_type =
+        net::io_context::executor_type;
 
     /// Return the executor associated with the object.
     executor_type
-    get_executor() noexcept;
+    get_executor() noexcept
+    {
+        return in_->ioc.get_executor();
+    };
 
     /// Set the maximum number of bytes returned by read_some
     void
@@ -333,14 +342,17 @@ public:
     }
 
     /// Returns a string view representing the pending input data
+    BOOST_BEAST_DECL
     string_view
     str() const;
 
     /// Appends a string to the pending input data
+    BOOST_BEAST_DECL
     void
     append(string_view s);
 
     /// Clear the pending input area
+    BOOST_BEAST_DECL
     void
     clear();
 
@@ -377,6 +389,7 @@ public:
         The other end of the connection will see
         `error::eof` after reading all the remaining data.
     */
+    BOOST_BEAST_DECL
     void
     close();
 
@@ -385,6 +398,7 @@ public:
         This end of the connection will see
         `error::eof` after reading all the remaining data.
     */
+    BOOST_BEAST_DECL
     void
     close_remote();
 
@@ -451,26 +465,20 @@ public:
             std::size_t bytes_transferred   // Number of bytes read.
         );
         @endcode
-        If the handler has an associated immediate executor,
-        an immediate completion will be dispatched to it.
-        Otherwise, the handler will not be invoked from within
-        this function. Invocation of the handler will be performed
-        by dispatching to the immediate executor. If no
-        immediate executor is specified, this is equivalent
-        to using `net::post`.
+        Regardless of whether the asynchronous operation completes
+        immediately or not, the handler will not be invoked from within
+        this function. Invocation of the handler will be performed in a
+        manner equivalent to using `net::post`.
+
         @note The `async_read_some` operation may not read all of the requested number of
         bytes. Consider using the function `net::async_read` if you need
         to ensure that the requested amount of data is read before the asynchronous
         operation completes.
     */
-    template<
-        class MutableBufferSequence,
-        BOOST_ASIO_COMPLETION_TOKEN_FOR(void(error_code, std::size_t)) ReadHandler
-            BOOST_ASIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)>
-    BOOST_ASIO_INITFN_AUTO_RESULT_TYPE(ReadHandler, void(error_code, std::size_t))
-    async_read_some(
-        MutableBufferSequence const& buffers,
-        ReadHandler&& handler BOOST_ASIO_DEFAULT_COMPLETION_TOKEN(executor_type));
+    template<class MutableBufferSequence, class ReadHandler>
+    BOOST_BEAST_ASYNC_RESULT2(ReadHandler)
+    async_read_some(MutableBufferSequence const& buffers,
+        ReadHandler&& handler);
 
     /** Write some data to the stream.
 
@@ -533,49 +541,44 @@ public:
             std::size_t bytes_transferred   // Number of bytes written.
         );
         @endcode
-        If the handler has an associated immediate executor,
-        an immediate completion will be dispatched to it.
-        Otherwise, the handler will not be invoked from within
-        this function. Invocation of the handler will be performed
-        by dispatching to the immediate executor. If no
-        immediate executor is specified, this is equivalent
-        to using `net::post`.
+        Regardless of whether the asynchronous operation completes
+        immediately or not, the handler will not be invoked from within
+        this function. Invocation of the handler will be performed in a
+        manner equivalent to using `net::post`.
+
         @note The `async_write_some` operation may not transmit all of the data to
         the peer. Consider using the function `net::async_write` if you need
         to ensure that all data is written before the asynchronous operation completes.
     */
-    template<
-        class ConstBufferSequence,
-        BOOST_ASIO_COMPLETION_TOKEN_FOR(void(error_code, std::size_t)) WriteHandler
-            BOOST_ASIO_DEFAULT_COMPLETION_TOKEN_TYPE(executor_type)>
-    BOOST_ASIO_INITFN_AUTO_RESULT_TYPE(WriteHandler, void(error_code, std::size_t))
-    async_write_some(
-        ConstBufferSequence const& buffers,
-        WriteHandler&& handler BOOST_ASIO_DEFAULT_COMPLETION_TOKEN(executor_type)
-        );
+    template<class ConstBufferSequence, class WriteHandler>
+    BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
+    async_write_some(ConstBufferSequence const& buffers,
+        WriteHandler&& handler);
 
 #if ! BOOST_BEAST_DOXYGEN
     friend
+    BOOST_BEAST_DECL
     void
-    teardown<>(
+    teardown(
         role_type,
-        basic_stream& s,
+        stream& s,
         boost::system::error_code& ec);
 
-    template<class Ex2, class TeardownHandler>
+    template<class TeardownHandler>
     friend
+    BOOST_BEAST_DECL
     void
     async_teardown(
         role_type role,
-        basic_stream<Ex2>& s,
+        stream& s,
         TeardownHandler&& handler);
 #endif
 };
 
 #if ! BOOST_BEAST_DOXYGEN
-template<class Executor>
+inline
 void
-beast_close_socket(basic_stream<Executor>& s)
+beast_close_socket(stream& s)
 {
     s.close();
 }
@@ -590,34 +593,31 @@ beast_close_socket(basic_stream<Executor>& s)
 
     @return The new, connected stream.
 */
-template<class Executor>
 template<class... Args>
-basic_stream
-connect(basic_stream& to, Args&&... args);
+stream
+connect(stream& to, Args&&... args);
 
 #else
-template<class Executor>
-basic_stream<Executor>
-connect(basic_stream<Executor>& to);
+BOOST_BEAST_DECL
+stream
+connect(stream& to);
 
-template<class Executor>
+BOOST_BEAST_DECL
 void
-connect(basic_stream<Executor>& s1, basic_stream<Executor>& s2);
+connect(stream& s1, stream& s2);
 
-template<class Executor, class Arg1, class... ArgN>
-basic_stream<Executor>
-connect(basic_stream<Executor>& to, Arg1&& arg1, ArgN&&... argn);
+template<class Arg1, class... ArgN>
+stream
+connect(stream& to, Arg1&& arg1, ArgN&&... argn);
 #endif
-
-using stream = basic_stream<>;
 
 } // test
 } // beast
 } // boost
 
 #include <boost/beast/_experimental/test/impl/stream.hpp>
-//#ifdef BOOST_BEAST_HEADER_ONLY
+#ifdef BOOST_BEAST_HEADER_ONLY
 #include <boost/beast/_experimental/test/impl/stream.ipp>
-//#endif
+#endif
 
 #endif

@@ -49,9 +49,10 @@
 
 // #define BOOST_SPIRIT_LEXERTL_DEBUG
 
+#include <boost/config/warning_disable.hpp>
 //[wcf_includes
 #include <boost/spirit/include/lex_lexertl.hpp>
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include <boost/ref.hpp>
 //]
 
@@ -161,7 +162,6 @@ int main(int argc, char* argv[])
 
     // tokenize the given string, the bound functor gets invoked for each of 
     // the matched tokens
-    using boost::placeholders::_1;
     char const* first = str.c_str();
     char const* last = &first[str.size()];
     bool r = lex::tokenize(first, last, word_count_functor, 

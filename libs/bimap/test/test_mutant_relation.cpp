@@ -8,7 +8,7 @@
 
 //  VC++ 8.0 warns on usage of certain Standard Library and API functions that
 //  can be cause buffer overruns or other possible security issues if misused.
-//  See https://web.archive.org/web/20071014014301/http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
+//  See http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
 //  But the wording of the warning is misleading and unsettling, there are no
 //  portable alternative functions, and VC++ 8.0's own libraries use the
 //  functions in question. So turn off the warnings.
@@ -20,7 +20,8 @@
 // std
 #include <string>
 
-#include <boost/core/lightweight_test.hpp>
+// Boost.Test
+#include <boost/test/minimal.hpp>
 
 // Boost.MPL
 #include <boost/mpl/assert.hpp>
@@ -223,7 +224,7 @@ void test_mutant_relation()
     test_relation<mutant_relation_builder, cc4, cc5>(0,0);
 }
 
-int main()
+int test_main( int, char* [] )
 {
 
     // Test metadata correctness with untagged relation version
@@ -235,6 +236,6 @@ int main()
     // Test basic
     test_mutant_relation();
 
-    return boost::report_errors();
+    return 0;
 }
 

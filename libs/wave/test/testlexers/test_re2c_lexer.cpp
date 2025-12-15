@@ -11,10 +11,8 @@
 #include <boost/config/warning_disable.hpp>
 
 //  system headers
-#if defined(TESTLEXERS_TIMING)
+#include <string>
 #include <iostream>
-#endif
-
 #include <limits>
 
 #include <boost/wave/wave_config.hpp>
@@ -56,7 +54,7 @@ main(int argc, char *argv[])
         token_type::string_type instr(data->token);
 
         lexer_type it = lexer_type(instr.begin(), instr.end(), pos, 
-                                   boost::wave::support_cpp2a);
+            boost::wave::support_option_long_long);
         lexer_type end = lexer_type();
 
         // verify the correct outcome of the tokenization
@@ -96,3 +94,4 @@ main(int argc, char *argv[])
 
     return boost::report_errors();
 }
+

@@ -13,6 +13,7 @@
 #include <boost/intrusive/slist.hpp>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 #include <vector>
 
@@ -34,7 +35,7 @@ class MyClass
    {  return l.int_ == r.int_; }
 
    friend std::size_t hash_value(const MyClass &v)
-   {  return std::size_t(v.int_); }
+   {  return boost::hash_value(v.int_); }
 };
 
 template<class T, class NodeTraits>
@@ -62,10 +63,10 @@ struct stateful_value_traits
    const_node_ptr to_node_ptr (const value_type &value) const
    {  return node_array_ + (&value - values_); }
 
-   pointer to_value_ptr(node_ptr n) const
+   pointer to_value_ptr(const node_ptr &n) const
    {  return values_ + (n - node_array_); }
 
-   const_pointer to_value_ptr(const_node_ptr n) const
+   const_pointer to_value_ptr(const const_node_ptr &n) const
    {  return values_ + (n - node_array_); }
 
    pointer  values_;
@@ -112,8 +113,8 @@ int main()
    Slist my_slist(slist_traits(values, slist_hook_array));
    Set   my_set  (std::less<MyClass>(), rbtree_traits(values, rbtree_hook_array));
    Uset  my_uset ( Uset::bucket_traits(buckets, NumElements)
-                 , Uset::hasher()
-                 , Uset::key_equal()
+                 , boost::hash<MyClass>()
+                 , std::equal_to<MyClass>()
                  , slist_traits(values, uset_hook_array)
                  );
 

@@ -13,6 +13,6 @@
 
 int main()
 {
-    int x = 1; (void)x;
+    int x = 1;
     BOOST_ASSERT( x == 1 );
 }

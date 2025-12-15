@@ -16,7 +16,7 @@
 #include <boost/graph/distributed/mpi_process_group.hpp>
 #include <boost/graph/dimacs.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 #include <iostream>
 #include <cstdlib>
@@ -73,7 +73,7 @@ test_dimacs_reader(const char *filename)
 }
 
 int
-main(int argc, char* argv[])
+test_main(int argc, char* argv[])
 {
   mpi::environment env(argc, argv);
 
@@ -81,5 +81,5 @@ main(int argc, char* argv[])
       test_dimacs_reader(argv[1]);
   }
 
-  return boost::report_errors();
+  return 0;
 }

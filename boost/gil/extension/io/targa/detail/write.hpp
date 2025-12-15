@@ -13,7 +13,7 @@
 
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/device.hpp>
-#include <boost/gil/io/detail/dynamic.hpp>
+#include <boost/gil/io/dynamic_io_new.hpp>
 
 #include <vector>
 
@@ -163,14 +163,14 @@ public:
               )
     {}
 
-    template< typename ...Views >
-    void apply( const any_image_view< Views... >& views )
+    template< typename Views >
+    void apply( const any_image_view< Views >& views )
     {
         detail::dynamic_io_fnobj< detail::targa_write_is_supported
                                 , parent_t
                                 > op( this );
 
-        variant2::visit( op, views );
+        apply_operation( views, op );
     }
 };
 

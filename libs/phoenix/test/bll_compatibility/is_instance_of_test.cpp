@@ -12,8 +12,7 @@
 // -----------------------------------------------------------------------
 
 
-#include <boost/core/lightweight_test.hpp>
-#include <boost/core/lightweight_test_trait.hpp>
+#include <boost/test/minimal.hpp>    // see "Header Implementation Option"
  
 
 #include "boost/lambda/detail/is_instance_of.hpp"
@@ -46,33 +45,35 @@ template <bool b> class X {};
 X<boost::lambda::is_instance_of_2<int, A2>::value> x;
 
 
-int main()
-{
-    using boost::lambda::is_instance_of_1;
-    using boost::lambda::is_instance_of_2;
-    using boost::lambda::is_instance_of_3;
-    using boost::lambda::is_instance_of_4;
+int test_main(int, char *[]) {
+
+using boost::lambda::is_instance_of_1;
+using boost::lambda::is_instance_of_2;
+using boost::lambda::is_instance_of_3;
+using boost::lambda::is_instance_of_4;
 
 
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_1<B1, A1>));
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_1<A1<float>, A1>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_1<int, A1>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_1<C1, A1>));
+BOOST_CHECK((is_instance_of_1<B1, A1>::value == true));
+BOOST_CHECK((is_instance_of_1<A1<float>, A1>::value == true));
+BOOST_CHECK((is_instance_of_1<int, A1>::value == false));
+BOOST_CHECK((is_instance_of_1<C1, A1>::value == false));
 
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_2<B2, A2>));
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_2<A2<int, float>, A2>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_2<int, A2>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_2<C2, A2>));
+BOOST_CHECK((is_instance_of_2<B2, A2>::value == true));
+BOOST_CHECK((is_instance_of_2<A2<int, float>, A2>::value == true));
+BOOST_CHECK((is_instance_of_2<int, A2>::value == false));
+BOOST_CHECK((is_instance_of_2<C2, A2>::value == false));
 
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_3<B3, A3>));
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_3<A3<int, float, char>, A3>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_3<int, A3>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_3<C3, A3>));
+BOOST_CHECK((is_instance_of_3<B3, A3>::value == true));
+BOOST_CHECK((is_instance_of_3<A3<int, float, char>, A3>::value == true));
+BOOST_CHECK((is_instance_of_3<int, A3>::value == false));
+BOOST_CHECK((is_instance_of_3<C3, A3>::value == false));
 
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_4<B4, A4>));
-    BOOST_TEST_TRAIT_TRUE((is_instance_of_4<A4<int, float, char, double>, A4>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_4<int, A4>));
-    BOOST_TEST_TRAIT_FALSE((is_instance_of_4<C4, A4>));
+BOOST_CHECK((is_instance_of_4<B4, A4>::value == true));
+BOOST_CHECK((is_instance_of_4<A4<int, float, char, double>, A4>::value == true));
+BOOST_CHECK((is_instance_of_4<int, A4>::value == false));
+BOOST_CHECK((is_instance_of_4<C4, A4>::value == false));
 
-    return boost::report_errors();
+return 0;
+
 }
+

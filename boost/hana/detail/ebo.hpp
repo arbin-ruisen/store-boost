@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::detail::ebo`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2016
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -105,11 +105,11 @@ namespace _hana {
     { return static_cast<V&&>(x.data_); }
 } // end namespace _hana
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     namespace detail {
         using ::_hana::ebo;
         using ::_hana::ebo_get;
     }
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DETAIL_EBO_HPP

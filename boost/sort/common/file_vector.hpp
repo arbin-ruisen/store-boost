@@ -43,7 +43,7 @@ namespace common
 /// @return
 /// @remarks
 //-----------------------------------------------------------------------------
-inline int generate_file(const std::string & filename, size_t NElem)
+static int generate_file(const std::string & filename, size_t NElem)
 {   //------------------------------- begin ----------------------------------
     std::ofstream ofile;
     ofile.open(filename, std::ios_base::out | std::ios_base::binary |
@@ -73,7 +73,7 @@ inline int generate_file(const std::string & filename, size_t NElem)
 /// @return
 /// @remarks
 //-----------------------------------------------------------------------------
-inline int fill_vector_uint64(const std::string & filename,
+static int fill_vector_uint64(const std::string & filename,
                               std::vector<uint64_t> & V, size_t NElem)
 {   //----------------------- begin ------------------------------------------
     std::ifstream input(filename, std::ios_base::in | std::ios_base::binary);
@@ -89,7 +89,7 @@ inline int fill_vector_uint64(const std::string & filename,
     size_t uCount = length / 8;
     if (uCount < NElem)
     {
-        throw std::ios_base::failure("incorrect length of the file\n");
+        throw std::ios_base::failure("incorrect lenght of the file\n");
     };
     V.clear();
     V.reserve(NElem);
@@ -115,7 +115,7 @@ inline int fill_vector_uint64(const std::string & filename,
 /// @return
 /// @remarks
 //-----------------------------------------------------------------------------
-inline int write_file_uint64 (const std::vector<uint64_t> & V,
+static int write_file_uint64 (const std::vector<uint64_t> & V,
                               const std::string & filename)
 {   //--------------------------------- begin --------------------------------
     std::ofstream ofile;
@@ -144,7 +144,7 @@ inline int write_file_uint64 (const std::vector<uint64_t> & V,
 /// @return
 /// @remarks
 //-----------------------------------------------------------------------------
-inline int fill_vector_string (const std::string & filename,
+static int fill_vector_string (const std::string & filename,
                                std::vector<std::string> & V, size_t NElem)
 {   //----------------------- begin ------------------------------------------
     std::ifstream input(filename, std::ios_base::in | std::ios_base::binary);
@@ -189,7 +189,7 @@ inline int fill_vector_string (const std::string & filename,
 /// @return
 /// @remarks
 //-----------------------------------------------------------------------------
-inline int write_file_string (const std::vector<std::string> & V,
+static int write_file_string (const std::vector<std::string> & V,
                              const std::string & filename)
 {   //--------------------------------- begin --------------------------------
     std::ofstream ofile;

@@ -14,12 +14,10 @@
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/bit_operations.hpp>
 #include <boost/gil/io/device.hpp>
-#include <boost/gil/io/detail/dynamic.hpp>
-#include <boost/gil/detail/mp11.hpp>
+#include <boost/gil/io/dynamic_io_new.hpp>
 
 #include <cstdlib>
 #include <string>
-#include <type_traits>
 
 namespace boost { namespace gil {
 
@@ -110,34 +108,30 @@ public:
 private:
 
     template< int Channels >
-    unsigned int get_type( std::true_type  /* is_bit_aligned */ )
+    unsigned int get_type( mpl::true_  /* is_bit_aligned */ )
     {
-        return mp11::mp_if_c
-            <
-                Channels == 1,
-                pnm_image_type::mono_bin_t,
-                pnm_image_type::color_bin_t
-            >::value;
+        return boost::mpl::if_c< Channels == 1
+                               , pnm_image_type::mono_bin_t
+                               , pnm_image_type::color_bin_t
+                               >::type::value;
     }
 
     template< int Channels >
-    unsigned int get_type( std::false_type /* is_bit_aligned */ )
+    unsigned int get_type( mpl::false_ /* is_bit_aligned */ )
     {
-        return mp11::mp_if_c
-            <
-                Channels == 1,
-                pnm_image_type::gray_bin_t,
-                pnm_image_type::color_bin_t
-            >::value;
+        return boost::mpl::if_c< Channels == 1
+                               , pnm_image_type::gray_bin_t
+                               , pnm_image_type::color_bin_t
+                               >::type::value;
     }
 
     template< typename View >
     void write_data( const View&   src
                    , std::size_t   pitch
-                   , const std::true_type&    // bit_aligned
+                   , const mpl::true_&    // bit_aligned
                    )
     {
-        static_assert(std::is_same<View, typename gray1_image_t::view_t>::value, "");
+        static_assert(is_same<View, typename gray1_image_t::view_t>::value, "");
 
         byte_vector_t row( pitch / 8 );
 
@@ -160,7 +154,7 @@ private:
     template< typename View >
     void write_data( const View&   src
                    , std::size_t   pitch
-                   , const std::false_type&    // bit_aligned
+                   , const mpl::false_&    // bit_aligned
                    )
     {
         std::vector< pixel< typename channel_type< View >::type
@@ -226,14 +220,14 @@ public:
               )
     {}
 
-    template< typename ...Views >
-    void apply( const any_image_view< Views... >& views )
+    template< typename Views >
+    void apply( const any_image_view< Views >& views )
     {
         detail::dynamic_io_fnobj< detail::pnm_write_is_supported
                                 , parent_t
                                 > op( this );
 
-        variant2::visit( op, views );
+        apply_operation( views, op );
     }
 };
 

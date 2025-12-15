@@ -8,7 +8,7 @@
 
 //  VC++ 8.0 warns on usage of certain Standard Library and API functions that
 //  can be cause buffer overruns or other possible security issues if misused.
-//  See https://web.archive.org/web/20071014014301/http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
+//  See http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
 //  But the wording of the warning is misleading and unsettling, there are no
 //  portable alternative functions, and VC++ 8.0's own libraries use the
 //  functions in question. So turn off the warnings.
@@ -17,7 +17,8 @@
 
 #include <boost/config.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+// Boost.Test
+#include <boost/test/minimal.hpp>
 
 // Boost.Bimap
 #include <boost/bimap/support/lambda.hpp>
@@ -39,21 +40,21 @@ void test_bimap_unconstrained()
         typedef bimap<int,unconstrained_set_of<double> > bm;
         bm b;
         b.insert( bm::value_type(2,34.4) );
-        BOOST_TEST( b.size() == 1 );
+        BOOST_CHECK( b.size() == 1 );
     }
 
     {
         typedef bimap<unconstrained_set_of<int>, double > bm;
         bm b;
         b.right[2.4] = 34;
-        BOOST_TEST( b.right.size() == 1 );
+        BOOST_CHECK( b.right.size() == 1 );
     }
 
     {
         typedef bimap<unconstrained_set_of<int>, double, right_based > bm;
         bm b;
         b.right[2.4] = 34;
-        BOOST_TEST( b.right.size() == 1 );
+        BOOST_CHECK( b.right.size() == 1 );
     }
 
     {
@@ -67,7 +68,7 @@ void test_bimap_unconstrained()
 
         bm b;
         b.left[2] = 34.4;
-        BOOST_TEST( b.left.size() == 1 );
+        BOOST_CHECK( b.left.size() == 1 );
     }
 
     {
@@ -81,7 +82,7 @@ void test_bimap_unconstrained()
 
         bm b;
         b.right[2.4] = 34;
-        BOOST_TEST( b.right.size() == 1 );
+        BOOST_CHECK( b.right.size() == 1 );
     }
 
     {
@@ -95,14 +96,14 @@ void test_bimap_unconstrained()
 
         bm b;
         b.insert( bm::value_type(1,2.3) );
-        BOOST_TEST( b.size() == 1 );
+        BOOST_CHECK( b.size() == 1 );
     }
 }
 
 
-int main()
+int test_main( int, char* [] )
 {
     test_bimap_unconstrained();
-    return boost::report_errors();
+    return 0;
 }
 

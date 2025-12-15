@@ -9,11 +9,10 @@
 #
 # /* See http://www.boost.org for most recent version. */
 #
-# include <boost/preprocessor/config/limits.hpp>
 # include <boost/preprocessor/arithmetic/add.hpp>
 # include <boost/preprocessor/arithmetic/dec.hpp>
 # include <boost/preprocessor/control.hpp>
-# include "test.h"
+# include <libs/preprocessor/test/test.h>
 
 # define TR(x) 1
 
@@ -39,9 +38,3 @@ BEGIN BOOST_PP_WHILE(PRED, OP_1, 50) == 0 END
 
 BEGIN BOOST_PP_WHILE(PRED, OP_2, 10) == 0 END
 BEGIN BOOST_PP_WHILE(PRED, OP_3, 10) == 0 END
-
-#if BOOST_PP_LIMIT_MAG != 256
-
-BEGIN BOOST_PP_WHILE(PRED, OP_1, BOOST_PP_LIMIT_MAG) == 0 END
-
-#endif

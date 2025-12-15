@@ -17,7 +17,6 @@
 #include <boost/spirit/home/karma/detail/default_width.hpp>
 #include <boost/spirit/home/karma/delimit_out.hpp>
 #include <boost/spirit/home/karma/auxiliary/lazy.hpp>
-#include <boost/spirit/home/karma/char/char.hpp>
 #include <boost/spirit/home/support/unused.hpp>
 #include <boost/spirit/home/support/common_terminals.hpp>
 #include <boost/spirit/home/support/has_semantic_action.hpp>
@@ -93,7 +92,7 @@ namespace boost { namespace spirit { namespace karma
             unsigned int const width, Padding const& p) 
         {
 #if BOOST_WORKAROUND(BOOST_MSVC, BOOST_TESTED_AT(1600))
-            (void)e; // suppresses warning: C4100: 'e' : unreferenced formal parameter
+            e; // suppresses warning: C4100: 'e' : unreferenced formal parameter
 #endif
             // wrap the given output iterator to allow left padding
             detail::enable_buffering<OutputIterator> buffering(sink, width);

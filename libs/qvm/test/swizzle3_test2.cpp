@@ -1,18 +1,11 @@
-// Copyright 2008-2024 Emil Dotchevski and Reverge Studios, Inc.
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//Copyright (c) 2008-2016 Emil Dotchevski and Reverge Studios, Inc.
 
-#ifdef BOOST_QVM_TEST_SINGLE_HEADER
-#   include BOOST_QVM_TEST_SINGLE_HEADER
-#   ifdef BOOST_QVM_TEST_SINGLE_HEADER_SWIZZLE
-#       include BOOST_QVM_TEST_SINGLE_HEADER_SWIZZLE
-#   endif
-#else
-#   include <boost/qvm/vec_traits.hpp>
-#   include <boost/qvm/swizzle3.hpp>
-#endif
+//Distributed under the Boost Software License, Version 1.0. (See accompanying
+//file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/qvm/vec_traits.hpp>
+#include <boost/qvm/swizzle3.hpp>
+#include <boost/detail/lightweight_test.hpp>
 
 template <int D> struct my_vec { };
 int called=0;

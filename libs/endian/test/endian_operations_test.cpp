@@ -29,6 +29,7 @@
 #include <boost/endian/arithmetic.hpp>
 #include <boost/type_traits/is_signed.hpp>
 #include <boost/core/lightweight_test.hpp>
+#include <boost/detail/lightweight_main.hpp>
 #include <boost/cstdint.hpp>
 #include <cassert>
 #include <iostream>
@@ -487,17 +488,4 @@ int cpp_main(int, char * [])
   op_test<op_star>();
 
   return boost::report_errors();
-}
-
-int main( int argc, char* argv[] )
-{
-    try
-    {
-        return cpp_main( argc, argv );
-    }
-    catch( std::exception const & x )
-    {
-        BOOST_ERROR( x.what() );
-        return boost::report_errors();
-    }
 }

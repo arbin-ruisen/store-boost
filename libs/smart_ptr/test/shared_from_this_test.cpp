@@ -1,3 +1,12 @@
+#include <boost/config.hpp>
+
+#if defined(BOOST_MSVC)
+#pragma warning(disable: 4786)  // identifier truncated in debug info
+#pragma warning(disable: 4710)  // function not inlined
+#pragma warning(disable: 4711)  // function selected for automatic inline expansion
+#pragma warning(disable: 4514)  // unreferenced inline removed
+#endif
+
 //
 //  shared_from_this_test.cpp
 //
@@ -8,15 +17,11 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#if defined(__GNUC__) && __GNUC__ > 4
-# pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-#endif
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/config.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/detail/lightweight_test.hpp>
 
 //
 

@@ -1,66 +1,72 @@
 //
-// Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
+//  Copyright (c) 2009-2011 Artyom Beilis (Tonkikh)
 //
-// Distributed under the Boost Software License, Version 1.0.
-// https://www.boost.org/LICENSE_1_0.txt
-
+//  Distributed under the Boost Software License, Version 1.0. (See
+//  accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt)
+//
 #include <boost/locale.hpp>
-#include <ctime>
 #include <iostream>
+#include <cassert>
+#include <ctime>
 
 int main()
 {
     using namespace boost::locale;
+    using namespace std;
 
     generator gen;
     // Make system default locale global
     std::locale loc = gen("");
-    // We need the boundary facet, currently only available via ICU
-    if(!std::has_facet<boundary::boundary_indexing<char>>(loc)) {
-        std::cout << "boundary detection not implemented in this environment\n";
-        return 0;
-    }
-    std::locale::global(loc);
-    std::cout.imbue(loc);
+    locale::global(loc); 
+    cout.imbue(loc);
+    
 
-    std::string text = "Hello World! あにま! Linux2.6 and Windows7 is word and number. שָלוֹם עוֹלָם!";
+    string text="Hello World! あにま! Linux2.6 and Windows7 is word and number. שָלוֹם עוֹלָם!";
 
-    std::cout << text << std::endl;
+    cout<<text<<endl;
 
-    boundary::ssegment_index index(boundary::word, text.begin(), text.end());
+    boundary::ssegment_index index(boundary::word,text.begin(),text.end());
+    boundary::ssegment_index::iterator p,e;
 
-    for(boundary::ssegment_index::iterator p = index.begin(), e = index.end(); p != e; ++p) {
-        std::cout << "Part [" << *p << "] has ";
+    for(p=index.begin(),e=index.end();p!=e;++p) {
+        cout<<"Part ["<<*p<<"] has ";
         if(p->rule() & boundary::word_number)
-            std::cout << "number(s) ";
+            cout<<"number(s) ";
         if(p->rule() & boundary::word_letter)
-            std::cout << "letter(s) ";
+            cout<<"letter(s) ";
         if(p->rule() & boundary::word_kana)
-            std::cout << "kana character(s) ";
+            cout<<"kana character(s) ";
         if(p->rule() & boundary::word_ideo)
-            std::cout << "ideographic character(s) ";
+            cout<<"ideographic character(s) ";
         if(p->rule() & boundary::word_none)
-            std::cout << "no word characters";
-        std::cout << std::endl;
+            cout<<"no word characters";
+        cout<<endl;
     }
 
-    index.map(boundary::character, text.begin(), text.end());
+    index.map(boundary::character,text.begin(),text.end());
 
-    for(const boundary::ssegment& p : index)
-        std::cout << "|" << p;
-    std::cout << "|\n\n";
+    for(p=index.begin(),e=index.end();p!=e;++p) {
+        cout<<"|" <<*p ;
+    }
+    cout<<"|\n\n";
 
-    index.map(boundary::line, text.begin(), text.end());
+    index.map(boundary::line,text.begin(),text.end());
 
-    for(const boundary::ssegment& p : index)
-        std::cout << "|" << p;
-    std::cout << "|\n\n";
+    for(p=index.begin(),e=index.end();p!=e;++p) {
+        cout<<"|" <<*p ;
+    }
+    cout<<"|\n\n";
 
-    index.map(boundary::sentence, text.begin(), text.end());
+    index.map(boundary::sentence,text.begin(),text.end());
 
-    for(const boundary::ssegment& p : index)
-        std::cout << "|" << p;
-    std::cout << "|\n\n";
+    for(p=index.begin(),e=index.end();p!=e;++p) {
+        cout<<"|" <<*p ;
+    }
+    cout<<"|\n\n";
+    
 }
+
+// vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4
 
 // boostinspect:noascii

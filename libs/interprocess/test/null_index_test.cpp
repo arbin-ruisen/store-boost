@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/indexes/null_index.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/mem_algo/simple_seq_fit.hpp>
@@ -46,3 +47,5 @@ int main ()
    shared_memory_object::remove(test::get_process_id_name());
    return 0;
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

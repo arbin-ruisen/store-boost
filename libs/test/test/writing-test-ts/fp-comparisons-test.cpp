@@ -18,7 +18,7 @@
 
 // Boost
 #include <boost/mpl/list.hpp>
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 
 // STL
 #include <functional>

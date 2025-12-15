@@ -13,19 +13,18 @@ import os ;
 import path ;
 import testing ;
 import toolset ;
-import-search /boost/config/checks ;
-import config : requires ;
+import ../../config/checks/config : requires ;
 
-project
+project boost/fiber/test
     : requirements
-      <library>/boost/test//boost_unit_test_framework
+      <library>../../test/build//boost_unit_test_framework
       <library>/boost/context//boost_context
       <library>/boost/fiber//boost_fiber
       <library>/boost/thread//boost_thread
       <target-os>solaris:<linkflags>"-llgrp"
       <target-os>windows:<define>_WIN32_WINNT=0x0601
-      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
-      <target-os>linux,<toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-fsplit-stack
+      <toolset>gcc,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <toolset>clang,<segmented-stacks>on:<cxxflags>-fsplit-stack
       <toolset>clang,<segmented-stacks>on:<cxxflags>-DBOOST_USE_SEGMENTED_STACKS
       <link>static

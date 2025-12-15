@@ -26,7 +26,7 @@ public:
     void
     run()
     {
-        test_file<file_win32, true>();
+        test_file<file_win32>();
     }
 };
 

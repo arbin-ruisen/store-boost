@@ -17,14 +17,10 @@
 //  http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include <boost/function_equal.hpp>
 #include <boost/weak_ptr.hpp>
-#include <boost/core/lightweight_test.hpp>
-
-//
-
-using namespace boost::placeholders;
+#include <boost/detail/lightweight_test.hpp>
 
 int f( boost::weak_ptr<void> wp )
 {

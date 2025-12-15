@@ -7,6 +7,5 @@
     "category": [
         "Metaprogramming",
         "Function-objects"
-    ],
-    "cxxstd": "11"
+    ]
 }

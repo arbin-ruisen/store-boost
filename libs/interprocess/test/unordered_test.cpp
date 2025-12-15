@@ -8,11 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-//boost::unordered is supported only in C++11 and newer
-#include <boost/config.hpp>
-
-#if BOOST_CXX_VERSION >=201103L
-
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include "get_process_id_name.hpp"
@@ -30,7 +26,7 @@
 //->
 
 #include <functional> //std::equal_to
-#include <boost/container_hash/hash.hpp> //boost::hash
+#include <boost/functional/hash.hpp> //boost::hash
 
 namespace bip = boost::interprocess;
 
@@ -42,12 +38,12 @@ int main()
 {
    //Remove any other old shared memory from the system
    bip::shared_memory_object::remove(bip::test::get_process_id_name());
-   BOOST_INTERPROCESS_TRY {
+   try {
       bip::managed_shared_memory shm(bip::create_only, bip::test::get_process_id_name(), 65536);
 
       //Elements to be inserted in unordered containers
       const int elements[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
-      const std::size_t elements_size = sizeof(elements)/sizeof(elements[0]);
+      const int elements_size = sizeof(elements)/sizeof(elements[0]);
 
       MyUnorderedSet *myset  =
          shm.construct<MyUnorderedSet>(bip::anonymous_instance)
@@ -63,14 +59,14 @@ int main()
             , shm.get_allocator<int>());
 
       //Insert elements and check sizes
-      myset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
-      myset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
-      mymset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
-      mymset->insert((&elements[0]), (&elements[std::ptrdiff_t(elements_size)]));
+      myset->insert((&elements[0]), (&elements[elements_size]));
+      myset->insert((&elements[0]), (&elements[elements_size]));
+      mymset->insert((&elements[0]), (&elements[elements_size]));
+      mymset->insert((&elements[0]), (&elements[elements_size]));
 
-      if(myset->size() != elements_size)
+      if(myset->size() != (unsigned int)elements_size)
          return 1;
-      if(mymset->size() != elements_size*2u)
+      if(mymset->size() != (unsigned int)elements_size*2)
          return 1;
 
       //Destroy elements and check sizes
@@ -91,19 +87,14 @@ int main()
          return 1;
 
    }
-   BOOST_INTERPROCESS_CATCH(...){
+   catch(...){
       //Remove shared memory from the system
       bip::shared_memory_object::remove(bip::test::get_process_id_name());
-      BOOST_INTERPROCESS_RETHROW
-   } BOOST_INTERPROCESS_CATCH_END
+      throw;
+   }
    //Remove shared memory from the system
    bip::shared_memory_object::remove(bip::test::get_process_id_name());
    return 0;
 }
 
-#else
-int main()
-{
-   return 0;
-}
-#endif //#if BOOST_CXX_VERSION >=201103L
+#include <boost/interprocess/detail/config_end.hpp>

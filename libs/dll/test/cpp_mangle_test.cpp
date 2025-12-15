@@ -6,7 +6,9 @@
 
 // For more information, see http://www.boost.org
 
-#include <boost/config.hpp>
+#include <boost/predef.h>
+
+#if (__cplusplus >= 201402L) || (BOOST_COMP_MSVC >= BOOST_VERSION_NUMBER(14,0,0))
 
 #include "../example/b2_workarounds.hpp"
 
@@ -26,7 +28,7 @@ int main(int argc, char* argv[])
     using namespace boost::dll;
     using mangled_storage = detail::mangled_storage_impl;
 
-    boost::dll::fs::path pt = b2_workarounds::first_lib_from_argv(argc, argv);
+    boost::dll::fs::path pt = b2_workarounds::first_lib_from_argv(argc, argv);;
 
     std::cout << "Library: " << pt << std::endl;
     library_info lib{pt};
@@ -102,18 +104,16 @@ int main(int argc, char* argv[])
 
     BOOST_TEST(!dtor.empty());
 
-// TODO: ms.get_name on Clang has space after comma `boost::variant<double, int>`
-#if !(defined(BOOST_TRAVISCI_BUILD) && defined(_MSC_VER) && defined(BOOST_CLANG))
     auto var1 = ms.get_function<void(boost::variant<int, double> &)>("use_variant");
     auto var2 = ms.get_function<void(boost::variant<double, int> &)>("use_variant");
 
     BOOST_TEST(!var1.empty());
     BOOST_TEST(!var2.empty());
-#endif
 
-#ifndef BOOST_NO_RTTI
+// TODO: FIX!
+#ifndef BOOST_TRAVISCI_BUILD
 
-#if defined(_MSC_VER) // MSVC, Clang-cl, and ICC on Windows
+#if defined(BOOST_MSVC) || defined(BOOST_MSVC_VER)
     auto vtable = ms.get_vtable<override_class>();
     BOOST_TEST(!vtable.empty());
 #else
@@ -121,8 +121,11 @@ int main(int argc, char* argv[])
     BOOST_TEST(!ti.empty());
 #endif
 
-#endif // #ifndef BOOST_NO_RTTI
+#endif // #ifndef BOOST_TRAVISCI_BUILD
 
     return boost::report_errors();
 }
 
+#else
+int main() {return 0;}
+#endif

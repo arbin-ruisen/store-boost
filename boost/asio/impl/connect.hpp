@@ -2,7 +2,7 @@
 // impl/connect.hpp
 // ~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2019 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,15 +16,15 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <algorithm>
-#include <boost/asio/associator.hpp>
-#include <boost/asio/detail/base_from_cancellation_state.hpp>
+#include <boost/asio/associated_allocator.hpp>
+#include <boost/asio/associated_executor.hpp>
 #include <boost/asio/detail/bind_handler.hpp>
+#include <boost/asio/detail/handler_alloc_helpers.hpp>
 #include <boost/asio/detail/handler_cont_helpers.hpp>
-#include <boost/asio/detail/handler_tracking.hpp>
+#include <boost/asio/detail/handler_invoke_helpers.hpp>
 #include <boost/asio/detail/handler_type_requirements.hpp>
 #include <boost/asio/detail/non_const_lvalue.hpp>
 #include <boost/asio/detail/throw_error.hpp>
-#include <boost/asio/detail/type_traits.hpp>
 #include <boost/asio/error.hpp>
 #include <boost/asio/post.hpp>
 
@@ -35,6 +35,15 @@ namespace asio {
 
 namespace detail
 {
+  struct default_connect_condition
+  {
+    template <typename Endpoint>
+    bool operator()(const boost::system::error_code&, const Endpoint&)
+    {
+      return true;
+    }
+  };
+
   template <typename Protocol, typename Iterator>
   inline typename Protocol::endpoint deref_connect_result(
       Iterator iter, boost::system::error_code& ec)
@@ -42,15 +51,38 @@ namespace detail
     return ec ? typename Protocol::endpoint() : *iter;
   }
 
+  template <typename T, typename Iterator>
+  struct legacy_connect_condition_helper : T
+  {
+    typedef char (*fallback_func_type)(...);
+    operator fallback_func_type() const;
+  };
+
+  template <typename R, typename Arg1, typename Arg2, typename Iterator>
+  struct legacy_connect_condition_helper<R (*)(Arg1, Arg2), Iterator>
+  {
+    R operator()(Arg1, Arg2) const;
+    char operator()(...) const;
+  };
+
+  template <typename T, typename Iterator>
+  struct is_legacy_connect_condition
+  {
+    static char asio_connect_condition_check(char);
+    static char (&asio_connect_condition_check(Iterator))[2];
+
+    static const bool value =
+      sizeof(asio_connect_condition_check(
+        (*static_cast<legacy_connect_condition_helper<T, Iterator>*>(0))(
+          *static_cast<const boost::system::error_code*>(0),
+          *static_cast<const Iterator*>(0)))) != 1;
+  };
+
   template <typename ConnectCondition, typename Iterator>
   inline Iterator call_connect_condition(ConnectCondition& connect_condition,
       const boost::system::error_code& ec, Iterator next, Iterator end,
-      constraint_t<
-        is_same<
-          result_of_t<ConnectCondition(boost::system::error_code, Iterator)>,
-          Iterator
-        >::value
-      > = 0)
+      typename enable_if<is_legacy_connect_condition<
+        ConnectCondition, Iterator>::value>::type* = 0)
   {
     if (next != end)
       return connect_condition(ec, next);
@@ -60,27 +92,21 @@ namespace detail
   template <typename ConnectCondition, typename Iterator>
   inline Iterator call_connect_condition(ConnectCondition& connect_condition,
       const boost::system::error_code& ec, Iterator next, Iterator end,
-      constraint_t<
-        is_same<
-          result_of_t<ConnectCondition(boost::system::error_code,
-            decltype(*declval<Iterator>()))>,
-          bool
-        >::value
-      > = 0)
+      typename enable_if<!is_legacy_connect_condition<
+        ConnectCondition, Iterator>::value>::type* = 0)
   {
     for (;next != end; ++next)
       if (connect_condition(ec, *next))
         return next;
     return end;
   }
-} // namespace detail
+}
 
 template <typename Protocol, typename Executor, typename EndpointSequence>
 typename Protocol::endpoint connect(basic_socket<Protocol, Executor>& s,
     const EndpointSequence& endpoints,
-    constraint_t<
-      is_endpoint_sequence<EndpointSequence>::value
-    >)
+    typename enable_if<is_endpoint_sequence<
+        EndpointSequence>::value>::type*)
 {
   boost::system::error_code ec;
   typename Protocol::endpoint result = connect(s, endpoints, ec);
@@ -91,14 +117,33 @@ typename Protocol::endpoint connect(basic_socket<Protocol, Executor>& s,
 template <typename Protocol, typename Executor, typename EndpointSequence>
 typename Protocol::endpoint connect(basic_socket<Protocol, Executor>& s,
     const EndpointSequence& endpoints, boost::system::error_code& ec,
-    constraint_t<
-      is_endpoint_sequence<EndpointSequence>::value
-    >)
+    typename enable_if<is_endpoint_sequence<
+        EndpointSequence>::value>::type*)
 {
   return detail::deref_connect_result<Protocol>(
       connect(s, endpoints.begin(), endpoints.end(),
         detail::default_connect_condition(), ec), ec);
 }
+
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+template <typename Protocol, typename Executor, typename Iterator>
+Iterator connect(basic_socket<Protocol, Executor>& s, Iterator begin,
+    typename enable_if<!is_endpoint_sequence<Iterator>::value>::type*)
+{
+  boost::system::error_code ec;
+  Iterator result = connect(s, begin, ec);
+  boost::asio::detail::throw_error(ec, "connect");
+  return result;
+}
+
+template <typename Protocol, typename Executor, typename Iterator>
+inline Iterator connect(basic_socket<Protocol, Executor>& s,
+    Iterator begin, boost::system::error_code& ec,
+    typename enable_if<!is_endpoint_sequence<Iterator>::value>::type*)
+{
+  return connect(s, begin, Iterator(), detail::default_connect_condition(), ec);
+}
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
 template <typename Protocol, typename Executor, typename Iterator>
 Iterator connect(basic_socket<Protocol, Executor>& s,
@@ -121,13 +166,8 @@ template <typename Protocol, typename Executor,
     typename EndpointSequence, typename ConnectCondition>
 typename Protocol::endpoint connect(basic_socket<Protocol, Executor>& s,
     const EndpointSequence& endpoints, ConnectCondition connect_condition,
-    constraint_t<
-      is_endpoint_sequence<EndpointSequence>::value
-    >,
-    constraint_t<
-      is_connect_condition<ConnectCondition,
-        decltype(declval<const EndpointSequence&>().begin())>::value
-    >)
+    typename enable_if<is_endpoint_sequence<
+        EndpointSequence>::value>::type*)
 {
   boost::system::error_code ec;
   typename Protocol::endpoint result = connect(
@@ -141,26 +181,42 @@ template <typename Protocol, typename Executor,
 typename Protocol::endpoint connect(basic_socket<Protocol, Executor>& s,
     const EndpointSequence& endpoints, ConnectCondition connect_condition,
     boost::system::error_code& ec,
-    constraint_t<
-      is_endpoint_sequence<EndpointSequence>::value
-    >,
-    constraint_t<
-      is_connect_condition<ConnectCondition,
-        decltype(declval<const EndpointSequence&>().begin())>::value
-    >)
+    typename enable_if<is_endpoint_sequence<
+        EndpointSequence>::value>::type*)
 {
   return detail::deref_connect_result<Protocol>(
       connect(s, endpoints.begin(), endpoints.end(),
         connect_condition, ec), ec);
 }
 
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+template <typename Protocol, typename Executor,
+    typename Iterator, typename ConnectCondition>
+Iterator connect(basic_socket<Protocol, Executor>& s,
+    Iterator begin, ConnectCondition connect_condition,
+    typename enable_if<!is_endpoint_sequence<Iterator>::value>::type*)
+{
+  boost::system::error_code ec;
+  Iterator result = connect(s, begin, connect_condition, ec);
+  boost::asio::detail::throw_error(ec, "connect");
+  return result;
+}
+
+template <typename Protocol, typename Executor,
+    typename Iterator, typename ConnectCondition>
+inline Iterator connect(basic_socket<Protocol, Executor>& s,
+    Iterator begin, ConnectCondition connect_condition,
+    boost::system::error_code& ec,
+    typename enable_if<!is_endpoint_sequence<Iterator>::value>::type*)
+{
+  return connect(s, begin, Iterator(), connect_condition, ec);
+}
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
+
 template <typename Protocol, typename Executor,
     typename Iterator, typename ConnectCondition>
 Iterator connect(basic_socket<Protocol, Executor>& s, Iterator begin,
-    Iterator end, ConnectCondition connect_condition,
-    constraint_t<
-      is_connect_condition<ConnectCondition, Iterator>::value
-    >)
+    Iterator end, ConnectCondition connect_condition)
 {
   boost::system::error_code ec;
   Iterator result = connect(s, begin, end, connect_condition, ec);
@@ -172,10 +228,7 @@ template <typename Protocol, typename Executor,
     typename Iterator, typename ConnectCondition>
 Iterator connect(basic_socket<Protocol, Executor>& s, Iterator begin,
     Iterator end, ConnectCondition connect_condition,
-    boost::system::error_code& ec,
-    constraint_t<
-      is_connect_condition<ConnectCondition, Iterator>::value
-    >)
+    boost::system::error_code& ec)
 {
   ec = boost::system::error_code();
 
@@ -241,29 +294,25 @@ namespace detail
 
   template <typename Protocol, typename Executor, typename EndpointSequence,
       typename ConnectCondition, typename RangeConnectHandler>
-  class range_connect_op
-    : public base_from_cancellation_state<RangeConnectHandler>,
-      base_from_connect_condition<ConnectCondition>
+  class range_connect_op : base_from_connect_condition<ConnectCondition>
   {
   public:
     range_connect_op(basic_socket<Protocol, Executor>& sock,
         const EndpointSequence& endpoints,
         const ConnectCondition& connect_condition,
         RangeConnectHandler& handler)
-      : base_from_cancellation_state<RangeConnectHandler>(
-          handler, enable_partial_cancellation()),
-        base_from_connect_condition<ConnectCondition>(connect_condition),
+      : base_from_connect_condition<ConnectCondition>(connect_condition),
         socket_(sock),
         endpoints_(endpoints),
         index_(0),
         start_(0),
-        handler_(static_cast<RangeConnectHandler&&>(handler))
+        handler_(BOOST_ASIO_MOVE_CAST(RangeConnectHandler)(handler))
     {
     }
 
+#if defined(BOOST_ASIO_HAS_MOVE)
     range_connect_op(const range_connect_op& other)
-      : base_from_cancellation_state<RangeConnectHandler>(other),
-        base_from_connect_condition<ConnectCondition>(other),
+      : base_from_connect_condition<ConnectCondition>(other),
         socket_(other.socket_),
         endpoints_(other.endpoints_),
         index_(other.index_),
@@ -273,17 +322,15 @@ namespace detail
     }
 
     range_connect_op(range_connect_op&& other)
-      : base_from_cancellation_state<RangeConnectHandler>(
-          static_cast<base_from_cancellation_state<RangeConnectHandler>&&>(
-            other)),
-        base_from_connect_condition<ConnectCondition>(other),
+      : base_from_connect_condition<ConnectCondition>(other),
         socket_(other.socket_),
         endpoints_(other.endpoints_),
         index_(other.index_),
         start_(other.start_),
-        handler_(static_cast<RangeConnectHandler&&>(other.handler_))
+        handler_(BOOST_ASIO_MOVE_CAST(RangeConnectHandler)(other.handler_))
     {
     }
+#endif // defined(BOOST_ASIO_HAS_MOVE)
 
     void operator()(boost::system::error_code ec, int start = 0)
     {
@@ -311,19 +358,17 @@ namespace detail
           if (iter != end)
           {
             socket_.close(ec);
-            BOOST_ASIO_HANDLER_LOCATION((__FILE__, __LINE__, "async_connect"));
             socket_.async_connect(*iter,
-                static_cast<range_connect_op&&>(*this));
+                BOOST_ASIO_MOVE_CAST(range_connect_op)(*this));
             return;
           }
 
           if (start)
           {
             ec = boost::asio::error::not_found;
-            BOOST_ASIO_HANDLER_LOCATION((__FILE__, __LINE__, "async_connect"));
             boost::asio::post(socket_.get_executor(),
                 detail::bind_handler(
-                  static_cast<range_connect_op&&>(*this), ec));
+                  BOOST_ASIO_MOVE_CAST(range_connect_op)(*this), ec));
             return;
           }
 
@@ -341,18 +386,11 @@ namespace detail
           if (!ec)
             break;
 
-          if (this->cancelled() != cancellation_type::none)
-          {
-            ec = boost::asio::error::operation_aborted;
-            break;
-          }
-
           ++iter;
           ++index_;
         }
 
-        static_cast<RangeConnectHandler&&>(handler_)(
-            static_cast<const boost::system::error_code&>(ec),
+        handler_(static_cast<const boost::system::error_code&>(ec),
             static_cast<const typename Protocol::endpoint&>(
               ec || iter == end ? typename Protocol::endpoint() : *iter));
       }
@@ -367,6 +405,26 @@ namespace detail
 
   template <typename Protocol, typename Executor, typename EndpointSequence,
       typename ConnectCondition, typename RangeConnectHandler>
+  inline void* asio_handler_allocate(std::size_t size,
+      range_connect_op<Protocol, Executor, EndpointSequence,
+        ConnectCondition, RangeConnectHandler>* this_handler)
+  {
+    return boost_asio_handler_alloc_helpers::allocate(
+        size, this_handler->handler_);
+  }
+
+  template <typename Protocol, typename Executor, typename EndpointSequence,
+      typename ConnectCondition, typename RangeConnectHandler>
+  inline void asio_handler_deallocate(void* pointer, std::size_t size,
+      range_connect_op<Protocol, Executor, EndpointSequence,
+        ConnectCondition, RangeConnectHandler>* this_handler)
+  {
+    boost_asio_handler_alloc_helpers::deallocate(
+        pointer, size, this_handler->handler_);
+  }
+
+  template <typename Protocol, typename Executor, typename EndpointSequence,
+      typename ConnectCondition, typename RangeConnectHandler>
   inline bool asio_handler_is_continuation(
       range_connect_op<Protocol, Executor, EndpointSequence,
         ConnectCondition, RangeConnectHandler>* this_handler)
@@ -375,26 +433,34 @@ namespace detail
         this_handler->handler_);
   }
 
-  template <typename Protocol, typename Executor>
-  class initiate_async_range_connect
+  template <typename Function, typename Executor, typename Protocol,
+      typename EndpointSequence, typename ConnectCondition,
+      typename RangeConnectHandler>
+  inline void asio_handler_invoke(Function& function,
+      range_connect_op<Protocol, Executor, EndpointSequence,
+        ConnectCondition, RangeConnectHandler>* this_handler)
   {
-  public:
-    typedef Executor executor_type;
+    boost_asio_handler_invoke_helpers::invoke(
+        function, this_handler->handler_);
+  }
 
-    explicit initiate_async_range_connect(basic_socket<Protocol, Executor>& s)
-      : socket_(s)
-    {
-    }
+  template <typename Function, typename Executor, typename Protocol,
+      typename EndpointSequence, typename ConnectCondition,
+      typename RangeConnectHandler>
+  inline void asio_handler_invoke(const Function& function,
+      range_connect_op<Protocol, Executor, EndpointSequence,
+        ConnectCondition, RangeConnectHandler>* this_handler)
+  {
+    boost_asio_handler_invoke_helpers::invoke(
+        function, this_handler->handler_);
+  }
 
-    executor_type get_executor() const noexcept
-    {
-      return socket_.get_executor();
-    }
-
-    template <typename RangeConnectHandler,
-        typename EndpointSequence, typename ConnectCondition>
-    void operator()(RangeConnectHandler&& handler,
-        const EndpointSequence& endpoints,
+  struct initiate_async_range_connect
+  {
+    template <typename RangeConnectHandler, typename Protocol,
+        typename Executor, typename EndpointSequence, typename ConnectCondition>
+    void operator()(BOOST_ASIO_MOVE_ARG(RangeConnectHandler) handler,
+        basic_socket<Protocol, Executor>* s, const EndpointSequence& endpoints,
         const ConnectCondition& connect_condition) const
     {
       // If you get an error on the following line it means that your
@@ -405,39 +471,32 @@ namespace detail
 
       non_const_lvalue<RangeConnectHandler> handler2(handler);
       range_connect_op<Protocol, Executor, EndpointSequence, ConnectCondition,
-        decay_t<RangeConnectHandler>>(socket_, endpoints,
+        typename decay<RangeConnectHandler>::type>(*s, endpoints,
           connect_condition, handler2.value)(boost::system::error_code(), 1);
     }
-
-  private:
-    basic_socket<Protocol, Executor>& socket_;
   };
 
   template <typename Protocol, typename Executor, typename Iterator,
       typename ConnectCondition, typename IteratorConnectHandler>
-  class iterator_connect_op
-    : public base_from_cancellation_state<IteratorConnectHandler>,
-      base_from_connect_condition<ConnectCondition>
+  class iterator_connect_op : base_from_connect_condition<ConnectCondition>
   {
   public:
     iterator_connect_op(basic_socket<Protocol, Executor>& sock,
         const Iterator& begin, const Iterator& end,
         const ConnectCondition& connect_condition,
         IteratorConnectHandler& handler)
-      : base_from_cancellation_state<IteratorConnectHandler>(
-          handler, enable_partial_cancellation()),
-        base_from_connect_condition<ConnectCondition>(connect_condition),
+      : base_from_connect_condition<ConnectCondition>(connect_condition),
         socket_(sock),
         iter_(begin),
         end_(end),
         start_(0),
-        handler_(static_cast<IteratorConnectHandler&&>(handler))
+        handler_(BOOST_ASIO_MOVE_CAST(IteratorConnectHandler)(handler))
     {
     }
 
+#if defined(BOOST_ASIO_HAS_MOVE)
     iterator_connect_op(const iterator_connect_op& other)
-      : base_from_cancellation_state<IteratorConnectHandler>(other),
-        base_from_connect_condition<ConnectCondition>(other),
+      : base_from_connect_condition<ConnectCondition>(other),
         socket_(other.socket_),
         iter_(other.iter_),
         end_(other.end_),
@@ -447,17 +506,15 @@ namespace detail
     }
 
     iterator_connect_op(iterator_connect_op&& other)
-      : base_from_cancellation_state<IteratorConnectHandler>(
-          static_cast<base_from_cancellation_state<IteratorConnectHandler>&&>(
-            other)),
-        base_from_connect_condition<ConnectCondition>(other),
+      : base_from_connect_condition<ConnectCondition>(other),
         socket_(other.socket_),
         iter_(other.iter_),
         end_(other.end_),
         start_(other.start_),
-        handler_(static_cast<IteratorConnectHandler&&>(other.handler_))
+        handler_(BOOST_ASIO_MOVE_CAST(IteratorConnectHandler)(other.handler_))
     {
     }
+#endif // defined(BOOST_ASIO_HAS_MOVE)
 
     void operator()(boost::system::error_code ec, int start = 0)
     {
@@ -471,19 +528,17 @@ namespace detail
           if (iter_ != end_)
           {
             socket_.close(ec);
-            BOOST_ASIO_HANDLER_LOCATION((__FILE__, __LINE__, "async_connect"));
             socket_.async_connect(*iter_,
-                static_cast<iterator_connect_op&&>(*this));
+                BOOST_ASIO_MOVE_CAST(iterator_connect_op)(*this));
             return;
           }
 
           if (start)
           {
             ec = boost::asio::error::not_found;
-            BOOST_ASIO_HANDLER_LOCATION((__FILE__, __LINE__, "async_connect"));
             boost::asio::post(socket_.get_executor(),
                 detail::bind_handler(
-                  static_cast<iterator_connect_op&&>(*this), ec));
+                  BOOST_ASIO_MOVE_CAST(iterator_connect_op)(*this), ec));
             return;
           }
 
@@ -501,17 +556,10 @@ namespace detail
           if (!ec)
             break;
 
-          if (this->cancelled() != cancellation_type::none)
-          {
-            ec = boost::asio::error::operation_aborted;
-            break;
-          }
-
           ++iter_;
         }
 
-        static_cast<IteratorConnectHandler&&>(handler_)(
-            static_cast<const boost::system::error_code&>(ec),
+        handler_(static_cast<const boost::system::error_code&>(ec),
             static_cast<const Iterator&>(iter_));
       }
     }
@@ -526,6 +574,26 @@ namespace detail
 
   template <typename Protocol, typename Executor, typename Iterator,
       typename ConnectCondition, typename IteratorConnectHandler>
+  inline void* asio_handler_allocate(std::size_t size,
+      iterator_connect_op<Protocol, Executor, Iterator,
+        ConnectCondition, IteratorConnectHandler>* this_handler)
+  {
+    return boost_asio_handler_alloc_helpers::allocate(
+        size, this_handler->handler_);
+  }
+
+  template <typename Protocol, typename Executor, typename Iterator,
+      typename ConnectCondition, typename IteratorConnectHandler>
+  inline void asio_handler_deallocate(void* pointer, std::size_t size,
+      iterator_connect_op<Protocol, Executor, Iterator,
+        ConnectCondition, IteratorConnectHandler>* this_handler)
+  {
+    boost_asio_handler_alloc_helpers::deallocate(
+        pointer, size, this_handler->handler_);
+  }
+
+  template <typename Protocol, typename Executor, typename Iterator,
+      typename ConnectCondition, typename IteratorConnectHandler>
   inline bool asio_handler_is_continuation(
       iterator_connect_op<Protocol, Executor, Iterator,
         ConnectCondition, IteratorConnectHandler>* this_handler)
@@ -534,28 +602,35 @@ namespace detail
         this_handler->handler_);
   }
 
-  template <typename Protocol, typename Executor>
-  class initiate_async_iterator_connect
+  template <typename Function, typename Executor, typename Protocol,
+      typename Iterator, typename ConnectCondition,
+      typename IteratorConnectHandler>
+  inline void asio_handler_invoke(Function& function,
+      iterator_connect_op<Protocol, Executor, Iterator,
+        ConnectCondition, IteratorConnectHandler>* this_handler)
   {
-  public:
-    typedef Executor executor_type;
+    boost_asio_handler_invoke_helpers::invoke(
+        function, this_handler->handler_);
+  }
 
-    explicit initiate_async_iterator_connect(
-        basic_socket<Protocol, Executor>& s)
-      : socket_(s)
-    {
-    }
+  template <typename Function, typename Executor, typename Protocol,
+      typename Iterator, typename ConnectCondition,
+      typename IteratorConnectHandler>
+  inline void asio_handler_invoke(const Function& function,
+      iterator_connect_op<Protocol, Executor, Iterator,
+        ConnectCondition, IteratorConnectHandler>* this_handler)
+  {
+    boost_asio_handler_invoke_helpers::invoke(
+        function, this_handler->handler_);
+  }
 
-    executor_type get_executor() const noexcept
-    {
-      return socket_.get_executor();
-    }
-
-    template <typename IteratorConnectHandler,
-        typename Iterator, typename ConnectCondition>
-    void operator()(IteratorConnectHandler&& handler,
-        Iterator begin, Iterator end,
-        const ConnectCondition& connect_condition) const
+  struct initiate_async_iterator_connect
+  {
+    template <typename IteratorConnectHandler, typename Protocol,
+        typename Executor, typename Iterator, typename ConnectCondition>
+    void operator()(BOOST_ASIO_MOVE_ARG(IteratorConnectHandler) handler,
+        basic_socket<Protocol, Executor>* s, Iterator begin,
+        Iterator end, const ConnectCondition& connect_condition) const
     {
       // If you get an error on the following line it means that your
       // handler does not meet the documented type requirements for an
@@ -565,79 +640,187 @@ namespace detail
 
       non_const_lvalue<IteratorConnectHandler> handler2(handler);
       iterator_connect_op<Protocol, Executor, Iterator, ConnectCondition,
-        decay_t<IteratorConnectHandler>>(socket_, begin, end,
+        typename decay<IteratorConnectHandler>::type>(*s, begin, end,
           connect_condition, handler2.value)(boost::system::error_code(), 1);
     }
-
-  private:
-    basic_socket<Protocol, Executor>& socket_;
   };
 } // namespace detail
 
 #if !defined(GENERATING_DOCUMENTATION)
 
-template <template <typename, typename> class Associator,
-    typename Protocol, typename Executor, typename EndpointSequence,
-    typename ConnectCondition, typename RangeConnectHandler,
-    typename DefaultCandidate>
-struct associator<Associator,
-    detail::range_connect_op<Protocol, Executor,
-      EndpointSequence, ConnectCondition, RangeConnectHandler>,
-    DefaultCandidate>
-  : Associator<RangeConnectHandler, DefaultCandidate>
+template <typename Protocol, typename Executor, typename EndpointSequence,
+    typename ConnectCondition, typename RangeConnectHandler, typename Allocator>
+struct associated_allocator<
+    detail::range_connect_op<Protocol, Executor, EndpointSequence,
+      ConnectCondition, RangeConnectHandler>, Allocator>
 {
-  static typename Associator<RangeConnectHandler, DefaultCandidate>::type get(
-      const detail::range_connect_op<Protocol, Executor, EndpointSequence,
-        ConnectCondition, RangeConnectHandler>& h) noexcept
-  {
-    return Associator<RangeConnectHandler, DefaultCandidate>::get(h.handler_);
-  }
+  typedef typename associated_allocator<
+      RangeConnectHandler, Allocator>::type type;
 
-  static auto get(
-      const detail::range_connect_op<Protocol, Executor,
-        EndpointSequence, ConnectCondition, RangeConnectHandler>& h,
-      const DefaultCandidate& c) noexcept
-    -> decltype(
-      Associator<RangeConnectHandler, DefaultCandidate>::get(
-        h.handler_, c))
+  static type get(
+      const detail::range_connect_op<Protocol, Executor, EndpointSequence,
+        ConnectCondition, RangeConnectHandler>& h,
+      const Allocator& a = Allocator()) BOOST_ASIO_NOEXCEPT
   {
-    return Associator<RangeConnectHandler, DefaultCandidate>::get(
-        h.handler_, c);
+    return associated_allocator<RangeConnectHandler,
+        Allocator>::get(h.handler_, a);
   }
 };
 
-template <template <typename, typename> class Associator,
-    typename Protocol, typename Executor, typename Iterator,
+template <typename Protocol, typename Executor, typename EndpointSequence,
+    typename ConnectCondition, typename RangeConnectHandler, typename Executor1>
+struct associated_executor<
+    detail::range_connect_op<Protocol, Executor, EndpointSequence,
+      ConnectCondition, RangeConnectHandler>, Executor1>
+{
+  typedef typename associated_executor<
+      RangeConnectHandler, Executor1>::type type;
+
+  static type get(
+      const detail::range_connect_op<Protocol, Executor, EndpointSequence,
+      ConnectCondition, RangeConnectHandler>& h,
+      const Executor1& ex = Executor1()) BOOST_ASIO_NOEXCEPT
+  {
+    return associated_executor<RangeConnectHandler,
+        Executor1>::get(h.handler_, ex);
+  }
+};
+
+template <typename Protocol, typename Executor, typename Iterator,
     typename ConnectCondition, typename IteratorConnectHandler,
-    typename DefaultCandidate>
-struct associator<Associator,
+    typename Allocator>
+struct associated_allocator<
     detail::iterator_connect_op<Protocol, Executor,
       Iterator, ConnectCondition, IteratorConnectHandler>,
-    DefaultCandidate>
-  : Associator<IteratorConnectHandler, DefaultCandidate>
+    Allocator>
 {
-  static typename Associator<IteratorConnectHandler, DefaultCandidate>::type
-  get(const detail::iterator_connect_op<Protocol, Executor, Iterator,
-        ConnectCondition, IteratorConnectHandler>& h) noexcept
-  {
-    return Associator<IteratorConnectHandler, DefaultCandidate>::get(
-        h.handler_);
-  }
+  typedef typename associated_allocator<
+      IteratorConnectHandler, Allocator>::type type;
 
-  static auto get(
+  static type get(
       const detail::iterator_connect_op<Protocol, Executor,
         Iterator, ConnectCondition, IteratorConnectHandler>& h,
-      const DefaultCandidate& c) noexcept
-    -> decltype(
-      Associator<IteratorConnectHandler, DefaultCandidate>::get(
-        h.handler_, c))
+      const Allocator& a = Allocator()) BOOST_ASIO_NOEXCEPT
   {
-    return Associator<IteratorConnectHandler, DefaultCandidate>::get(
-        h.handler_, c);
+    return associated_allocator<IteratorConnectHandler,
+        Allocator>::get(h.handler_, a);
+  }
+};
+
+template <typename Protocol, typename Executor, typename Iterator,
+    typename ConnectCondition, typename IteratorConnectHandler,
+    typename Executor1>
+struct associated_executor<
+    detail::iterator_connect_op<Protocol, Executor,
+      Iterator, ConnectCondition, IteratorConnectHandler>,
+    Executor1>
+{
+  typedef typename associated_executor<
+      IteratorConnectHandler, Executor1>::type type;
+
+  static type get(
+      const detail::iterator_connect_op<Protocol, Executor,
+        Iterator, ConnectCondition, IteratorConnectHandler>& h,
+      const Executor1& ex = Executor1()) BOOST_ASIO_NOEXCEPT
+  {
+    return associated_executor<IteratorConnectHandler,
+        Executor1>::get(h.handler_, ex);
   }
 };
 
 #endif // !defined(GENERATING_DOCUMENTATION)
+
+template <typename Protocol, typename Executor,
+    typename EndpointSequence, typename RangeConnectHandler>
+inline BOOST_ASIO_INITFN_RESULT_TYPE(RangeConnectHandler,
+    void (boost::system::error_code, typename Protocol::endpoint))
+async_connect(basic_socket<Protocol, Executor>& s,
+    const EndpointSequence& endpoints,
+    BOOST_ASIO_MOVE_ARG(RangeConnectHandler) handler,
+    typename enable_if<is_endpoint_sequence<
+        EndpointSequence>::value>::type*)
+{
+  return async_initiate<RangeConnectHandler,
+    void (boost::system::error_code, typename Protocol::endpoint)>(
+      detail::initiate_async_range_connect(), handler,
+      &s, endpoints, detail::default_connect_condition());
+}
+
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+template <typename Protocol, typename Executor,
+    typename Iterator, typename IteratorConnectHandler>
+inline BOOST_ASIO_INITFN_RESULT_TYPE(IteratorConnectHandler,
+    void (boost::system::error_code, Iterator))
+async_connect(basic_socket<Protocol, Executor>& s, Iterator begin,
+    BOOST_ASIO_MOVE_ARG(IteratorConnectHandler) handler,
+    typename enable_if<!is_endpoint_sequence<Iterator>::value>::type*)
+{
+  return async_initiate<IteratorConnectHandler,
+    void (boost::system::error_code, Iterator)>(
+      detail::initiate_async_iterator_connect(), handler,
+      &s, begin, Iterator(), detail::default_connect_condition());
+}
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
+
+template <typename Protocol, typename Executor,
+    typename Iterator, typename IteratorConnectHandler>
+inline BOOST_ASIO_INITFN_RESULT_TYPE(IteratorConnectHandler,
+    void (boost::system::error_code, Iterator))
+async_connect(basic_socket<Protocol, Executor>& s, Iterator begin, Iterator end,
+    BOOST_ASIO_MOVE_ARG(IteratorConnectHandler) handler)
+{
+  return async_initiate<IteratorConnectHandler,
+    void (boost::system::error_code, Iterator)>(
+      detail::initiate_async_iterator_connect(), handler,
+      &s, begin, end, detail::default_connect_condition());
+}
+
+template <typename Protocol, typename Executor, typename EndpointSequence,
+    typename ConnectCondition, typename RangeConnectHandler>
+inline BOOST_ASIO_INITFN_RESULT_TYPE(RangeConnectHandler,
+    void (boost::system::error_code, typename Protocol::endpoint))
+async_connect(basic_socket<Protocol, Executor>& s,
+    const EndpointSequence& endpoints, ConnectCondition connect_condition,
+    BOOST_ASIO_MOVE_ARG(RangeConnectHandler) handler,
+    typename enable_if<is_endpoint_sequence<
+        EndpointSequence>::value>::type*)
+{
+  return async_initiate<RangeConnectHandler,
+    void (boost::system::error_code, typename Protocol::endpoint)>(
+      detail::initiate_async_range_connect(),
+      handler, &s, endpoints, connect_condition);
+}
+
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+template <typename Protocol, typename Executor, typename Iterator,
+    typename ConnectCondition, typename IteratorConnectHandler>
+inline BOOST_ASIO_INITFN_RESULT_TYPE(IteratorConnectHandler,
+    void (boost::system::error_code, Iterator))
+async_connect(basic_socket<Protocol, Executor>& s, Iterator begin,
+    ConnectCondition connect_condition,
+    BOOST_ASIO_MOVE_ARG(IteratorConnectHandler) handler,
+    typename enable_if<!is_endpoint_sequence<Iterator>::value>::type*)
+{
+  return async_initiate<IteratorConnectHandler,
+    void (boost::system::error_code, Iterator)>(
+      detail::initiate_async_iterator_connect(),
+      handler, &s, begin, Iterator(), connect_condition);
+}
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
+
+template <typename Protocol, typename Executor, typename Iterator,
+    typename ConnectCondition, typename IteratorConnectHandler>
+inline BOOST_ASIO_INITFN_RESULT_TYPE(IteratorConnectHandler,
+    void (boost::system::error_code, Iterator))
+async_connect(basic_socket<Protocol, Executor>& s, Iterator begin,
+    Iterator end, ConnectCondition connect_condition,
+    BOOST_ASIO_MOVE_ARG(IteratorConnectHandler) handler)
+{
+  return async_initiate<IteratorConnectHandler,
+    void (boost::system::error_code, Iterator)>(
+      detail::initiate_async_iterator_connect(),
+      handler, &s, begin, end, connect_condition);
+}
 
 } // namespace asio
 } // namespace boost

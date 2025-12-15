@@ -10,8 +10,8 @@
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
-#if !defined(BOOST_IDL_RE2C_LEXER_HPP_B81A2629_D5B1_4944_A97D_60254182B9A8_INCLUDED)
-#define BOOST_IDL_RE2C_LEXER_HPP_B81A2629_D5B1_4944_A97D_60254182B9A8_INCLUDED
+#if !defined(IDL_RE2C_LEXER_HPP_B81A2629_D5B1_4944_A97D_60254182B9A8_INCLUDED)
+#define IDL_RE2C_LEXER_HPP_B81A2629_D5B1_4944_A97D_60254182B9A8_INCLUDED
 
 #include <string>
 #include <cstdio>
@@ -55,14 +55,14 @@ template <
 >
 class lexer 
 {
-    typedef boost::wave::cpplexer::re2clex::Scanner<IteratorT> scanner_t;
+    typedef boost::wave::cpplexer::re2clex::Scanner scanner_t;
 
 public:
 
-    typedef char                                                 char_t;
-    typedef boost::wave::cpplexer::re2clex::Scanner<IteratorT>   base_t;
-    typedef boost::wave::cpplexer::lex_token<PositionT>          token_type;
-    typedef typename token_type::string_type                     string_type;
+    typedef char                                        char_t;
+    typedef boost::wave::cpplexer::re2clex::Scanner     base_t;
+    typedef boost::wave::cpplexer::lex_token<PositionT> token_type;
+    typedef typename token_type::string_type            string_type;
     
     lexer(IteratorT const &first, IteratorT const &last, 
         PositionT const &pos, boost::wave::language_support language);
@@ -96,11 +96,15 @@ inline
 lexer<IteratorT, PositionT>::lexer(IteratorT const &first, 
         IteratorT const &last, PositionT const &pos, 
         boost::wave::language_support language) 
-    :   scanner(first, last), filename(pos.get_file()), at_eof(false), language(language)
+:   filename(pos.get_file()), at_eof(false), language(language)
 {
     using namespace std;        // some systems have memset in std
     using namespace boost::wave::cpplexer::re2clex;
 
+    memset(&scanner, '\0', sizeof(scanner_t));
+    scanner.eol_offsets = aq_create();
+    scanner.first = scanner.act = (uchar *)&(*first);
+    scanner.last = scanner.first + std::distance(first, last);
     scanner.line = pos.get_line();
     scanner.error_proc = report_error;
     scanner.file_name = filename.c_str();
@@ -116,6 +120,7 @@ template <typename IteratorT, typename PositionT>
 inline
 lexer<IteratorT, PositionT>::~lexer() 
 {
+    boost::wave::cpplexer::re2clex::aq_terminate(scanner.eol_offsets);
     free(scanner.bot);
 }
 
@@ -165,13 +170,12 @@ lexer<IteratorT, PositionT>::report_error(scanner_t const *s, int errcode,
     BOOST_ASSERT(0 != s);
     BOOST_ASSERT(0 != msg);
 
-    using namespace std;    // some systems have vsnprintf in namespace std
+    using namespace std;    // some system have vsprintf in namespace std
     
-    constexpr std::size_t bufsize = 200;           // should be large enough
-    char buffer[bufsize];
+    char buffer[200];           // should be large enough
     va_list params;
     va_start(params, msg);
-    vsnprintf(buffer, bufsize, msg, params);
+    vsprintf(buffer, msg, params);
     va_end(params);
     
     BOOST_WAVE_LEXER_THROW_VAR(boost::wave::cpplexer::lexing_exception, 
@@ -200,20 +204,20 @@ public:
     
     lex_functor(IteratorT const &first, IteratorT const &last, 
             PositionT const &pos, boost::wave::language_support language)
-    :   re2c_lexer(first, last, pos, language)
+    :   lexer(first, last, pos, language)
     {}
     virtual ~lex_functor() {}
 
 // get the next token from the input stream
-    token_type& get(token_type& t) { return re2c_lexer.get(t); }
+    token_type& get(token_type& t) { return lexer.get(t); }
     void set_position(PositionT const &pos) 
-    { re2c_lexer.set_position(pos); }
+    { lexer.set_position(pos); }
 #if BOOST_WAVE_SUPPORT_PRAGMA_ONCE != 0
     bool has_include_guards(std::string&) const { return false; }
 #endif    
 
 private:
-    lexer<IteratorT, PositionT> re2c_lexer;
+    lexer<IteratorT, PositionT> lexer;
 };
 
 }   // namespace re2clex
@@ -269,4 +273,4 @@ new_lexer_gen<IteratorT, PositionT>::new_lexer(IteratorT const &first,
 }   // namespace wave
 }   // namespace boost
      
-#endif // !defined(BOOST_IDL_RE2C_LEXER_HPP_B81A2629_D5B1_4944_A97D_60254182B9A8_INCLUDED)
+#endif // !defined(IDL_RE2C_LEXER_HPP_B81A2629_D5B1_4944_A97D_60254182B9A8_INCLUDED)

@@ -20,7 +20,7 @@ inline double expint(unsigned n, double a)
 { return expn(n, a); }
 inline long double expint(unsigned n, long double a)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
    return expn(n, (double)a); 
 #else
    return expnl(n, a); 

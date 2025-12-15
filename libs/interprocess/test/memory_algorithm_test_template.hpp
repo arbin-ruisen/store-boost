@@ -13,13 +13,12 @@
 
 #include <boost/interprocess/detail/config_begin.hpp>
 
-#include <boost/container/vector.hpp>
+#include <boost/interprocess/containers/vector.hpp>
 
 #include <vector>
 #include <iostream>
 #include <new> //std::nothrow
 #include <cstring>   //std::memset
-#include <typeinfo>
 
 namespace boost { namespace interprocess { namespace test {
 
@@ -36,7 +35,7 @@ bool test_allocation(Allocator &a)
       std::vector<void*> buffers;
       typename Allocator::size_type free_memory = a.get_free_memory();
 
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
@@ -48,7 +47,7 @@ bool test_allocation(Allocator &a)
       switch(t){
          case DirectDeallocation:
          {
-            for(std::size_t j = 0, max = buffers.size()
+            for(int j = 0, max = (int)buffers.size()
                ;j < max
                ;++j){
                a.deallocate(buffers[j]);
@@ -57,7 +56,7 @@ bool test_allocation(Allocator &a)
          break;
          case InverseDeallocation:
          {
-            for(std::size_t j = buffers.size()
+            for(int j = (int)buffers.size()
                ;j--
                ;){
                a.deallocate(buffers[j]);
@@ -66,12 +65,12 @@ bool test_allocation(Allocator &a)
          break;
          case MixedDeallocation:
          {
-            for(std::size_t j = 0, max = buffers.size()
+            for(int j = 0, max = (int)buffers.size()
                ;j < max
                ;++j){
-               std::size_t pos = (j%4)*(buffers.size())/4;
+               int pos = (j%4)*((int)buffers.size())/4;
                a.deallocate(buffers[pos]);
-               buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+               buffers.erase(buffers.begin()+pos);
             }
          }
          break;
@@ -92,50 +91,43 @@ template<class Allocator>
 bool test_allocation_shrink(Allocator &a)
 {
    std::vector<void*> buffers;
-   std::vector<std::size_t> sizes;
 
    //Allocate buffers with extra memory
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       void *ptr = a.allocate(i*2, std::nothrow);
       if(!ptr)
          break;
-      std::size_t size = a.size(ptr);
+     std::size_t size = a.size(ptr);
       std::memset(ptr, 0, size);
       buffers.push_back(ptr);
-      sizes.push_back(size);
    }
 
    //Now shrink to half
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ;i < max
       ; ++i){
       typename Allocator::size_type received_size;
       char *reuse = static_cast<char*>(buffers[i]);
       if(a.template allocation_command<char>
-         ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, sizes[i]
+         ( boost::interprocess::shrink_in_place | boost::interprocess::nothrow_allocation, i*2
          , received_size = i, reuse)){
-         if(received_size > sizes[i]){
+         if(received_size > std::size_t(i*2)){
             return false;
          }
          if(received_size < std::size_t(i)){
             return false;
          }
-         const std::size_t sz = a.size(buffers[i]);
-         if (received_size != sz) {
-            return false;
-         }
-
-         std::memset(buffers[i], 0, sz);
+       std::memset(buffers[i], 0, a.size(buffers[i]));
       }
    }
 
    //Deallocate it in non sequential order
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      std::size_t pos = (j%4)*(buffers.size())/4;
+      int pos = (j%4)*((int)buffers.size())/4;
       a.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      buffers.erase(buffers.begin()+pos);
    }
 
    return a.all_memory_deallocated() && a.check_sanity();
@@ -150,7 +142,7 @@ bool test_allocation_expand(Allocator &a)
    std::vector<void*> buffers;
 
    //Allocate buffers with extra memory
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
@@ -160,7 +152,7 @@ bool test_allocation_expand(Allocator &a)
    }
 
    //Now try to expand to the double of the size
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
       typename Allocator::size_type received_size;
@@ -183,12 +175,12 @@ bool test_allocation_expand(Allocator &a)
    }
 
    //Deallocate it in non sequential order
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      std::size_t pos = (j%4)*(buffers.size())/4;
+      int pos = (j%4)*((int)buffers.size())/4;
       a.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      buffers.erase(buffers.begin()+pos);
    }
 
    return a.all_memory_deallocated() && a.check_sanity();
@@ -205,7 +197,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    std::vector<bool>        size_reduced;
 
    //Allocate buffers wand store received sizes
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       typename Allocator::size_type received_size;
       char *reuse = 0;
       void *ptr = a.template allocation_command<char>
@@ -221,7 +213,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    }
 
    //Now shrink to half
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ; i < max
       ; ++i){
       typename Allocator::size_type received_size;
@@ -240,7 +232,7 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    }
 
    //Now try to expand to the original size
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
       typename Allocator::size_type received_size;
@@ -259,12 +251,12 @@ bool test_allocation_shrink_and_expand(Allocator &a)
    }
 
    //Deallocate it in non sequential order
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      std::size_t pos = (j%4)*(buffers.size())/4;
+      int pos = (j%4)*((int)buffers.size())/4;
       a.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      buffers.erase(buffers.begin()+pos);
    }
 
    return a.all_memory_deallocated() && a.check_sanity();
@@ -280,7 +272,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
    std::vector<void*> buffers;
 
    //Allocate buffers with extra memory
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
@@ -291,7 +283,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
 
    //Now deallocate the half of the blocks
    //so expand maybe can merge new free blocks
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
       if(i%2){
@@ -301,7 +293,7 @@ bool test_allocation_deallocation_expand(Allocator &a)
    }
 
    //Now try to expand to the double of the size
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
       //
@@ -331,12 +323,12 @@ bool test_allocation_deallocation_expand(Allocator &a)
                 , buffers.end());
 
    //Deallocate it in non sequential order
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      std::size_t pos = (j%4)*(buffers.size())/4;
+      int pos = (j%4)*((int)buffers.size())/4;
       a.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      buffers.erase(buffers.begin()+pos);
    }
 
    return a.all_memory_deallocated() && a.check_sanity();
@@ -352,11 +344,11 @@ template<class Allocator>
 bool test_allocation_with_reuse(Allocator &a)
 {
    //We will repeat this test for different sized elements
-   for(std::size_t sizeof_object = 1; sizeof_object < 20u; ++sizeof_object){
+   for(int sizeof_object = 1; sizeof_object < 20; ++sizeof_object){
       std::vector<void*> buffers;
 
       //Allocate buffers with extra memory
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          void *ptr = a.allocate(i*sizeof_object, std::nothrow);
          if(!ptr)
             break;
@@ -367,7 +359,7 @@ bool test_allocation_with_reuse(Allocator &a)
 
       //Now deallocate all except the latest
       //Now try to expand to the double of the sizeof_object
-      for(std::size_t i = 0, max = buffers.size() - 1
+      for(int i = 0, max = (int)buffers.size() - 1
          ;i < max
          ;++i){
          a.deallocate(buffers[i]);
@@ -379,7 +371,7 @@ bool test_allocation_with_reuse(Allocator &a)
 
       //Now allocate with reuse
       typename Allocator::size_type received_size = 0;
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          std::size_t min_size = (received_size + 1);
          std::size_t prf_size = (received_size + (i+1)*2);
          void *reuse = ptr;
@@ -413,8 +405,8 @@ bool test_aligned_allocation(Allocator &a)
    //Allocate aligned buffers in a loop
    //and then deallocate it
    bool continue_loop = true;
-   for(std::size_t i = 1; continue_loop; i <<= 1){
-      for(std::size_t j = 1; true; j <<= 1){
+   for(unsigned int i = 1; continue_loop; i <<= 1){
+      for(unsigned int j = 1; true; j <<= 1){
          void *ptr = a.allocate_aligned(i-1, j, std::nothrow);
          if(!ptr){
             if(j == 1)
@@ -424,7 +416,6 @@ bool test_aligned_allocation(Allocator &a)
 
          if(((std::size_t)ptr & (j - 1)) != 0)
             return false;
-         std::memset(ptr, 0xFF, i - 1);
          a.deallocate(ptr);
          if(!a.all_memory_deallocated() || !a.check_sanity()){
             return false;
@@ -445,7 +436,7 @@ bool test_continuous_aligned_allocation(Allocator &a)
    //and then deallocate it
    bool continue_loop = true;
    for(unsigned i = 1; continue_loop && i; i <<= 1){
-      for(std::size_t j = 1; j; j <<= 1){
+      for(unsigned int j = 1; j; j <<= 1){
          for(bool any_allocated = false; 1;){
             void *ptr = a.allocate_aligned(i-1, j, std::nothrow);
             buffers.push_back(ptr);
@@ -463,7 +454,7 @@ bool test_continuous_aligned_allocation(Allocator &a)
                return false;
          }
          //Deallocate all
-         for(std::size_t k = buffers.size(); k--;){
+         for(unsigned int k = (int)buffers.size(); k--;){
             a.deallocate(buffers[k]);
          }
          buffers.clear();
@@ -485,7 +476,7 @@ bool test_clear_free_memory(Allocator &a)
    std::vector<void*> buffers;
 
    //Allocate memory
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
@@ -495,12 +486,12 @@ bool test_clear_free_memory(Allocator &a)
    }
 
    //Mark it
-   for(std::size_t i = 0, max = buffers.size(); i < max; ++i){
+   for(int i = 0, max = buffers.size(); i < max; ++i){
       std::memset(buffers[i], 1, i);
    }
 
    //Deallocate all
-   for(std::size_t j = buffers.size()
+   for(int j = (int)buffers.size()
       ;j--
       ;){
       a.deallocate(buffers[j]);
@@ -519,7 +510,7 @@ bool test_clear_free_memory(Allocator &a)
    //Now test all allocated memory is zero
    //Allocate memory
    const char *first_addr = 0;
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
@@ -529,7 +520,7 @@ bool test_clear_free_memory(Allocator &a)
       std::size_t memsize = a.size(ptr);
       buffers.push_back(ptr);
 
-      for(std::size_t j = 0; j < memsize; ++j){
+      for(int j = 0; j < (int)memsize; ++j){
          if(static_cast<char*>((char*)ptr)[j]){
             std::cout << "Zero memory test failed. in buffer " << i
                       << " byte " << j << " first address " << (void*) first_addr << " offset " << ((char*)ptr+j) - (char*)first_addr << " memsize: " << memsize << std::endl;
@@ -539,7 +530,7 @@ bool test_clear_free_memory(Allocator &a)
    }
 
    //Deallocate all
-   for(std::size_t j = buffers.size()
+   for(int j = (int)buffers.size()
       ;j--
       ;){
       a.deallocate(buffers[j]);
@@ -581,7 +572,7 @@ bool test_grow_shrink_to_fit(Allocator &a)
       return false;
 
    //Allocate memory
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       void *ptr = a.allocate(i, std::nothrow);
       if(!ptr)
          break;
@@ -592,7 +583,7 @@ bool test_grow_shrink_to_fit(Allocator &a)
 
    //Now deallocate the half of the blocks
    //so expand maybe can merge new free blocks
-   for(std::size_t i = 0, max = buffers.size()
+   for(int i = 0, max = (int)buffers.size()
       ;i < max
       ;++i){
       if(i%2){
@@ -604,14 +595,14 @@ bool test_grow_shrink_to_fit(Allocator &a)
    //Deallocate the rest of the blocks
 
    //Deallocate it in non sequential order
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      std::size_t pos = (j%5)*(buffers.size())/4;
-      if(pos == buffers.size())
+      int pos = (j%5)*((int)buffers.size())/4;
+      if(pos == int(buffers.size()))
          --pos;
       a.deallocate(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      buffers.erase(buffers.begin()+pos);
       typename Allocator::size_type old_free = a.get_free_memory();
       a.shrink_to_fit();
       if(!a.check_sanity())   return false;
@@ -662,7 +653,7 @@ bool test_many_equal_allocation(Allocator &a)
       std::vector<void*> buffers2;
 
       //Allocate buffers with extra memory
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
@@ -675,7 +666,7 @@ bool test_many_equal_allocation(Allocator &a)
 
       //Now deallocate the half of the blocks
       //so expand maybe can merge new free blocks
-      for(std::size_t i = 0, max = buffers2.size()
+      for(int i = 0, max = (int)buffers2.size()
          ;i < max
          ;++i){
          if(i%2){
@@ -689,7 +680,7 @@ bool test_many_equal_allocation(Allocator &a)
 
       typedef typename Allocator::multiallocation_chain multiallocation_chain;
       std::vector<void*> buffers;
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          multiallocation_chain chain;
          a.allocate_many(std::nothrow, i+1, (i+1)*2, chain);
          if(chain.empty())
@@ -709,7 +700,7 @@ bool test_many_equal_allocation(Allocator &a)
       switch(t){
          case DirectDeallocation:
          {
-            for(std::size_t j = 0, max = buffers.size()
+            for(int j = 0, max = (int)buffers.size()
                ;j < max
                ;++j){
                a.deallocate(buffers[j]);
@@ -718,7 +709,7 @@ bool test_many_equal_allocation(Allocator &a)
          break;
          case InverseDeallocation:
          {
-            for(std::size_t j = buffers.size()
+            for(int j = (int)buffers.size()
                ;j--
                ;){
                a.deallocate(buffers[j]);
@@ -727,12 +718,12 @@ bool test_many_equal_allocation(Allocator &a)
          break;
          case MixedDeallocation:
          {
-            for(std::size_t j = 0, max = buffers.size()
+            for(int j = 0, max = (int)buffers.size()
                ;j < max
                ;++j){
-               std::size_t pos = (j%4)*(buffers.size())/4;
+               int pos = (j%4)*((int)buffers.size())/4;
                a.deallocate(buffers[pos]);
-               buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+               buffers.erase(buffers.begin()+pos);
             }
          }
          break;
@@ -743,12 +734,12 @@ bool test_many_equal_allocation(Allocator &a)
       //Deallocate the rest of the blocks
 
       //Deallocate it in non sequential order
-      for(std::size_t j = 0, max = buffers2.size()
+      for(int j = 0, max = (int)buffers2.size()
          ;j < max
          ;++j){
-         std::size_t pos = (j%4)*(buffers2.size())/4;
+         int pos = (j%4)*((int)buffers2.size())/4;
          a.deallocate(buffers2[pos]);
-         buffers2.erase(buffers2.begin()+std::ptrdiff_t(pos));
+         buffers2.erase(buffers2.begin()+pos);
       }
 
       bool ok = free_memory == a.get_free_memory() &&
@@ -778,7 +769,7 @@ bool test_many_different_allocation(Allocator &a)
       std::vector<void*> buffers2;
 
       //Allocate buffers with extra memory
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          void *ptr = a.allocate(i, std::nothrow);
          if(!ptr)
             break;
@@ -789,7 +780,7 @@ bool test_many_different_allocation(Allocator &a)
 
       //Now deallocate the half of the blocks
       //so expand maybe can merge new free blocks
-      for(std::size_t i = 0, max = buffers2.size()
+      for(int i = 0, max = (int)buffers2.size()
          ;i < max
          ;++i){
          if(i%2){
@@ -799,7 +790,7 @@ bool test_many_different_allocation(Allocator &a)
       }
 
       std::vector<void*> buffers;
-      while(true){
+      for(int i = 0; true; ++i){
          multiallocation_chain chain;
          a.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
          if(chain.empty())
@@ -815,7 +806,7 @@ bool test_many_different_allocation(Allocator &a)
       switch(t){
          case DirectDeallocation:
          {
-            for(std::size_t j = 0, max = buffers.size()
+            for(int j = 0, max = (int)buffers.size()
                ;j < max
                ;++j){
                a.deallocate(buffers[j]);
@@ -824,7 +815,7 @@ bool test_many_different_allocation(Allocator &a)
          break;
          case InverseDeallocation:
          {
-            for(std::size_t j = buffers.size()
+            for(int j = (int)buffers.size()
                ;j--
                ;){
                a.deallocate(buffers[j]);
@@ -833,12 +824,12 @@ bool test_many_different_allocation(Allocator &a)
          break;
          case MixedDeallocation:
          {
-            for(std::size_t j = 0, max = buffers.size()
+            for(int j = 0, max = (int)buffers.size()
                ;j < max
                ;++j){
-               std::size_t pos = (j%4)*(buffers.size())/4;
+               int pos = (j%4)*((int)buffers.size())/4;
                a.deallocate(buffers[pos]);
-               buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+               buffers.erase(buffers.begin()+pos);
             }
          }
          break;
@@ -849,12 +840,12 @@ bool test_many_different_allocation(Allocator &a)
       //Deallocate the rest of the blocks
 
       //Deallocate it in non sequential order
-      for(std::size_t j = 0, max = buffers2.size()
+      for(int j = 0, max = (int)buffers2.size()
          ;j < max
          ;++j){
-         std::size_t pos = (j%4)*(buffers2.size())/4;
+         int pos = (j%4)*((int)buffers2.size())/4;
          a.deallocate(buffers2[pos]);
-         buffers2.erase(buffers2.begin()+std::ptrdiff_t(pos));
+         buffers2.erase(buffers2.begin()+pos);
       }
 
       bool ok = free_memory == a.get_free_memory() &&
@@ -873,7 +864,7 @@ bool test_many_deallocation(Allocator &a)
 
    typedef typename Allocator::multiallocation_chain multiallocation_chain;
    const std::size_t ArraySize = 11;
-   boost::container::vector<multiallocation_chain> buffers;
+   vector<multiallocation_chain> buffers;
    typename Allocator::size_type requested_sizes[ArraySize];
    for(std::size_t i = 0; i < ArraySize; ++i){
       requested_sizes[i] = 4*i;
@@ -881,14 +872,14 @@ bool test_many_deallocation(Allocator &a)
    typename Allocator::size_type free_memory = a.get_free_memory();
 
    {
-      while(true){
+      for(int i = 0; true; ++i){
          multiallocation_chain chain;
          a.allocate_many(std::nothrow, requested_sizes, ArraySize, 1, chain);
          if(chain.empty())
             break;
          buffers.push_back(boost::move(chain));
       }
-      for(std::size_t i = 0, max = buffers.size(); i != max; ++i){
+      for(int i = 0, max = (int)buffers.size(); i != max; ++i){
          a.deallocate_many(buffers[i]);
       }
       buffers.clear();
@@ -898,14 +889,14 @@ bool test_many_deallocation(Allocator &a)
    }
 
    {
-      for(std::size_t i = 0; true; ++i){
+      for(int i = 0; true; ++i){
          multiallocation_chain chain;
          a.allocate_many(std::nothrow, i*4, ArraySize, chain);
          if(chain.empty())
             break;
          buffers.push_back(boost::move(chain));
       }
-      for(std::size_t i = 0, max = buffers.size(); i != max; ++i){
+      for(int i = 0, max = (int)buffers.size(); i != max; ++i){
          a.deallocate_many(buffers[i]);
       }
       buffers.clear();

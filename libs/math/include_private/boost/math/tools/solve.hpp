@@ -11,9 +11,9 @@
 #endif
 
 #include <boost/config.hpp>
-#include <boost/math/tools/assert.hpp>
+#include <boost/assert.hpp>
 
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(push)
 #pragma warning(disable:4996 4267 4244)
 #endif
@@ -22,7 +22,7 @@
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
 
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(pop)
 #endif
 
@@ -32,7 +32,7 @@ namespace boost{ namespace math{ namespace tools{
 // Find x such that Ax = b
 //
 // Caution: this uses undocumented, and untested ublas code,
-// however short of writing our own LU-decomposition code
+// however short of writing our own LU-decompostion code
 // it's the only game in town.
 //
 template <class T>
@@ -40,7 +40,7 @@ boost::numeric::ublas::vector<T> solve(
           const boost::numeric::ublas::matrix<T>& A_,
           const boost::numeric::ublas::vector<T>& b_)
 {
-   //BOOST_MATH_ASSERT(A_.size() == b_.size());
+   //BOOST_ASSERT(A_.size() == b_.size());
 
    boost::numeric::ublas::matrix<T> A(A_);
    boost::numeric::ublas::vector<T> b(b_);
@@ -62,8 +62,7 @@ boost::numeric::ublas::vector<T> solve(
 
       for(unsigned i = 0; i < delta.size(); ++i)
       {
-         using std::abs;
-         T err = abs(delta[i] / b[i]);
+         T err = fabs(delta[i] / b[i]);
          if(err > max_error)
             max_error = err;
       }

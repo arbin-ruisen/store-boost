@@ -8,11 +8,10 @@
 
 // For more information, see http://www.boost.org
 
+#include <boost/test/minimal.hpp>
 #include <boost/array.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <boost/signals2/signal.hpp>
-#define BOOST_TEST_MODULE shared_connection_block_test
-#include <boost/test/included/unit_test.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -32,7 +31,7 @@ struct test_slot {
   int value;
 };
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char* [])
 {
   boost::signals2::signal<void ()> s0;
 
@@ -109,4 +108,5 @@ BOOST_AUTO_TEST_CASE(test_main)
     s0();
     BOOST_CHECK(test_output.str() == "123");
   }
+  return 0;
 }

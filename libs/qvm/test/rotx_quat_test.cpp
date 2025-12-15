@@ -1,15 +1,11 @@
-// Copyright 2008-2024 Emil Dotchevski and Reverge Studios, Inc.
-// Distributed under the Boost Software License, Version 1.0. (See accompanying
-// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//Copyright (c) 2008-2016 Emil Dotchevski and Reverge Studios, Inc.
 
-#ifdef BOOST_QVM_TEST_SINGLE_HEADER
-#   include BOOST_QVM_TEST_SINGLE_HEADER
-#else
-#   include <boost/qvm/quat_operations.hpp>
-#   include <boost/qvm/mat_operations.hpp>
-#   include <boost/qvm/quat.hpp>
-#endif
+//Distributed under the Boost Software License, Version 1.0. (See accompanying
+//file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
+#include <boost/qvm/quat_operations.hpp>
+#include <boost/qvm/mat_operations.hpp>
+#include <boost/qvm/quat.hpp>
 #include "test_qvm_quaternion.hpp"
 #include "test_qvm_matrix.hpp"
 #include "gold.hpp"
@@ -34,7 +30,7 @@ namespace
             test_qvm::quaternion<Q1> q3(42,1);
             test_qvm::quaternion<Q1> r1=q3*q1;
             rotate_x(q3,r);
-            BOOST_QVM_TEST_CLOSE(q3.a,r1.a,0.000001f);
+            BOOST_QVM_TEST_EQ(q3.a,r1.a);
             }
         rotx_quat(0.0f)+rotx_quat(0.0f);
         -rotx_quat(0.0f);

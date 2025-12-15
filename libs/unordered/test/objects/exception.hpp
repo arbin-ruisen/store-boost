@@ -1,6 +1,5 @@
 
 // Copyright 2006-2009 Daniel James.
-// Copyright 2022 Christian Mazakas
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 
@@ -53,7 +52,7 @@ namespace test {
       {
         UNORDERED_SCOPE(object::object())
         {
-          UNORDERED_EPOINT("Mock object default constructor.")
+          UNORDERED_EPOINT("Mock object default constructor.");
         }
       }
 
@@ -61,7 +60,7 @@ namespace test {
       {
         UNORDERED_SCOPE(object::object(int))
         {
-          UNORDERED_EPOINT("Mock object constructor by value.")
+          UNORDERED_EPOINT("Mock object constructor by value.");
         }
       }
 
@@ -70,7 +69,7 @@ namespace test {
       {
         UNORDERED_SCOPE(object::object(object))
         {
-          UNORDERED_EPOINT("Mock object copy constructor.")
+          UNORDERED_EPOINT("Mock object copy constructor.");
         }
       }
 
@@ -85,7 +84,7 @@ namespace test {
         UNORDERED_SCOPE(object::operator=(object))
         {
           tag1_ = x.tag1_;
-          UNORDERED_EPOINT("Mock object assign operator 1.")
+          UNORDERED_EPOINT("Mock object assign operator 1.");
           tag2_ = x.tag2_;
           // UNORDERED_EPOINT("Mock object assign operator 2.");
         }
@@ -96,7 +95,7 @@ namespace test {
       {
         UNORDERED_SCOPE(operator==(object, object))
         {
-          UNORDERED_EPOINT("Mock object equality operator.")
+          UNORDERED_EPOINT("Mock object equality operator.");
         }
 
         return x1.tag1_ == x2.tag1_ && x1.tag2_ == x2.tag2_;
@@ -106,7 +105,7 @@ namespace test {
       {
         UNORDERED_SCOPE(operator!=(object, object))
         {
-          UNORDERED_EPOINT("Mock object inequality operator.")
+          UNORDERED_EPOINT("Mock object inequality operator.");
         }
 
         return !(x1.tag1_ == x2.tag1_ && x1.tag2_ == x2.tag2_);
@@ -150,7 +149,7 @@ namespace test {
       {
         UNORDERED_SCOPE(hash::object())
         {
-          UNORDERED_EPOINT("Mock hash default constructor.")
+          UNORDERED_EPOINT("Mock hash default constructor.");
         }
       }
 
@@ -158,7 +157,7 @@ namespace test {
       {
         UNORDERED_SCOPE(hash::hash(hash))
         {
-          UNORDERED_EPOINT("Mock hash copy constructor.")
+          UNORDERED_EPOINT("Mock hash copy constructor.");
         }
       }
 
@@ -166,9 +165,9 @@ namespace test {
       {
         UNORDERED_SCOPE(hash::operator=(hash))
         {
-          UNORDERED_EPOINT("Mock hash assign operator 1.")
+          UNORDERED_EPOINT("Mock hash assign operator 1.");
           tag_ = x.tag_;
-          UNORDERED_EPOINT("Mock hash assign operator 2.")
+          UNORDERED_EPOINT("Mock hash assign operator 2.");
         }
         return *this;
       }
@@ -177,7 +176,7 @@ namespace test {
       {
         UNORDERED_SCOPE(hash::operator()(object))
         {
-          UNORDERED_EPOINT("Mock hash function.")
+          UNORDERED_EPOINT("Mock hash function.");
         }
 
         return hash_impl(x);
@@ -187,7 +186,7 @@ namespace test {
       {
         UNORDERED_SCOPE(hash::operator()(std::pair<object, object>))
         {
-          UNORDERED_EPOINT("Mock hash pair function.")
+          UNORDERED_EPOINT("Mock hash pair function.");
         }
 
         return hash_impl(x.first) * 193ul + hash_impl(x.second) * 97ul + 29ul;
@@ -195,26 +194,25 @@ namespace test {
 
       std::size_t hash_impl(object const& x) const
       {
-        unsigned result;
+        int result;
         switch (tag_) {
         case 1:
-          result = static_cast<unsigned>(x.tag1_);
+          result = x.tag1_;
           break;
         case 2:
-          result = static_cast<unsigned>(x.tag2_);
+          result = x.tag2_;
           break;
         default:
-          result =
-            static_cast<unsigned>(x.tag1_) + static_cast<unsigned>(x.tag2_);
+          result = x.tag1_ + x.tag2_;
         }
-        return result;
+        return static_cast<std::size_t>(result);
       }
 
       friend bool operator==(hash const& x1, hash const& x2)
       {
         UNORDERED_SCOPE(operator==(hash, hash))
         {
-          UNORDERED_EPOINT("Mock hash equality function.")
+          UNORDERED_EPOINT("Mock hash equality function.");
         }
         return x1.tag_ == x2.tag_;
       }
@@ -223,24 +221,11 @@ namespace test {
       {
         UNORDERED_SCOPE(hash::operator!=(hash, hash))
         {
-          UNORDERED_EPOINT("Mock hash inequality function.")
+          UNORDERED_EPOINT("Mock hash inequality function.");
         }
         return x1.tag_ != x2.tag_;
       }
-
-#if defined(BOOST_UNORDERED_FOA_TESTS)
-      friend void swap(hash&, hash&) noexcept;
-#endif
     };
-
-#if defined(BOOST_UNORDERED_FOA_TESTS)
-      void swap(hash& lhs, hash& rhs) noexcept
-      {
-        int tag = lhs.tag_;
-        lhs.tag_ = rhs.tag_;
-        rhs.tag_ = tag;
-      }
-#endif
 
     class less
     {
@@ -262,7 +247,7 @@ namespace test {
         if (less_impl(x1.first, x2.first)) {
           return true;
         }
-        if (less_impl(x2.first, x1.first)) {
+        if (!less_impl(x1.first, x2.first)) {
           return false;
         }
         return less_impl(x1.second, x2.second);
@@ -300,7 +285,7 @@ namespace test {
       {
         UNORDERED_SCOPE(equal_to::equal_to())
         {
-          UNORDERED_EPOINT("Mock equal_to default constructor.")
+          UNORDERED_EPOINT("Mock equal_to default constructor.");
         }
       }
 
@@ -308,7 +293,7 @@ namespace test {
       {
         UNORDERED_SCOPE(equal_to::equal_to(equal_to))
         {
-          UNORDERED_EPOINT("Mock equal_to copy constructor.")
+          UNORDERED_EPOINT("Mock equal_to copy constructor.");
         }
       }
 
@@ -316,9 +301,9 @@ namespace test {
       {
         UNORDERED_SCOPE(equal_to::operator=(equal_to))
         {
-          UNORDERED_EPOINT("Mock equal_to assign operator 1.")
+          UNORDERED_EPOINT("Mock equal_to assign operator 1.");
           tag_ = x.tag_;
-          UNORDERED_EPOINT("Mock equal_to assign operator 2.")
+          UNORDERED_EPOINT("Mock equal_to assign operator 2.");
         }
         return *this;
       }
@@ -327,7 +312,7 @@ namespace test {
       {
         UNORDERED_SCOPE(equal_to::operator()(object, object))
         {
-          UNORDERED_EPOINT("Mock equal_to function.")
+          UNORDERED_EPOINT("Mock equal_to function.");
         }
 
         return equal_impl(x1, x2);
@@ -339,7 +324,7 @@ namespace test {
         UNORDERED_SCOPE(equal_to::operator()(
           std::pair<object, object>, std::pair<object, object>))
         {
-          UNORDERED_EPOINT("Mock equal_to function.")
+          UNORDERED_EPOINT("Mock equal_to function.");
         }
 
         return equal_impl(x1.first, x2.first) &&
@@ -362,7 +347,7 @@ namespace test {
       {
         UNORDERED_SCOPE(operator==(equal_to, equal_to))
         {
-          UNORDERED_EPOINT("Mock equal_to equality function.")
+          UNORDERED_EPOINT("Mock equal_to equality function.");
         }
         return x1.tag_ == x2.tag_;
       }
@@ -371,25 +356,13 @@ namespace test {
       {
         UNORDERED_SCOPE(operator!=(equal_to, equal_to))
         {
-          UNORDERED_EPOINT("Mock equal_to inequality function.")
+          UNORDERED_EPOINT("Mock equal_to inequality function.");
         }
         return x1.tag_ != x2.tag_;
       }
 
       friend less create_compare(equal_to x) { return less(x.tag_); }
-#if defined(BOOST_UNORDERED_FOA_TESTS)
-      friend void swap(equal_to&, equal_to&) noexcept;
-#endif
     };
-
-#if defined(BOOST_UNORDERED_FOA_TESTS)
-    void swap(equal_to& lhs, equal_to& rhs) noexcept
-    {
-      int tag = lhs.tag_;
-      lhs.tag_ = rhs.tag_;
-      rhs.tag_ = tag;
-    }
-#endif
 
     template <class T> class allocator
     {
@@ -412,7 +385,7 @@ namespace test {
       {
         UNORDERED_SCOPE(allocator::allocator())
         {
-          UNORDERED_EPOINT("Mock allocator default constructor.")
+          UNORDERED_EPOINT("Mock allocator default constructor.");
         }
         test::detail::tracker.allocator_ref();
       }
@@ -460,7 +433,7 @@ namespace test {
         T* ptr = 0;
         UNORDERED_SCOPE(allocator::allocate(size_type))
         {
-          UNORDERED_EPOINT("Mock allocator allocate function.")
+          UNORDERED_EPOINT("Mock allocator allocate function.");
 
           using namespace std;
           ptr = (T*)malloc(n * sizeof(T));
@@ -478,7 +451,7 @@ namespace test {
         T* ptr = 0;
         UNORDERED_SCOPE(allocator::allocate(size_type, const_pointer))
         {
-          UNORDERED_EPOINT("Mock allocator allocate function.")
+          UNORDERED_EPOINT("Mock allocator allocate function.");
 
           using namespace std;
           ptr = (T*)malloc(n * sizeof(T));
@@ -501,28 +474,39 @@ namespace test {
         }
       }
 
-      template <class U, class... Args> void construct(U* p, Args&&... args)
+      void construct(pointer p, T const& t)
       {
-        UNORDERED_SCOPE(allocator::construct(U*, Args&&...))
+        UNORDERED_SCOPE(allocator::construct(T*, T))
         {
-          UNORDERED_EPOINT("Mock allocator construct function.")
-          new (p) U(std::forward<Args>(args)...);
+          UNORDERED_EPOINT("Mock allocator construct function.");
+          new (p) T(t);
         }
-        test::detail::tracker.track_construct((void*)p, sizeof(U), tag_);
+        test::detail::tracker.track_construct((void*)p, sizeof(T), tag_);
       }
 
-      template <class U>
-      void destroy(U* p)
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+      template <class... Args> void construct(T* p, BOOST_FWD_REF(Args)... args)
       {
-        test::detail::tracker.track_destroy((void*)p, sizeof(U), tag_);
-        p->~U();
+        UNORDERED_SCOPE(allocator::construct(pointer, BOOST_FWD_REF(Args)...))
+        {
+          UNORDERED_EPOINT("Mock allocator construct function.");
+          new (p) T(boost::forward<Args>(args)...);
+        }
+        test::detail::tracker.track_construct((void*)p, sizeof(T), tag_);
+      }
+#endif
+
+      void destroy(T* p)
+      {
+        test::detail::tracker.track_destroy((void*)p, sizeof(T), tag_);
+        p->~T();
       }
 
       size_type max_size() const
       {
         UNORDERED_SCOPE(allocator::construct(pointer, T))
         {
-          UNORDERED_EPOINT("Mock allocator max_size function.")
+          UNORDERED_EPOINT("Mock allocator max_size function.");
         }
         return (std::numeric_limits<std::size_t>::max)();
       }
@@ -579,7 +563,7 @@ namespace test {
       {
         UNORDERED_SCOPE(allocator2::allocator2())
         {
-          UNORDERED_EPOINT("Mock allocator2 default constructor.")
+          UNORDERED_EPOINT("Mock allocator2 default constructor.");
         }
         test::detail::tracker.allocator_ref();
       }
@@ -628,7 +612,7 @@ namespace test {
         T* ptr = 0;
         UNORDERED_SCOPE(allocator2::allocate(size_type))
         {
-          UNORDERED_EPOINT("Mock allocator2 allocate function.")
+          UNORDERED_EPOINT("Mock allocator2 allocate function.");
 
           using namespace std;
           ptr = (T*)malloc(n * sizeof(T));
@@ -646,7 +630,7 @@ namespace test {
         T* ptr = 0;
         UNORDERED_SCOPE(allocator2::allocate(size_type, const_pointer))
         {
-          UNORDERED_EPOINT("Mock allocator2 allocate function.")
+          UNORDERED_EPOINT("Mock allocator2 allocate function.");
 
           using namespace std;
           ptr = (T*)malloc(n * sizeof(T));
@@ -669,29 +653,39 @@ namespace test {
         }
       }
 
-      template <class U, class... Args> 
-      void construct(U* p, Args&&... args)
+      void construct(pointer p, T const& t)
       {
-        UNORDERED_SCOPE(allocator2::construct(U*, Args&&...))
+        UNORDERED_SCOPE(allocator2::construct(T*, T))
         {
-          UNORDERED_EPOINT("Mock allocator2 construct function.")
-          new (p) U(std::forward<Args>(args)...);
+          UNORDERED_EPOINT("Mock allocator2 construct function.");
+          new (p) T(t);
         }
-        test::detail::tracker.track_construct((void*)p, sizeof(U), tag_);
+        test::detail::tracker.track_construct((void*)p, sizeof(T), tag_);
       }
 
-      template <class U>
-      void destroy(U* p)
+#if !defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+      template <class... Args> void construct(T* p, BOOST_FWD_REF(Args)... args)
       {
-        test::detail::tracker.track_destroy((void*)p, sizeof(U), tag_);
-        p->~U();
+        UNORDERED_SCOPE(allocator2::construct(pointer, BOOST_FWD_REF(Args)...))
+        {
+          UNORDERED_EPOINT("Mock allocator2 construct function.");
+          new (p) T(boost::forward<Args>(args)...);
+        }
+        test::detail::tracker.track_construct((void*)p, sizeof(T), tag_);
+      }
+#endif
+
+      void destroy(T* p)
+      {
+        test::detail::tracker.track_destroy((void*)p, sizeof(T), tag_);
+        p->~T();
       }
 
       size_type max_size() const
       {
         UNORDERED_SCOPE(allocator2::construct(pointer, T))
         {
-          UNORDERED_EPOINT("Mock allocator2 max_size function.")
+          UNORDERED_EPOINT("Mock allocator2 max_size function.");
         }
         return (std::numeric_limits<std::size_t>::max)();
       }

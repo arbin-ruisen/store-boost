@@ -47,13 +47,13 @@ struct delete_disposer
 
 int main()
 {
-   const std::size_t MaxElem = 100;
+   const int MaxElem = 100;
    std::vector<my_class> nodes(MaxElem);
 
    //Fill all the nodes and insert them in the list
    my_class_list list;
 
-   for(std::size_t i = 0; i < MaxElem; ++i) nodes[i].int_ = (int)i;
+   for(int i = 0; i < MaxElem; ++i) nodes[i].int_ = i;
 
    list.insert(list.end(), nodes.begin(), nodes.end());
 

@@ -7,11 +7,9 @@
 
 #include <cstdlib>
 #include <iostream>
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include <boost/signals2.hpp>
 #include <boost/thread/thread.hpp>
-
-using namespace boost::placeholders;
 
 typedef boost::signals2::signal<void ()> signal_type;
 

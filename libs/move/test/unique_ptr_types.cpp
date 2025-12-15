@@ -13,6 +13,7 @@
 #include <boost/move/utility_core.hpp>
 #include <boost/move/unique_ptr.hpp>
 #include <boost/move/detail/type_traits.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/core/lightweight_test.hpp>
 
 //////////////////////////////////////////////
@@ -50,40 +51,40 @@ void test()
    //Single unique_ptr
    {
    typedef bml::unique_ptr<int> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, int*>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, int*>::value));
    }
    {
    typedef bml::unique_ptr<int, Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
    }
    //Unbounded array unique_ptr
    {
    typedef bml::unique_ptr<int[]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, int*>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, int*>::value));
    }
    {
    typedef bml::unique_ptr<int[], Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
    }
    //Bounded array unique_ptr
    {
    typedef bml::unique_ptr<int[5]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, int*>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, int*>::value));
    }
    {
    typedef bml::unique_ptr<int[5], Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
    }
    //Unbounded array of bounded array unique_ptr
    {
    typedef int int_5_t [5];
    typedef bml::unique_ptr<int_5_t[]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, int_5_t*>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, int_5_t*>::value));
    }
    {
    typedef int int_5_t [5];
    typedef bml::unique_ptr<int_5_t[], Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::pointer, Deleter::pointer>::value));
    }
 }
 
@@ -103,29 +104,29 @@ void test()
    //Single unique_ptr
    {
    typedef bml::unique_ptr<int> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, bml::default_delete<int> >::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, bml::default_delete<int> >::value));
    }
    {
    typedef bml::unique_ptr<int, Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, Deleter >::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, Deleter >::value));
    }
    //Unbounded array unique_ptr
    {
    typedef bml::unique_ptr<int[]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, bml::default_delete<int[]> >::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, bml::default_delete<int[]> >::value));
    }
    {
    typedef bml::unique_ptr<int[], Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, Deleter >::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, Deleter >::value));
    }
    //Bounded array unique_ptr
    {
    typedef bml::unique_ptr<int[2]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, bml::default_delete<int[2]> >::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, bml::default_delete<int[2]> >::value));
    }
    {
    typedef bml::unique_ptr<int[2], Deleter> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, Deleter >::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::deleter_type, Deleter >::value));
    }
 }
 
@@ -142,17 +143,17 @@ void test()
    //Single unique_ptr
    {
    typedef bml::unique_ptr<const int> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::element_type, const int>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::element_type, const int>::value));
    }
    //Unbounded array unique_ptr
    {
    typedef bml::unique_ptr<const int[]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::element_type, const int>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::element_type, const int>::value));
    }
    //Bounded array unique_ptr
    {
    typedef bml::unique_ptr<const int[2]> P;
-   BOOST_MOVE_STATIC_ASSERT((bmupmu::is_same<P::element_type, const int>::value));
+   BOOST_STATIC_ASSERT((bmupmu::is_same<P::element_type, const int>::value));
    }
 }
 
@@ -169,13 +170,13 @@ namespace unique_ptr_construct_assign_traits {
       typedef bml::unique_ptr<int> unique_ptr_t;
       //Even if BOOST_MOVE_TT_CXX11_IS_COPY_CONSTRUCTIBLE is not defined
       //boost::unique_ptr shall work with boost::movelib traits
-      BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<unique_ptr_t>::value));
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_constructible<unique_ptr_t>::value));
       //Even if BOOST_MOVE_TT_CXX11_IS_COPY_ASSIGNABLE is not defined
       //boost::unique_ptr shall work with boost::movelib traits
-      BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<unique_ptr_t>::value));
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_copy_assignable<unique_ptr_t>::value));
       //Important traits for containers like boost::vector
-      BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<unique_ptr_t>::value));
-      BOOST_MOVE_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<unique_ptr_t>::value));
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_constructible<unique_ptr_t>::value));
+      BOOST_STATIC_ASSERT(!(boost::move_detail::is_trivially_copy_assignable<unique_ptr_t>::value));
    }
 
 }  //namespace unique_ptr_construct_assign_traits {

@@ -35,55 +35,47 @@ class handler
 {
     boost::optional<error_code> ec_;
     bool pass_ = false;
-    boost::source_location loc_{BOOST_CURRENT_LOCATION};
+
 public:
-    handler(boost::source_location loc = BOOST_CURRENT_LOCATION) : loc_(loc) {}
+    handler() = default;
 
     explicit
-    handler(error_code ec, boost::source_location loc = BOOST_CURRENT_LOCATION)
-        : ec_(ec), loc_(loc)
+    handler(error_code ec)
+        : ec_(ec)
     {
     }
 
     explicit
-    handler(boost::none_t, boost::source_location loc = BOOST_CURRENT_LOCATION) : loc_(loc)
+    handler(boost::none_t)
     {
     }
 
     handler(handler&& other)
         : ec_(other.ec_)
         , pass_(boost::exchange(other.pass_, true))
-        , loc_(other.loc_)
-
     {
     }
 
     ~handler()
     {
-        ::boost::beast::unit_test::suite::this_suite()->expect(pass_, loc_.file_name(), loc_.line());
+        BEAST_EXPECT(pass_);
     }
 
     template<class... Args>
     void
     operator()(error_code ec, Args&&...)
     {
-        ::boost::beast::unit_test::suite::this_suite()->expect(!pass_, loc_.file_name(), loc_.line());
-        if (ec_ && ec != *ec_)
-            ::boost::beast::unit_test::suite::this_suite()->fail(ec.message(), loc_.file_name(), loc_.line());
-        else
-            ::boost::beast::unit_test::suite::this_suite()->pass();
+        BEAST_EXPECT(! pass_); // can't call twice
+        BEAST_EXPECTS(! ec_ || ec == *ec_,
+            ec.message());
         pass_ = true;
     }
 
     void
     operator()()
     {
-        ::boost::beast::unit_test::suite::this_suite()->expect(!pass_, loc_.file_name(), loc_.line());
-        if (ec_ && ec_->failed())
-            ::boost::beast::unit_test::suite::this_suite()->fail(ec_->message(), loc_.file_name(), loc_.line());
-        else
-            ::boost::beast::unit_test::suite::this_suite()->pass();
-
+        BEAST_EXPECT(! pass_); // can't call twice
+        BEAST_EXPECT(! ec_);
         pass_ = true;
     }
 
@@ -93,11 +85,8 @@ public:
     void
     operator()(Arg0&&, Args&&...)
     {
-        ::boost::beast::unit_test::suite::this_suite()->expect(!pass_, loc_.file_name(), loc_.line());
-        if (ec_ && ec_->failed())
-            ::boost::beast::unit_test::suite::this_suite()->fail(ec_->message(), loc_.file_name(), loc_.line());
-        else
-            ::boost::beast::unit_test::suite::this_suite()->pass();
+        BEAST_EXPECT(! pass_); // can't call twice
+        BEAST_EXPECT(! ec_);
         pass_ = true;
     }
 };
@@ -114,9 +103,9 @@ public:
 */
 inline
 handler
-success_handler(boost::source_location loc = BOOST_CURRENT_LOCATION) noexcept
+success_handler() noexcept
 {
-    return handler(error_code{}, loc);
+    return handler(error_code{});
 }
 
 /** Return a test CompletionHandler which requires invocation.
@@ -128,9 +117,9 @@ success_handler(boost::source_location loc = BOOST_CURRENT_LOCATION) noexcept
 */
 inline
 handler
-any_handler(boost::source_location loc = BOOST_CURRENT_LOCATION) noexcept
+any_handler() noexcept
 {
-    return handler(boost::none, loc);
+    return handler(boost::none);
 }
 
 /** Return a test CompletionHandler which requires a specific error code.
@@ -147,9 +136,9 @@ any_handler(boost::source_location loc = BOOST_CURRENT_LOCATION) noexcept
 */
 inline
 handler
-fail_handler(error_code ec,boost::source_location loc = BOOST_CURRENT_LOCATION) noexcept
+fail_handler(error_code ec) noexcept
 {
-    return handler(ec, loc);
+    return handler(ec);
 }
 
 /** Run an I/O context.

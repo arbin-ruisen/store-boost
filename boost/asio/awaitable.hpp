@@ -2,7 +2,7 @@
 // awaitable.hpp
 // ~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2019 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,14 +19,8 @@
 
 #if defined(BOOST_ASIO_HAS_CO_AWAIT) || defined(GENERATING_DOCUMENTATION)
 
-#if defined(BOOST_ASIO_HAS_STD_COROUTINE)
-# include <coroutine>
-#else // defined(BOOST_ASIO_HAS_STD_COROUTINE)
-# include <experimental/coroutine>
-#endif // defined(BOOST_ASIO_HAS_STD_COROUTINE)
-
-#include <utility>
-#include <boost/asio/any_io_executor.hpp>
+#include <experimental/coroutine>
+#include <boost/asio/executor.hpp>
 
 #include <boost/asio/detail/push_options.hpp>
 
@@ -34,13 +28,8 @@ namespace boost {
 namespace asio {
 namespace detail {
 
-#if defined(BOOST_ASIO_HAS_STD_COROUTINE)
-using std::coroutine_handle;
-using std::suspend_always;
-#else // defined(BOOST_ASIO_HAS_STD_COROUTINE)
 using std::experimental::coroutine_handle;
 using std::experimental::suspend_always;
-#endif // defined(BOOST_ASIO_HAS_STD_COROUTINE)
 
 template <typename> class awaitable_thread;
 template <typename, typename> class awaitable_frame;
@@ -48,8 +37,8 @@ template <typename, typename> class awaitable_frame;
 } // namespace detail
 
 /// The return type of a coroutine or asynchronous operation.
-template <typename T, typename Executor = any_io_executor>
-class BOOST_ASIO_NODISCARD awaitable
+template <typename T, typename Executor = executor>
+class awaitable
 {
 public:
   /// The type of the awaited value.
@@ -77,14 +66,6 @@ public:
       frame_->destroy();
   }
 
-  /// Move assignment.
-  awaitable& operator=(awaitable&& other) noexcept
-  {
-    if (this != &other)
-      frame_ = std::exchange(other.frame_, nullptr);
-    return *this;
-  }
-
   /// Checks if the awaitable refers to a future result.
   bool valid() const noexcept
   {
@@ -110,7 +91,7 @@ public:
   // Support for co_await keyword.
   T await_resume()
   {
-    return awaitable(static_cast<awaitable&&>(*this)).frame_->get();
+    return frame_->get();
   }
 
 #endif // !defined(GENERATING_DOCUMENTATION)
@@ -138,9 +119,6 @@ private:
 #include <boost/asio/detail/pop_options.hpp>
 
 #include <boost/asio/impl/awaitable.hpp>
-#if defined(BOOST_ASIO_HEADER_ONLY)
-# include <boost/asio/impl/awaitable.ipp>
-#endif // defined(BOOST_ASIO_HEADER_ONLY)
 
 #endif // defined(BOOST_ASIO_HAS_CO_AWAIT) || defined(GENERATING_DOCUMENTATION)
 

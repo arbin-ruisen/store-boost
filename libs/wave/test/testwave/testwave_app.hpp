@@ -86,8 +86,7 @@ protected:
 
     //  Preprocess the given input data and return the generated output through
     //  the parameter 'result'.
-    std::tuple<bool, bool>   // pass/fail, suppressed by cfg macro (or not)
-    preprocess_file(std::string filename, std::string const& instr,
+    bool preprocess_file(std::string filename, std::string const& instr,
         std::string& result, std::string& error, std::string& hooks,
         std::string const& expected_cfg_macro, bool single_line = false);
 

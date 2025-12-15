@@ -24,7 +24,7 @@ multi_point, a collection of points
 [heading Synopsis]
 ``template<typename Point, template< typename, typename > class Container, template< typename > class Allocator>
 class model::multi_point
-      : public std::vector< Point, std::allocator< Point > >
+      : public Container< Point, Allocator< Point > >
 {
   // ...
 };

@@ -1,5 +1,5 @@
 /* clang-format off
-(error: no matching function for call to .+::basic_result|error: no matching constructor for initialization of 'result<udt>'|cannot convert argument 1 from 'int'|no overloaded function could convert all the argument types)
+(error: no matching function for call to .+::basic_result|error: no matching constructor for initialization of 'result<udt>'|cannot convert argument 1 from 'int')
 clang-format on
 
 
@@ -33,6 +33,5 @@ int main()
   };
   // Must not be possible to implicitly initialise a result<udt>
   result<udt> m(5);
-  (void) m;
   return 0;
 }

@@ -4,9 +4,10 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/qi.hpp>
 #include <boost/lambda/lambda.hpp>
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 
 #include <iostream>
 
@@ -75,7 +76,6 @@ int main()
     { // example using boost.bind with a plain function
 
         char const *first = "{44}", *last = first + std::strlen(first);
-        using boost::placeholders::_1;
         //[tutorial_attach_actions3
         parse(first, last, '{' >> int_[boost::bind(&print, _1)] >> '}');
         //]
@@ -84,7 +84,6 @@ int main()
     { // example using boost.bind with a member function
 
         char const *first = "{44}", *last = first + std::strlen(first);
-        using boost::placeholders::_1;
         //[tutorial_attach_actions4
         writer w;
         parse(first, last, '{' >> int_[boost::bind(&writer::print, &w, _1)] >> '}');

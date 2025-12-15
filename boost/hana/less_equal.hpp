@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::less_equal`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -25,7 +25,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <type_traits>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @cond
     template <typename X, typename Y>
     constexpr auto less_equal_t::operator()(X&& x, Y&& y) const {
@@ -70,6 +70,6 @@ namespace boost { namespace hana {
                                     hana::to<C>(static_cast<Y&&>(y)));
         }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_LESS_EQUAL_HPP

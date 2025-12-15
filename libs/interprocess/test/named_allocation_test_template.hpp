@@ -27,7 +27,6 @@
 #include <new>
 #include <set>
 #include <vector>
-#include <typeinfo>
 
 // local
 #include "get_process_id_name.hpp"
@@ -50,16 +49,16 @@ bool test_names_and_types(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
    typedef std::char_traits<char_type> char_traits_type;
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100u;
+   const int BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
 
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
 
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
 
       if(!ptr)
          break;
@@ -85,7 +84,7 @@ bool test_names_and_types(ManagedMemory &m)
    if(m.get_num_named_objects() != buffers.size() || !m.check_sanity())
       return false;
 
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
       m.destroy_ptr(buffers[j]);
@@ -107,7 +106,7 @@ bool test_named_iterators(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100;
+   const int BufferLen = 100;
    char_type name[BufferLen];
    typedef std::basic_string<char_type> string_type;
    std::set<string_type> names;
@@ -116,10 +115,10 @@ bool test_named_iterators(ManagedMemory &m)
 
    string_type aux_str;
 
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
       aux_str = name;
@@ -157,7 +156,7 @@ bool test_named_iterators(ManagedMemory &m)
          return false;
    }
 
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
       m.destroy_ptr(buffers[j]);
@@ -178,25 +177,25 @@ bool test_shrink_to_fit(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100;
+   const int BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
 
    std::size_t free_memory_before = m.get_free_memory();
 
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
 
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
 
       if(!ptr)
          break;
       buffers.push_back(ptr);
    }
 
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
       m.destroy_ptr(buffers[j]);
@@ -219,15 +218,15 @@ bool test_direct_named_allocation_destruction(ManagedMemory &m)
 {
    typedef typename ManagedMemory::char_type char_type;
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100;
+   const int BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
 
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
       if(m.template find<char>(name).first == 0)
@@ -238,7 +237,7 @@ bool test_direct_named_allocation_destruction(ManagedMemory &m)
    if(m.get_num_named_objects() != buffers.size() || !m.check_sanity())
       return false;
 
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
       m.destroy_ptr(buffers[j]);
@@ -260,15 +259,15 @@ bool test_named_allocation_inverse_destruction(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
 
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100;
+   const int BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
 
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
       buffers.push_back(ptr);
@@ -277,7 +276,7 @@ bool test_named_allocation_inverse_destruction(ManagedMemory &m)
    if(m.get_num_named_objects() != buffers.size() || !m.check_sanity())
       return false;
 
-   for(std::size_t j = buffers.size()
+   for(int j = (int)buffers.size()
       ;j--
       ;){
       m.destroy_ptr(buffers[j]);
@@ -299,15 +298,15 @@ bool test_named_allocation_mixed_destruction(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
 
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100;
+   const int BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
 
-   for(std::size_t i = 0; true; ++i){
+   for(int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
       buffers.push_back(ptr);
@@ -316,12 +315,12 @@ bool test_named_allocation_mixed_destruction(ManagedMemory &m)
    if(m.get_num_named_objects() != buffers.size() || !m.check_sanity())
       return false;
 
-   for(std::size_t j = 0, max = buffers.size()
+   for(int j = 0, max = (int)buffers.size()
       ;j < max
       ;++j){
-      std::size_t pos = (j%4u)*(buffers.size())/4u;
+      int pos = (j%4)*((int)buffers.size())/4;
       m.destroy_ptr(buffers[pos]);
-      buffers.erase(buffers.begin()+std::ptrdiff_t(pos));
+      buffers.erase(buffers.begin()+pos);
    }
 
    if(m.get_num_named_objects() != 0 || !m.check_sanity())
@@ -340,15 +339,15 @@ bool test_inverse_named_allocation_destruction(ManagedMemory &m)
    typedef typename ManagedMemory::char_type char_type;
 
    std::vector<char*> buffers;
-   const std::size_t BufferLen = 100;
+   const int BufferLen = 100;
    char_type name[BufferLen];
 
    basic_bufferstream<char_type> formatter(name, BufferLen);
 
-   for(std::size_t i = 0; true; ++i){
+   for(unsigned int i = 0; true; ++i){
       formatter.seekp(0);
       formatter << get_prefix(char_type()) << i << std::ends;
-      char *ptr = m.template construct<char>(name, std::nothrow)((char)i);
+      char *ptr = m.template construct<char>(name, std::nothrow)(i);
       if(!ptr)
          break;
       buffers.push_back(ptr);
@@ -357,7 +356,7 @@ bool test_inverse_named_allocation_destruction(ManagedMemory &m)
    if(m.get_num_named_objects() != buffers.size() || !m.check_sanity())
       return false;
 
-   for(std::size_t j = 0, max = (unsigned int)buffers.size()
+   for(unsigned int j = 0, max = (unsigned int)buffers.size()
       ;j < max
       ;++j){
       m.destroy_ptr(buffers[j]);
@@ -437,7 +436,7 @@ bool test_named_allocation()
 
    const int memsize = 163840;
    const char *const shMemName = test::get_process_id_name();
-   BOOST_INTERPROCESS_TRY
+   try
    {
       //A shared memory with rbtree best fit algorithm
       typedef basic_managed_shared_memory
@@ -455,14 +454,14 @@ bool test_named_allocation()
          return false;
       }
    }
-   BOOST_INTERPROCESS_CATCH(...){
+   catch(...){
       shared_memory_object::remove(shMemName);
-      BOOST_INTERPROCESS_RETHROW
-   } BOOST_INTERPROCESS_CATCH_END
+      throw;
+   }
    shared_memory_object::remove(shMemName);
 
    //Now test it with wchar_t
-   BOOST_INTERPROCESS_TRY
+   try
    {
       //A shared memory with simple sequential fit algorithm
       typedef basic_managed_shared_memory
@@ -480,10 +479,10 @@ bool test_named_allocation()
          return false;
       }
    }
-   BOOST_INTERPROCESS_CATCH(...){
+   catch(...){
       shared_memory_object::remove(shMemName);
-      BOOST_INTERPROCESS_RETHROW
-   } BOOST_INTERPROCESS_CATCH_END
+      throw;
+   }
    shared_memory_object::remove(shMemName);
 
    return true;

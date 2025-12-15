@@ -71,35 +71,33 @@ main()
         BOOST_TEST(test("2", udouble));
         BOOST_TEST(test_attr("2", udouble, d) && compare(d, 2));
 
-        using boost::core::isinf;
-        using boost::core::isnan;
-
+        using boost::math::fpclassify;
         BOOST_TEST(test("inf", udouble));
         BOOST_TEST(test("infinity", udouble));
         BOOST_TEST(test("INF", udouble));
         BOOST_TEST(test("INFINITY", udouble));
 
         BOOST_TEST(test_attr("inf", udouble, d)
-                && isinf(d));
+                && FP_INFINITE == fpclassify(d));
         BOOST_TEST(test_attr("INF", udouble, d)
-                && isinf(d));
+                && FP_INFINITE == fpclassify(d));
         BOOST_TEST(test_attr("infinity", udouble, d)
-                && isinf(d));
+                && FP_INFINITE == fpclassify(d));
         BOOST_TEST(test_attr("INFINITY", udouble, d)
-                && isinf(d));
+                && FP_INFINITE == fpclassify(d));
 
         BOOST_TEST(test("nan", udouble));
         BOOST_TEST(test_attr("nan", udouble, d)
-                && isnan(d));
+                && FP_NAN == fpclassify(d));
         BOOST_TEST(test("NAN", udouble));
         BOOST_TEST(test_attr("NAN", udouble, d)
-                && isnan(d));
+                && FP_NAN == fpclassify(d));
         BOOST_TEST(test("nan(...)", udouble));
         BOOST_TEST(test_attr("nan(...)", udouble, d)
-                && isnan(d));
+                && FP_NAN == fpclassify(d));
         BOOST_TEST(test("NAN(...)", udouble));
         BOOST_TEST(test_attr("NAN(...)", udouble, d)
-                && isnan(d));
+                && FP_NAN == fpclassify(d));
 
         BOOST_TEST(!test("e3", udouble));
         BOOST_TEST(!test_attr("e3", udouble, d));

@@ -11,12 +11,12 @@
 #define BOOST_BEAST_IMPL_BUFFERED_READ_STREAM_HPP
 
 #include <boost/beast/core/async_base.hpp>
+#include <boost/beast/core/bind_handler.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/read_size.hpp>
 #include <boost/beast/core/stream_traits.hpp>
 #include <boost/beast/core/detail/is_invocable.hpp>
-#include <boost/asio/append.hpp>
-#include <boost/asio/dispatch.hpp>
+#include <boost/asio/post.hpp>
 #include <boost/throw_exception.hpp>
 
 namespace boost {
@@ -80,12 +80,11 @@ public:
                             std::move(*this));
             }
             step_ = 3;
-            {
-                const auto ex = this->get_immediate_executor();
-                return net::dispatch(
-                    ex,
-                    net::append(std::move(*this), ec, 0));
-            }
+            return net::post(
+                s_.get_executor(),
+                beast::bind_front_handler(
+                    std::move(*this), ec, 0));
+
         case 1:
             // upcall
             break;
@@ -106,21 +105,12 @@ public:
 
 struct run_read_op
 {
-    buffered_read_stream* self;
-
-    using executor_type = typename buffered_read_stream::executor_type;
-
-    executor_type
-    get_executor() const noexcept
-    {
-        return self->get_executor();
-    }
-
     template<class ReadHandler, class Buffers>
     void
     operator()(
         ReadHandler&& h,
-        Buffers const* b)
+        buffered_read_stream* s,
+        Buffers const& b)
     {
         // If you get an error on the following line it means
         // that your handler does not meet the documented type
@@ -134,7 +124,7 @@ struct run_read_op
         read_op<
             Buffers,
             typename std::decay<ReadHandler>::type>(
-                std::forward<ReadHandler>(h), *self, *b);
+                std::forward<ReadHandler>(h), *s, b);
     }
 };
 
@@ -151,7 +141,7 @@ buffered_read_stream(Args&&... args)
 }
 
 template<class Stream, class DynamicBuffer>
-template<class ConstBufferSequence, BOOST_BEAST_ASYNC_TPARAM2 WriteHandler>
+template<class ConstBufferSequence, class WriteHandler>
 BOOST_BEAST_ASYNC_RESULT2(WriteHandler)
 buffered_read_stream<Stream, DynamicBuffer>::
 async_write_some(
@@ -163,7 +153,7 @@ async_write_some(
     static_assert(net::is_const_buffer_sequence<
         ConstBufferSequence>::value,
             "ConstBufferSequence type requirements not met");
-    static_assert(detail::is_completion_token_for<WriteHandler,
+    static_assert(detail::is_invocable<WriteHandler,
         void(error_code, std::size_t)>::value,
             "WriteHandler type requirements not met");
     return next_layer_.async_write_some(buffers,
@@ -222,7 +212,7 @@ read_some(MutableBufferSequence const& buffers,
 }
 
 template<class Stream, class DynamicBuffer>
-template<class MutableBufferSequence, BOOST_BEAST_ASYNC_TPARAM2 ReadHandler>
+template<class MutableBufferSequence, class ReadHandler>
 BOOST_BEAST_ASYNC_RESULT2(ReadHandler)
 buffered_read_stream<Stream, DynamicBuffer>::
 async_read_some(
@@ -240,9 +230,10 @@ async_read_some(
     return net::async_initiate<
         ReadHandler,
         void(error_code, std::size_t)>(
-            typename ops::run_read_op{this},
+            typename ops::run_read_op{},
             handler,
-            &buffers);
+            this,
+            buffers);
 }
 
 } // beast

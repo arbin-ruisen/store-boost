@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Thorsten Ottosen <nesotto -at- cs.auc.dk>"
-    ],
-    "cxxstd": "11"
+    ]
 }

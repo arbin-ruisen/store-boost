@@ -1,6 +1,5 @@
 //
 // Copyright 2005-2007 Adobe Systems Incorporated
-// Copyright 2022 Marco Langer <langer.m86 at gmail dot com>
 //
 // Distributed under the Boost Software License, Version 1.0
 // See accompanying file LICENSE_1_0.txt or copy at
@@ -13,10 +12,7 @@
 
 #include <boost/gil/algorithm.hpp>
 
-#include <boost/variant2/variant.hpp>
-
 #include <functional>
-#include <utility>
 
 ////////////////////////////////////////////////////////////////////////////////////////
 /// \file
@@ -44,34 +40,34 @@ struct equal_pixels_fn : binary_operation_obj<equal_pixels_fn, bool>
 } // namespace detail
 
 /// \ingroup ImageViewSTLAlgorithmsEqualPixels
-/// \tparam Types Model Boost.MP11-compatible list of models of ImageViewConcept
+/// \tparam Types Model MPL Random Access Container of models of ImageViewConcept
 /// \tparam View Model MutableImageViewConcept
-template <typename ...Types, typename View>
-auto equal_pixels(any_image_view<Types...> const& src, View const& dst) -> bool
+template <typename Types, typename View>
+bool equal_pixels(any_image_view<Types> const& src, View const& dst)
 {
-    return variant2::visit(
-        std::bind(detail::equal_pixels_fn(), std::placeholders::_1, dst),
-        src);
+    return apply_operation(
+        src,
+        std::bind(detail::equal_pixels_fn(), std::placeholders::_1, dst));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsEqualPixels
 /// \tparam View Model ImageViewConcept
-/// \tparam Types Model Boost.MP11-compatible list of models of MutableImageViewConcept
-template <typename View, typename ...Types>
-auto equal_pixels(View const& src, any_image_view<Types...> const& dst) -> bool
+/// \tparam Types Model MPL Random Access Container of models of MutableImageViewConcept
+template <typename View, typename Types>
+bool equal_pixels(View const& src, any_image_view<Types> const& dst)
 {
-    return variant2::visit(
-        std::bind(detail::equal_pixels_fn(), src, std::placeholders::_1),
-        dst);
+    return apply_operation(
+        dst,
+        std::bind(detail::equal_pixels_fn(), src, std::placeholders::_1));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsEqualPixels
-/// \tparam Types1 Model Boost.MP11-compatible list of models of ImageViewConcept
-/// \tparam Types2 Model Boost.MP11-compatible list of models of MutableImageViewConcept
-template <typename ...Types1, typename ...Types2>
-auto equal_pixels(any_image_view<Types1...> const& src, any_image_view<Types2...> const& dst) -> bool
+/// \tparam Types1 Model MPL Random Access Container of models of ImageViewConcept
+/// \tparam Types2 Model MPL Random Access Container of models of MutableImageViewConcept
+template <typename Types1, typename Types2>
+bool equal_pixels(any_image_view<Types1> const& src, any_image_view<Types2> const& dst)
 {
-    return variant2::visit(detail::equal_pixels_fn(), src, dst);
+    return apply_operation(src, dst, detail::equal_pixels_fn());
 }
 
 namespace detail {
@@ -89,99 +85,99 @@ struct copy_pixels_fn : public binary_operation_obj<copy_pixels_fn>
 } // namespace detail
 
 /// \ingroup ImageViewSTLAlgorithmsCopyPixels
-/// \tparam Types Model Boost.MP11-compatible list of models of ImageViewConcept
+/// \tparam Types Model MPL Random Access Container of models of ImageViewConcept
 /// \tparam View Model MutableImageViewConcept
-template <typename ...Types, typename View>
-void copy_pixels(any_image_view<Types...> const& src, View const& dst)
+template <typename Types, typename View>
+void copy_pixels(any_image_view<Types> const& src, View const& dst)
 {
-    variant2::visit(std::bind(detail::copy_pixels_fn(), std::placeholders::_1, dst), src);
+    apply_operation(src, std::bind(detail::copy_pixels_fn(), std::placeholders::_1, dst));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyPixels
-/// \tparam Types Model Boost.MP11-compatible list of models of MutableImageViewConcept
+/// \tparam Types Model MPL Random Access Container of models of MutableImageViewConcept
 /// \tparam View Model ImageViewConcept
-template <typename ...Types, typename View>
-void copy_pixels(View const& src, any_image_view<Types...> const& dst)
+template <typename Types, typename View>
+void copy_pixels(View const& src, any_image_view<Types> const& dst)
 {
-    variant2::visit(std::bind(detail::copy_pixels_fn(), src, std::placeholders::_1), dst);
+    apply_operation(dst, std::bind(detail::copy_pixels_fn(), src, std::placeholders::_1));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyPixels
-/// \tparam Types1 Model Boost.MP11-compatible list of models of ImageViewConcept
-/// \tparam Types2 Model Boost.MP11-compatible list of models of MutableImageViewConcept
-template <typename ...Types1, typename ...Types2>
-void copy_pixels(any_image_view<Types1...> const& src, any_image_view<Types2...> const& dst)
+/// \tparam Types1 Model MPL Random Access Container of models of ImageViewConcept
+/// \tparam Types2 Model MPL Random Access Container of models of MutableImageViewConcept
+template <typename Types1, typename Types2>
+void copy_pixels(any_image_view<Types1> const& src, any_image_view<Types2> const& dst)
 {
-    variant2::visit(detail::copy_pixels_fn(), src, dst);
+    apply_operation(src, dst, detail::copy_pixels_fn());
 }
 
 //forward declaration for default_color_converter (see full definition in color_convert.hpp)
 struct default_color_converter;
 
 /// \ingroup ImageViewSTLAlgorithmsCopyAndConvertPixels
-/// \tparam Types Model Boost.MP11-compatible list of models of ImageViewConcept
+/// \tparam Types Model MPL Random Access Container of models of ImageViewConcept
 /// \tparam View Model MutableImageViewConcept
 /// \tparam CC Model ColorConverterConcept
-template <typename ...Types, typename View, typename CC>
-void copy_and_convert_pixels(any_image_view<Types...> const& src, View const& dst, CC cc)
+template <typename Types, typename View, typename CC>
+void copy_and_convert_pixels(any_image_view<Types> const& src, View const& dst, CC cc)
 {
     using cc_fn = detail::copy_and_convert_pixels_fn<CC>;
-    variant2::visit(std::bind(cc_fn{cc}, std::placeholders::_1, dst), src);
+    apply_operation(src, std::bind(cc_fn{cc}, std::placeholders::_1, dst));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyAndConvertPixels
-/// \tparam Types Model Boost.MP11-compatible list of models of ImageViewConcept
+/// \tparam Types Model MPL Random Access Container of models of ImageViewConcept
 /// \tparam View Model MutableImageViewConcept
-template <typename ...Types, typename View>
-void copy_and_convert_pixels(any_image_view<Types...> const& src, View const& dst)
+template <typename Types, typename View>
+void copy_and_convert_pixels(any_image_view<Types> const& src, View const& dst)
 {
     using cc_fn = detail::copy_and_convert_pixels_fn<default_color_converter>;
-    variant2::visit(std::bind(cc_fn{}, std::placeholders::_1, dst), src);
+    apply_operation(src, std::bind(cc_fn{}, std::placeholders::_1, dst));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyAndConvertPixels
 /// \tparam View Model ImageViewConcept
-/// \tparam Types Model Boost.MP11-compatible list of models of MutableImageViewConcept
+/// \tparam Types Model MPL Random Access Container of models of MutableImageViewConcept
 /// \tparam CC Model ColorConverterConcept
-template <typename View, typename ...Types, typename CC>
-void copy_and_convert_pixels(View const& src, any_image_view<Types...> const& dst, CC cc)
+template <typename View, typename Types, typename CC>
+void copy_and_convert_pixels(View const& src, any_image_view<Types> const& dst, CC cc)
 {
     using cc_fn = detail::copy_and_convert_pixels_fn<CC>;
-    variant2::visit(std::bind(cc_fn{cc}, src, std::placeholders::_1), dst);
+    apply_operation(dst, std::bind(cc_fn{cc}, src, std::placeholders::_1));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyAndConvertPixels
 /// \tparam View Model ImageViewConcept
-/// \tparam Type Model Boost.MP11-compatible list of models of MutableImageViewConcept
-template <typename View, typename ...Types>
-void copy_and_convert_pixels(View const& src, any_image_view<Types...> const& dst)
+/// \tparam Type Model MPL Random Access Container of models of MutableImageViewConcept
+template <typename View, typename Types>
+void copy_and_convert_pixels(View const& src, any_image_view<Types> const& dst)
 {
     using cc_fn = detail::copy_and_convert_pixels_fn<default_color_converter>;
-    variant2::visit(std::bind(cc_fn{}, src, std::placeholders::_1), dst);
+    apply_operation(dst, std::bind(cc_fn{}, src, std::placeholders::_1));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyAndConvertPixels
-/// \tparam Types1 Model Boost.MP11-compatible list of models of ImageViewConcept
-/// \tparam Types2 Model Boost.MP11-compatible list of models of MutableImageViewConcept
+/// \tparam Types1 Model MPL Random Access Container of models of ImageViewConcept
+/// \tparam Types2 Model MPL Random Access Container of models of MutableImageViewConcept
 /// \tparam CC Model ColorConverterConcept
-template <typename ...Types1, typename ...Types2, typename CC>
+template <typename Types1, typename Types2, typename CC>
 void copy_and_convert_pixels(
-    any_image_view<Types1...> const& src,
-    any_image_view<Types2...> const& dst, CC cc)
+    any_image_view<Types1> const& src,
+    any_image_view<Types2> const& dst, CC cc)
 {
-    variant2::visit(detail::copy_and_convert_pixels_fn<CC>(cc), src, dst);
+    apply_operation(src, dst, detail::copy_and_convert_pixels_fn<CC>(cc));
 }
 
 /// \ingroup ImageViewSTLAlgorithmsCopyAndConvertPixels
-/// \tparam Types1 Model Boost.MP11-compatible list of models of ImageViewConcept
-/// \tparam Types2 Model Boost.MP11-compatible list of models of MutableImageViewConcept
-template <typename ...Types1, typename ...Types2>
+/// \tparam Types1 Model MPL Random Access Container of models of ImageViewConcept
+/// \tparam Types2 Model MPL Random Access Container of models of MutableImageViewConcept
+template <typename Types1, typename Types2>
 void copy_and_convert_pixels(
-    any_image_view<Types1...> const& src,
-    any_image_view<Types2...> const& dst)
+    any_image_view<Types1> const& src,
+    any_image_view<Types2> const& dst)
 {
-    variant2::visit(
-        detail::copy_and_convert_pixels_fn<default_color_converter>(), src, dst);
+    apply_operation(src, dst,
+        detail::copy_and_convert_pixels_fn<default_color_converter>());
 }
 
 namespace detail {
@@ -190,7 +186,7 @@ template <bool IsCompatible>
 struct fill_pixels_fn1
 {
     template <typename V, typename Value>
-    static void apply(V const& src, Value const& val) { fill_pixels(src, val); }
+    static void apply(V const &src, Value const &val) { fill_pixels(src, val); }
 };
 
 // copy_pixels invoked on incompatible images
@@ -198,7 +194,7 @@ template <>
 struct fill_pixels_fn1<false>
 {
     template <typename V, typename Value>
-    static void apply(V const&, Value const&) { throw std::bad_cast();}
+    static void apply(V const &, Value const &) { throw std::bad_cast();}
 };
 
 template <typename Value>
@@ -227,40 +223,11 @@ struct fill_pixels_fn
 
 /// \ingroup ImageViewSTLAlgorithmsFillPixels
 /// \brief fill_pixels for any image view. The pixel to fill with must be compatible with the current view
-/// \tparam Types Model Boost.MP11-compatible list of models of MutableImageViewConcept
-template <typename ...Types, typename Value>
-void fill_pixels(any_image_view<Types...> const& view, Value const& val)
+/// \tparam Types Model MPL Random Access Container of models of MutableImageViewConcept
+template <typename Types, typename Value>
+void fill_pixels(any_image_view<Types> const& view, Value const& val)
 {
-    variant2::visit(detail::fill_pixels_fn<Value>(val), view);
-}
-
-namespace detail {
-
-template <typename F>
-struct for_each_pixel_fn
-{
-    for_each_pixel_fn(F&& fun) : fun_(std::move(fun)) {}
-
-    template <typename View>
-    auto operator()(View const& view) -> F
-    {
-        return for_each_pixel(view, fun_);
-    }
-
-    F fun_;
-};
-
-} // namespace detail
-
-/// \defgroup ImageViewSTLAlgorithmsForEachPixel for_each_pixel
-/// \ingroup ImageViewSTLAlgorithms
-/// \brief std::for_each for any image views
-///
-/// \ingroup ImageViewSTLAlgorithmsForEachPixel
-template <typename ...Types, typename F>
-auto for_each_pixel(any_image_view<Types...> const& view, F fun) -> F
-{
-    return variant2::visit(detail::for_each_pixel_fn<F>(std::move(fun)), view);
+    apply_operation(view, detail::fill_pixels_fn<Value>(val));
 }
 
 }}  // namespace boost::gil

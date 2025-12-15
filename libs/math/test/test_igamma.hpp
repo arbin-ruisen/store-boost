@@ -8,12 +8,11 @@
 
 #include <boost/math/concepts/real_concept.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
-#include <boost/math/special_functions/gamma.hpp>
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
-#include <boost/test/tools/floating_point_comparison.hpp>
-#include "../include_private/boost/math/tools/test.hpp"
+#include <boost/test/floating_point_comparison.hpp>
 #include <boost/math/tools/stats.hpp>
+#include <boost/math/tools/test.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/type_traits/is_floating_point.hpp>
 #include <boost/array.hpp>
@@ -203,7 +202,7 @@ void test_spots(T)
 
    //typedef boost::math::policies::policy<boost::math::policies::overflow_error<boost::math::policies::throw_on_error> > throw_policy;
 
-   BOOST_IF_CONSTEXPR(std::numeric_limits<T>::max_exponent <= 1024 && std::numeric_limits<T>::has_infinity)
+   if(std::numeric_limits<T>::max_exponent <= 1024 && std::numeric_limits<T>::has_infinity)
    {
       BOOST_CHECK_EQUAL(::boost::math::tgamma(static_cast<T>(176), static_cast<T>(100)), std::numeric_limits<T>::infinity());
       //BOOST_MATH_CHECK_THROW(::boost::math::tgamma(static_cast<T>(176), static_cast<T>(100), throw_policy()), std::overflow_error);
@@ -213,10 +212,10 @@ void test_spots(T)
       BOOST_CHECK_EQUAL(::boost::math::tgamma(static_cast<T>(740.5), static_cast<T>(2500)), std::numeric_limits<T>::infinity());
       BOOST_CHECK_EQUAL(::boost::math::tgamma_lower(static_cast<T>(10000.0f), static_cast<T>(10000.0f / 4)), std::numeric_limits<T>::infinity());
    }
-   BOOST_IF_CONSTEXPR(std::numeric_limits<T>::max_exponent >= 1024)
+   if(std::numeric_limits<T>::max_exponent >= 1024)
    {
-      BOOST_CHECK_CLOSE(::boost::math::tgamma(static_cast<T>(170), static_cast<T>(165)), static_cast<T>(2.737338337642022829223832094019477918166996032112404370e304L), (std::numeric_limits<T>::digits > 100 ? 10 : 3) * tolerance);
-      BOOST_CHECK_CLOSE(::boost::math::tgamma_lower(static_cast<T>(170), static_cast<T>(165)), static_cast<T>(1.531729671362682445715419794880088619901822603944331733e304L), 3 * tolerance);
+      BOOST_CHECK_CLOSE(::boost::math::tgamma(static_cast<T>(170), static_cast<T>(165)), static_cast<T>(2.737338337642022829223832094019477918166996032112404370e304L), tolerance);
+      BOOST_CHECK_CLOSE(::boost::math::tgamma_lower(static_cast<T>(170), static_cast<T>(165)), static_cast<T>(1.531729671362682445715419794880088619901822603944331733e304L), tolerance);
       BOOST_CHECK_CLOSE(::boost::math::tgamma(static_cast<T>(170), static_cast<T>(170)), static_cast<T>(2.090991698081449410761040647015858316167077909285580375e304L), 10 * tolerance);
       BOOST_CHECK_CLOSE(::boost::math::tgamma_lower(static_cast<T>(170), static_cast<T>(170)), static_cast<T>(2.178076310923255864178211241883708221901740726771155728e304L), 10 * tolerance);
       BOOST_CHECK_CLOSE(::boost::math::tgamma(static_cast<T>(170), static_cast<T>(190)), static_cast<T>(2.8359275512790301602903689596273175148895758522893941392e303L), 10 * tolerance);
@@ -250,34 +249,5 @@ void test_spots(T)
       BOOST_CHECK_EQUAL(::boost::math::gamma_q(static_cast<T>(22.25), std::numeric_limits<T>::infinity()), 0);
       BOOST_CHECK_EQUAL(::boost::math::gamma_p(static_cast<T>(22.25), std::numeric_limits<T>::infinity()), 1);
    }
-   //
-   // Large arguments and small parameters, see https://github.com/boostorg/math/issues/451:
-   //
-   BOOST_CHECK_EQUAL(::boost::math::gamma_q(static_cast<T>(1770), static_cast<T>(1e-12)), 1);
-   BOOST_CHECK_EQUAL(::boost::math::gamma_p(static_cast<T>(1770), static_cast<T>(1e-12)), 0);
-   //
-   // Coverage:
-   //
-#ifndef BOOST_MATH_NO_EXCEPTIONS
-   BOOST_CHECK_THROW(boost::math::gamma_p(static_cast<T>(-1), static_cast<T>(2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_q(static_cast<T>(-1), static_cast<T>(2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_p(static_cast<T>(1), static_cast<T>(-2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_q(static_cast<T>(1), static_cast<T>(-2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_p(static_cast<T>(0), static_cast<T>(2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_q(static_cast<T>(0), static_cast<T>(2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_p_derivative(static_cast<T>(-1), static_cast<T>(2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_p_derivative(static_cast<T>(1), static_cast<T>(-2)), std::domain_error);
-   BOOST_CHECK_THROW(boost::math::gamma_p_derivative(static_cast<T>(0), static_cast<T>(2)), std::domain_error);
-#else
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_p(static_cast<T>(-1), static_cast<T>(2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_q(static_cast<T>(-1), static_cast<T>(2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_p(static_cast<T>(1), static_cast<T>(-2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_q(static_cast<T>(1), static_cast<T>(-2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_p(static_cast<T>(0), static_cast<T>(2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_q(static_cast<T>(0), static_cast<T>(2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_p_derivative(static_cast<T>(-1), static_cast<T>(2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_p_derivative(static_cast<T>(1), static_cast<T>(-2))));
-   BOOST_CHECK((boost::math::isnan)(boost::math::gamma_p_derivative(static_cast<T>(0), static_cast<T>(2))));
-#endif
 }
 

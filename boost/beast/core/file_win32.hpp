@@ -13,7 +13,7 @@
 #include <boost/beast/core/detail/config.hpp>
 
 #if ! defined(BOOST_BEAST_USE_WIN32_FILE)
-# ifdef _WIN32
+# ifdef BOOST_MSVC
 #  define BOOST_BEAST_USE_WIN32_FILE 1
 # else
 #  define BOOST_BEAST_USE_WIN32_FILE 0

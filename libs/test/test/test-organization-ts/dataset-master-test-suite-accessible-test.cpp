@@ -18,7 +18,7 @@
 class dataset_loader
 {
 public:
-    static const int arity = 1;
+    enum { arity = 1 };
   
     // this constructor access the master test suite
     dataset_loader();
@@ -153,7 +153,7 @@ public:
     data_type m_expected;
     data_type m_input;
   
-    static const int arity = 3;
+    enum { arity = 3 };
 
 public:
     dataset_loader_arity3(std::string some_additional) : m_some_additional(some_additional)

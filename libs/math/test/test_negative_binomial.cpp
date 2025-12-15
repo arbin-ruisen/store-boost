@@ -26,17 +26,9 @@
 #  define TEST_REAL_CONCEPT
 #endif
 
-#ifdef SYCL_LANGUAGE_VERSION
-#include "sycl/sycl.hpp"
-#endif
-
-#include <boost/math/tools/config.hpp>
-#include "../include_private/boost/math/tools/test.hpp"
-
-#ifndef BOOST_MATH_NO_REAL_CONCEPT_TESTS
+#include <boost/math/tools/test.hpp> // for real_concept
 #include <boost/math/concepts/real_concept.hpp> // for real_concept
 using ::boost::math::concepts::real_concept;
-#endif
 
 #include <boost/math/distributions/negative_binomial.hpp> // for negative_binomial_distribution
 using boost::math::negative_binomial_distribution;
@@ -46,7 +38,7 @@ using boost::math::negative_binomial_distribution;
 
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp> // for test_main
-#include <boost/test/tools/floating_point_comparison.hpp> // for BOOST_CHECK_CLOSE
+#include <boost/test/floating_point_comparison.hpp> // for BOOST_CHECK_CLOSE
 #include "table_type.hpp"
 #include "test_out_of_range.hpp"
 

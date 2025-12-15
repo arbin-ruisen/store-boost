@@ -7,7 +7,7 @@
 
 #include <boost/mpl/assert.hpp>
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 
 template<typename T>
@@ -37,25 +37,25 @@ template<typename T>
 using user_ref = boost::yap::expression_ref<user_expr, T>;
 
 
-int main()
+int test_main(int, char * [])
 {
     {
         {
             BOOST_MPL_ASSERT((std::is_same<decltype(yap::value(1.0)), double &&>));
-            BOOST_TEST(yap::value(1.0) == 1.0);
+            BOOST_CHECK(yap::value(1.0) == 1.0);
         }
 
         {
             double d = 2.0;
             BOOST_MPL_ASSERT((std::is_same<decltype(yap::value(d)), double &>));
-            BOOST_TEST(yap::value(d) == 2.0);
+            BOOST_CHECK(yap::value(d) == 2.0);
         }
 
         {
             double const d = 3.0;
             BOOST_MPL_ASSERT(
                 (std::is_same<decltype(yap::value(d)), double const &>));
-            BOOST_TEST(yap::value(d) == 3.0);
+            BOOST_CHECK(yap::value(d) == 3.0);
         }
     }
 
@@ -64,20 +64,20 @@ int main()
             term<double> td = {{1.0}};
             BOOST_MPL_ASSERT(
                 (std::is_same<decltype(yap::value(std::move(td))), double &&>));
-            BOOST_TEST(yap::value(std::move(td)) == 1.0);
+            BOOST_CHECK(yap::value(std::move(td)) == 1.0);
         }
 
         {
             term<double> td = {{2.0}};
             BOOST_MPL_ASSERT((std::is_same<decltype(yap::value(td)), double &>));
-            BOOST_TEST(yap::value(td) == 2.0);
+            BOOST_CHECK(yap::value(td) == 2.0);
         }
 
         {
             term<double> const td = {{3.0}};
             BOOST_MPL_ASSERT(
                 (std::is_same<decltype(yap::value(td)), double const &>));
-            BOOST_TEST(yap::value(td) == 3.0);
+            BOOST_CHECK(yap::value(td) == 3.0);
         }
 
         term<double> unity = {{1.0}};
@@ -135,20 +135,20 @@ int main()
             user_term<double> td = {{1.0}};
             BOOST_MPL_ASSERT(
                 (std::is_same<decltype(yap::value(std::move(td))), double &&>));
-            BOOST_TEST(yap::value(std::move(td)) == 1.0);
+            BOOST_CHECK(yap::value(std::move(td)) == 1.0);
         }
 
         {
             user_term<double> td = {{2.0}};
             BOOST_MPL_ASSERT((std::is_same<decltype(yap::value(td)), double &>));
-            BOOST_TEST(yap::value(td) == 2.0);
+            BOOST_CHECK(yap::value(td) == 2.0);
         }
 
         {
             user_term<double> const td = {{3.0}};
             BOOST_MPL_ASSERT(
                 (std::is_same<decltype(yap::value(td)), double const &>));
-            BOOST_TEST(yap::value(td) == 3.0);
+            BOOST_CHECK(yap::value(td) == 3.0);
         }
 
         user_term<double> unity = {{1.0}};
@@ -204,5 +204,5 @@ int main()
         }
     }
 
-    return boost::report_errors();
+    return 0;
 }

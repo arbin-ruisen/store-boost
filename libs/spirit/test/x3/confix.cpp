@@ -5,6 +5,7 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
+#include <boost/detail/lightweight_test.hpp>
 
 #include <boost/spirit/home/x3/char.hpp>
 #include <boost/spirit/home/x3/core.hpp>
@@ -19,10 +20,6 @@ int main()
 {
     namespace x3 = boost::spirit::x3;
     using namespace spirit_test;
-
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(x3::confix('(', ')'));
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(x3::confix("[", "]"));
-    BOOST_SPIRIT_ASSERT_CONSTEXPR_CTORS(x3::confix("/*", "*/"));
 
     {
         const auto comment = x3::confix("/*", "*/");

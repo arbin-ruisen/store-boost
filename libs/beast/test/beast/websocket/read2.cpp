@@ -14,15 +14,18 @@
 
 #include <boost/asio/write.hpp>
 
-#if BOOST_ASIO_HAS_CO_AWAIT
-#include <boost/asio/use_awaitable.hpp>
+#include <boost/config/workaround.hpp>
+#if BOOST_WORKAROUND(BOOST_GCC, < 80200)
+#define BOOST_BEAST_SYMBOL_HIDDEN __attribute__ ((visibility("hidden")))
+#else
+#define BOOST_BEAST_SYMBOL_HIDDEN
 #endif
 
 namespace boost {
 namespace beast {
 namespace websocket {
 
-class read2_test
+class BOOST_BEAST_SYMBOL_HIDDEN read2_test
     : public websocket_test_suite
 {
 public:
@@ -466,8 +469,9 @@ public:
             {
                 if(se.code() == test::error::test_failure)
                     throw;
-                auto const ec = make_error_code(static_cast<zlib::error>(0));
-                BEAST_EXPECTS(se.code().category() == ec.category(),
+                BEAST_EXPECTS(se.code().category() ==
+                    make_error_code(static_cast<
+                        zlib::error>(0)).category(),
                     se.code().message());
             }
             catch(...)
@@ -669,34 +673,10 @@ public:
         }
     }
 
-#if BOOST_ASIO_HAS_CO_AWAIT
-    void testAwaitableCompiles(
-        stream<test::stream>& s,
-        flat_buffer& dynbuf,
-        net::mutable_buffer buf,
-        std::size_t limit)
-    {
-        static_assert(std::is_same_v<
-            net::awaitable<std::size_t>, decltype(
-            s.async_read(dynbuf, net::use_awaitable))>);
-
-        static_assert(std::is_same_v<
-            net::awaitable<std::size_t>, decltype(
-            s.async_read_some(buf, net::use_awaitable))>);
-
-        static_assert(std::is_same_v<
-            net::awaitable<std::size_t>, decltype(
-            s.async_read_some(dynbuf, limit, net::use_awaitable))>);
-    }
-#endif
-
     void
     run() override
     {
         testRead();
-#if BOOST_ASIO_HAS_CO_AWAIT
-        boost::ignore_unused(&read2_test::testAwaitableCompiles);
-#endif
     }
 };
 

@@ -1,11 +1,11 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2014-2021, Oracle and/or its affiliates.
-// Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+// Copyright (c) 2014-2015, Oracle and/or its affiliates.
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
+
+// Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
 
 #ifndef BOOST_GEOMETRY_TEST_SET_OPS_LINEAR_LINEAR_HPP
 #define BOOST_GEOMETRY_TEST_SET_OPS_LINEAR_LINEAR_HPP
@@ -17,11 +17,8 @@
 #include <algorithm>
 
 #include <boost/core/ignore_unused.hpp>
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/iterator.hpp>
-#include <boost/range/size.hpp>
-#include <boost/range/value_type.hpp>
+#include <boost/range.hpp>
+#include <boost/typeof/typeof.hpp>
 
 #include <boost/geometry/policies/compare.hpp>
 #include <boost/geometry/algorithms/equals.hpp>
@@ -29,15 +26,18 @@
 
 #include "test_get_turns_ll_invariance.hpp"
 
-#include <string_from_type.hpp>
-
 namespace bg = ::boost::geometry;
 
 
 
+template <typename Linestring1, typename Linestring2>
 struct ls_less
 {
-    template <typename Linestring1, typename Linestring2>
+    typedef typename boost::range_iterator<Linestring1 const>::type Iterator1;
+    typedef typename boost::range_iterator<Linestring2 const>::type Iterator2;
+
+    typedef bg::less<typename bg::point_type<Linestring1>::type> point_less;
+
     bool operator()(Linestring1 const& linestring1,
                     Linestring2 const& linestring2) const
     {
@@ -46,10 +46,9 @@ struct ls_less
             return boost::size(linestring1) < boost::size(linestring2);
         }
 
-        bg::less<typename bg::point_type<Linestring1>::type> less;
-
-        auto it1 = boost::begin(linestring1);
-        auto it2 = boost::begin(linestring2);
+        Iterator1 it1 = boost::begin(linestring1);
+        Iterator2 it2 = boost::begin(linestring2);
+        point_less less;
         for (; it1 != boost::end(linestring1); ++it1, ++it2)
         {
             if (less(*it1, *it2))
@@ -66,19 +65,21 @@ struct ls_less
 };
 
 
+template <typename Linestring1, typename Linestring2>
 struct ls_equal
 {
-    template <typename Linestring1, typename Linestring2>
     bool operator()(Linestring1 const& linestring1,
                     Linestring2 const& linestring2) const
     {
-        ls_less less;
+        ls_less<Linestring1, Linestring2> less;
+
         return ! less(linestring1, linestring2)
             && ! less(linestring2, linestring1);
     }    
 };
 
 
+template <typename Point1, typename Point2>
 class pt_equal
 {
 private:
@@ -100,7 +101,6 @@ private:
 public:
     pt_equal(double tolerence) : m_tolerence(tolerence) {}
 
-    template <typename Point1, typename Point2>
     bool operator()(Point1 const& point1, Point2 const& point2) const
     {
         // allow for some tolerence in testing equality of points
@@ -116,6 +116,11 @@ struct multilinestring_equals
     template <typename MultiLinestring, bool Enable>
     struct unique
     {
+        typedef typename boost::range_value<MultiLinestring>::type Linestring;
+        typedef typename bg::point_type<MultiLinestring>::type point_type;
+        typedef ls_equal<Linestring, Linestring> linestring_equal;
+        typedef pt_equal<point_type, point_type> point_equal;
+
         template <typename Range, typename EqualTo>
         void apply_to_range(Range& range, EqualTo const& equal_to)
         {
@@ -129,9 +134,9 @@ struct multilinestring_equals
             for (typename boost::range_iterator<MultiLinestring>::type it
                      = boost::begin(mls); it != boost::end(mls); ++it)
             {
-                apply_to_range(*it, pt_equal(tolerance));
+                apply_to_range(*it, point_equal(tolerance));
             }
-            apply_to_range(mls, ls_equal());
+            apply_to_range(mls, linestring_equal());
         }
     };
 
@@ -149,11 +154,50 @@ struct multilinestring_equals
                MultiLinestring2 const& multilinestring2,
                double tolerance)
     {
+        typedef typename boost::range_iterator
+            <
+                MultiLinestring1 const
+            >::type ls1_iterator;
+
+        typedef typename boost::range_iterator
+            <
+                MultiLinestring2 const
+            >::type ls2_iterator;
+
+        typedef typename boost::range_value<MultiLinestring1>::type Linestring1;
+
+        typedef typename boost::range_value<MultiLinestring2>::type Linestring2;
+
+        typedef typename boost::range_iterator
+            <
+                Linestring1 const
+            >::type point1_iterator;
+
+        typedef typename boost::range_iterator
+            <
+                Linestring2 const
+            >::type point2_iterator;
+
+        typedef ls_less<Linestring1, Linestring2> linestring_less;
+
+        typedef pt_equal
+            <
+                typename boost::range_value
+                    <
+                        typename boost::range_value<MultiLinestring1>::type
+                    >::type,
+                typename boost::range_value
+                    <
+                        typename boost::range_value<MultiLinestring2>::type
+                    >::type
+            > point_equal;
+
+
         MultiLinestring1 mls1 = multilinestring1;
         MultiLinestring2 mls2 = multilinestring2;
 
-        std::sort(boost::begin(mls1), boost::end(mls1), ls_less());
-        std::sort(boost::begin(mls2), boost::end(mls2), ls_less());
+        std::sort(boost::begin(mls1), boost::end(mls1), linestring_less());
+        std::sort(boost::begin(mls2), boost::end(mls2), linestring_less());
 
         unique<MultiLinestring1, EnableUnique>()(mls1, tolerance);
         unique<MultiLinestring2, EnableUnique>()(mls2, tolerance);
@@ -163,19 +207,19 @@ struct multilinestring_equals
             return false;
         }
 
-        auto it1 = boost::begin(mls1);
-        auto it2 = boost::begin(mls2);
+        ls1_iterator it1 = boost::begin(mls1);
+        ls2_iterator it2 = boost::begin(mls2);
         for (; it1 != boost::end(mls1); ++it1, ++it2)
         {
             if (boost::size(*it1) != boost::size(*it2))
             {
                 return false;
             }
-            auto pit1 = boost::begin(*it1);
-            auto pit2 = boost::begin(*it2);
+            point1_iterator pit1 = boost::begin(*it1);
+            point2_iterator pit2 = boost::begin(*it2);
             for (; pit1 != boost::end(*it1); ++pit1, ++pit2)
             {
-                if (! pt_equal(tolerance)(*pit1, *pit2))
+                if (! point_equal(tolerance)(*pit1, *pit2))
                 {
                     return false;
                 }
@@ -208,7 +252,9 @@ private:
     convert_isolated_points_to_segments(MultiLinestring const& multilinestring,
                                         OutputIterator oit)
     {
-        for (auto it = boost::begin(multilinestring) ; it != boost::end(multilinestring); ++it)
+        BOOST_AUTO_TPL(it, boost::begin(multilinestring));
+
+        for (; it != boost::end(multilinestring); ++it)
         {
             if (boost::size(*it) == 1)
             {
@@ -299,12 +345,9 @@ void set_operation_output(std::string const& set_op_id,
     typedef typename bg::point_type<G1>::type point_type;
 
     std::ostringstream filename;
-    filename << "ops_" + set_op_id + "_"
-        << caseid << "_"
-        << string_from_type<coordinate_type>::name()
-        << ".svg";
+    filename << "svgs/" << set_op_id << "_" << caseid << ".svg";
 
-    std::ofstream svg(filename.str());
+    std::ofstream svg(filename.str().c_str());
 
     bg::svg_mapper<point_type> mapper(svg, 500, 500);
 
@@ -314,7 +357,7 @@ void set_operation_output(std::string const& set_op_id,
     mapper.map(g2, "stroke-opacity:1;stroke:rgb(153,204,0);stroke-width:4");
     mapper.map(g1, "stroke-opacity:1;stroke:rgb(51,51,153);stroke-width:2");
 
-    auto it = output.begin();
+    BOOST_AUTO_TPL(it, output.begin());
     for (; it != output.end(); ++it)
     {
         if ( boost::size(*it) == 2

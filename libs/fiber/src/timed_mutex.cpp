@@ -26,14 +26,23 @@ timed_mutex::try_lock_until_( std::chrono::steady_clock::time_point const& timeo
             return false;
         }
         context * active_ctx = context::active();
+        // store this fiber in order to be notified later
         detail::spinlock_lock lk{ wait_queue_splk_ };
         if ( nullptr == owner_) {
             owner_ = active_ctx;
             return true;
         }
-        if ( ! wait_queue_.suspend_and_wait_until( lk, active_ctx, timeout_time)) {
+        BOOST_ASSERT( ! active_ctx->wait_is_linked() );
+        active_ctx->wait_link( wait_queue_);
+        active_ctx->twstatus.store( reinterpret_cast< std::intptr_t >( this), std::memory_order_release);
+        // suspend this fiber until notified or timed-out
+        if ( ! active_ctx->wait_until( timeout_time, lk) ) {
+            // remove fiber from wait-queue 
+            lk.lock();
+            wait_queue_.remove( * active_ctx);
             return false;
         }
+        BOOST_ASSERT( ! active_ctx->wait_is_linked() );
     }
 }
 
@@ -47,12 +56,16 @@ timed_mutex::lock() {
             throw lock_error{
                     std::make_error_code( std::errc::resource_deadlock_would_occur),
                     "boost fiber: a deadlock is detected" };
-        }
-        if ( nullptr == owner_) {
+        } else if ( nullptr == owner_) {
             owner_ = active_ctx;
             return;
         }
-        wait_queue_.suspend_and_wait( lk, active_ctx);
+        BOOST_ASSERT( ! active_ctx->wait_is_linked() );
+        active_ctx->wait_link( wait_queue_);
+        active_ctx->twstatus.store( static_cast< std::intptr_t >( 0), std::memory_order_release);
+        // suspend this fiber
+        active_ctx->suspend( lk);
+        BOOST_ASSERT( ! active_ctx->wait_is_linked() );
     }
 }
 
@@ -64,8 +77,7 @@ timed_mutex::try_lock() {
         throw lock_error{
                 std::make_error_code( std::errc::resource_deadlock_would_occur),
                 "boost fiber: a deadlock is detected" };
-    }
-    if ( nullptr == owner_) {
+    } else if ( nullptr == owner_) {
         owner_ = active_ctx;
     }
     lk.unlock();
@@ -84,8 +96,19 @@ timed_mutex::unlock() {
                 "boost fiber: no  privilege to perform the operation" };
     }
     owner_ = nullptr;
-
-    wait_queue_.notify_one();
+    if ( ! wait_queue_.empty() ) {
+        context * ctx = & wait_queue_.front();
+        wait_queue_.pop_front();
+        std::intptr_t expected = reinterpret_cast< std::intptr_t >( this);
+        if ( ctx->twstatus.compare_exchange_strong( expected, static_cast< std::intptr_t >( -1), std::memory_order_acq_rel) ) {
+            // notify context
+            active_ctx->schedule( ctx);
+        } else if ( static_cast< std::intptr_t >( 0) == expected) {
+            // no timed-wait op.
+            // notify context
+            active_ctx->schedule( ctx);
+        }
+    }
 }
 
 }}

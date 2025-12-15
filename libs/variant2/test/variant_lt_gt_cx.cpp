@@ -86,15 +86,6 @@ int main()
         STATIC_ASSERT( !(v1 <= v2) );
         STATIC_ASSERT( !(v1 >= v2) );
     }
-
-    {
-        constexpr variant<monostate> v1, v2;
-
-        STATIC_ASSERT( !(v1 < v2) );
-        STATIC_ASSERT( !(v1 > v2) );
-        STATIC_ASSERT( v1 <= v2 );
-        STATIC_ASSERT( v1 >= v2 );
-    }
 }
 
 #endif

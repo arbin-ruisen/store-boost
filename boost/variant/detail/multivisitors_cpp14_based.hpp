@@ -17,9 +17,9 @@
 # pragma once
 #endif
 
-#include <tuple>
+#include <boost/variant/detail/multivisitors_cpp14_based.hpp>
 
-namespace boost {
+namespace boost { 
 
 namespace detail { namespace variant {
 
@@ -106,9 +106,8 @@ namespace detail { namespace variant {
     template <class Visitor, class T1, class T2, class T3, class... TN>
     inline decltype(auto) apply_visitor(const Visitor& visitor, T1&& v1, T2&& v2, T3&& v3, TN&&... vn,
         typename boost::disable_if<
-            boost::detail::variant::has_result_type<Visitor>,
-            bool
-        >::type = true)
+            boost::detail::variant::has_result_type<Visitor>
+        >::type* = 0)
     {
         return boost::apply_visitor(
             ::boost::detail::variant::make_one_by_one_visitor_and_value_referer_cpp14(
@@ -120,17 +119,16 @@ namespace detail { namespace variant {
                     ),
                 std::tuple<>()
             ),
-            std::forward<T1>(v1)
+            ::boost::forward<T1>(v1)
         );
     }
-
+    
 
     template <class Visitor, class T1, class T2, class T3, class... TN>
     inline decltype(auto) apply_visitor(Visitor& visitor, T1&& v1, T2&& v2, T3&& v3, TN&&... vn,
         typename boost::disable_if<
-            boost::detail::variant::has_result_type<Visitor>,
-            bool
-        >::type = true)
+            boost::detail::variant::has_result_type<Visitor>
+        >::type* = 0)
     {
         return ::boost::apply_visitor(
             ::boost::detail::variant::make_one_by_one_visitor_and_value_referer_cpp14(
@@ -142,7 +140,7 @@ namespace detail { namespace variant {
                     ),
                 std::tuple<>()
             ),
-            std::forward<T1>(v1)
+            ::boost::forward<T1>(v1)
         );
     }
 

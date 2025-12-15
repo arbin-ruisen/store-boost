@@ -9,11 +9,7 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <boost/core/lightweight_test.hpp>
-
-#if defined(__GNUC__)
-# pragma GCC diagnostic ignored "-Waddress"
-#endif
+#include <boost/detail/lightweight_test.hpp>
 
 #include <boost/assert.hpp>
 

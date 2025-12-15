@@ -8,9 +8,10 @@
 //
 //  For more information see here: http://spirit.sourceforge.net/home/?p=400
 
+#include <boost/config/warning_disable.hpp>
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/karma_stream.hpp>
-#include <boost/phoenix.hpp>
+#include <boost/spirit/include/phoenix.hpp>
 #include <boost/fusion/include/std_pair.hpp>
 
 #include <iostream>

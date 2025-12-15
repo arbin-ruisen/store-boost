@@ -21,7 +21,7 @@ struct Functor
 #define U double
 
 Functor func;
-std::uintmax_t uim = 0;
+boost::uintmax_t uim = 0;
 
 void compile_and_link_test()
 {

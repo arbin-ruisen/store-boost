@@ -43,7 +43,7 @@ namespace beast {
 
     @li Buffer sequences representing the readable and writable
     bytes, returned by @ref data and @ref prepare, will have
-    a type of net::const_buffer or net::mutable_buffer.
+    length one.
 
     Upon construction, a maximum size for the buffer may be
     specified. If this limit is exceeded, the `std::length_error`
@@ -358,17 +358,17 @@ public:
     void
     reserve(std::size_t n);
 
-    /** Request the removal of unused capacity.
+    /** Reallocate the buffer to fit the readable bytes exactly.
 
-        This function attempts to reduce @ref capacity()
-        to @ref size(), which may not succeed.
+        Buffer sequences previously obtained using @ref data or
+        @ref prepare become invalid.
 
         @esafe
 
-        No-throw guarantee.
+        Strong guarantee.
     */
     void
-    shrink_to_fit() noexcept;
+    shrink_to_fit();
 
     /** Set the size of the readable and writable bytes to zero.
 
@@ -395,6 +395,9 @@ public:
 
     /// The ConstBufferSequence used to represent the readable bytes.
     using const_buffers_type = net::const_buffer;
+
+    /// The MutableBufferSequence used to represent the readable bytes.
+    using mutable_data_type = net::mutable_buffer;
 
     /// The MutableBufferSequence used to represent the writable bytes.
     using mutable_buffers_type = net::mutable_buffer;
@@ -435,7 +438,7 @@ public:
     }
 
     /// Returns a mutable buffer sequence representing the readable bytes
-    mutable_buffers_type
+    mutable_data_type
     data() noexcept
     {
         return {in_, dist(in_, out_)};

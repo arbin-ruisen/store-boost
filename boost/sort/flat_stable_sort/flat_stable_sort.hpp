@@ -13,13 +13,6 @@
 #ifndef __BOOST_SORT_FLAT_STABLE_SORT_HPP
 #define __BOOST_SORT_FLAT_STABLE_SORT_HPP
 
-#include <cstdlib>
-#include <functional>
-#include <iterator>
-#include <memory>
-#include <type_traits>
-#include <vector>
-
 #include <boost/sort/insert_sort/insert_sort.hpp>
 #include <boost/sort/common/util/insert.hpp>
 #include <boost/sort/common/merge_block.hpp>
@@ -28,7 +21,12 @@
 #include <boost/sort/common/util/traits.hpp>
 #include <boost/sort/common/indirect.hpp>
 
-
+#include <cstdlib>
+#include <functional>
+#include <iterator>
+#include <memory>
+#include <type_traits>
+#include <vector>
 
 namespace boost
 {
@@ -86,9 +84,6 @@ public:
                      circular_t *ptr_circ)
                     : merge_block_t(first, last, comp, ptr_circ)
     {
-        auto nelem = last - first;
-        assert (nelem >= 0);
-        if (nelem < 2) return;
         divide(index.begin(), index.end());
         rearrange_with_index();
     };
@@ -109,10 +104,9 @@ public:
 //----------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------
-//  @fn divide
-/// @brief Divide a big list of blocks in two parts to be sorted and merged
-/// @param itx_first iterator to the first element in the index
-/// @param itx_last itarator to to the after the last element in the index
+//  function :
+/// @brief :
+/// @param Pos :
 /// @return
 //------------------------------------------------------------------------
 template <class Iter_t, typename Compare, uint32_t Power2>
@@ -132,20 +126,21 @@ void flat_stable_sort <Iter_t, Compare, Power2>
     divide(itx_first, itx_first + nblock1);
     divide(itx_first + nblock1, itx_last);
     merge_range_pos(itx_first, itx_first + nblock1, itx_last);
-}
+};
 //
 //------------------------------------------------------------------------
-//  @fn sort_small
-/// @brief  sort an small number of blocks
-/// @param itx_first iterator to the first element in the index
-/// @param itx_last itarator to to the after the last element in the index
+//  function : sort_small
+/// @brief :
+/// @param
+/// @param
+/// @param
 //------------------------------------------------------------------------
 template <class Iter_t, typename Compare, uint32_t Power2>
 void flat_stable_sort <Iter_t, Compare, Power2>
 ::sort_small(it_index itx_first, it_index itx_last)
 {
     size_t nblock = size_t(itx_last - itx_first);
-    assert(nblock > 0 && nblock < 5);
+    assert(nblock > 0 and nblock < 5);
     value_t *paux = ptr_circ->get_buffer();
     range_it rng_data = get_group_range(*itx_first, nblock);
 
@@ -168,10 +163,10 @@ void flat_stable_sort <Iter_t, Compare, Power2>
     range_sort_data(rng_data2, rng_aux2, cmp);
     range_sort_buffer(rng_data1, rng_aux1, cmp);
     merge_half(rng_data, rng_aux1, rng_data2, cmp);
-}
+};
 //
 //------------------------------------------------------------------------
-//  @fn is_sorted_forward
+//  function : is_sorted_forward
 /// @brief : return if the data are ordered,
 /// @param itx_first : iterator to the first block in the index
 /// @param itx_last : iterator to the last block in the index
@@ -184,7 +179,7 @@ bool flat_stable_sort <Iter_t, Compare, Power2>
     size_t nblock = size_t(itx_last - itx_first);
     range_it rng = get_group_range(*itx_first, nblock);
     size_t nelem = rng.size();
-    size_t min_process = (std::max)(BLOCK_SIZE, (nelem >> 3));
+    size_t min_process = std::max(BLOCK_SIZE, (nelem >> 3));
 
     size_t nsorted1 = bsc::number_stable_sorted_forward (rng.first, rng.last,
                                                          min_process, cmp);
@@ -209,10 +204,10 @@ bool flat_stable_sort <Iter_t, Compare, Power2>
         merge_range_pos(itx_first, itx_first + nblock1, itx_last);
     };
     return true;
-}
+};
 //
 //------------------------------------------------------------------------
-//  @fn is_sorted_backward
+//  function : is_sorted_backward
 /// @brief : return if the data are ordered,
 /// @param itx_first : iterator to the first block in the index
 /// @param itx_last : iterator to the last block in the index
@@ -226,7 +221,7 @@ bool flat_stable_sort <Iter_t, Compare, Power2>
     range_it rng = get_group_range(*itx_first, nblock);
 
     size_t nelem = rng.size();
-    size_t min_process = (std::max)(BLOCK_SIZE, (nelem >> 3));
+    size_t min_process = std::max(BLOCK_SIZE, (nelem >> 3));
 
     size_t nsorted2 = bsc::number_stable_sorted_backward(rng.first, rng.last,
                                                          min_process, cmp);
@@ -250,16 +245,16 @@ bool flat_stable_sort <Iter_t, Compare, Power2>
         merge_range_pos(itx_first, itx_first + nblock1, itx_last);
     };
     return true;
-}
+};
 //****************************************************************************
-}// End namespace flat_internal
+};// End namespace flat_internal
 //****************************************************************************
 //
 namespace bscu = boost::sort::common::util;
 namespace flat = boost::sort::flat_internal;
 //
 ///---------------------------------------------------------------------------
-//  @fn flat_stable_sort
+//  function flat_stable_sort
 /// @brief This class is select the block size in the block_indirect_sort
 ///        algorithm depending of the type and size of the data to sort
 ///
@@ -270,7 +265,7 @@ inline void flat_stable_sort (Iter_t first, Iter_t last,
                                  Compare cmp = Compare())
 {
     flat::flat_stable_sort<Iter_t, Compare, 6> (first, last, cmp);
-}
+};
 
 template<size_t Size>
 struct block_size_fss
@@ -284,7 +279,7 @@ struct block_size_fss
 
 //
 ///---------------------------------------------------------------------------
-//  @fn flat_stable_sort
+//  function flat_stable_sort
 /// @brief This class is select the block size in the flat_stable_sort
 ///        algorithm depending of the type and size of the data to sort
 ///
@@ -297,21 +292,21 @@ inline void flat_stable_sort (Iter_t first, Iter_t last,
     flat::flat_stable_sort<Iter_t, Compare,
                            block_size_fss<sizeof(value_iter<Iter_t> )>::data>
         (first, last, cmp);
-}
+};
 
 template<class Iter_t, class Compare = compare_iter<Iter_t> >
 inline void indirect_flat_stable_sort (Iter_t first, Iter_t last,
                                            Compare comp = Compare())
 {
     typedef typename std::vector<Iter_t>::iterator itx_iter;
-    typedef common::less_ptr_no_null <Iter_t, Compare> itx_comp;
+    typedef common::less_ptr_no_null<Iter_t, Compare> itx_comp;
     common::indirect_sort ( flat_stable_sort<itx_iter, itx_comp>,
                             first, last, comp);
-}
+};
 
 //****************************************************************************
-}//    End namespace sort
-}//    End namepspace boost
+};//    End namespace sort
+};//    End namepspace boost
 //****************************************************************************
 //
 #endif

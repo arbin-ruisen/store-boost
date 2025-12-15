@@ -10,7 +10,6 @@
 
 #include <boost/gil/color_convert.hpp>
 #include <boost/gil/typedefs.hpp>
-#include <boost/gil/detail/mp11.hpp>
 
 namespace boost{ namespace gil {
 
@@ -28,18 +27,18 @@ struct lightness_t {};
 /// \}
 
 /// \ingroup ColorSpaceModel
-using hsl_t = mp11::mp_list
-<
-    hsl_color_space::hue_t,
-    hsl_color_space::saturation_t,
-    hsl_color_space::lightness_t
->;
+using hsl_t = mpl::vector3
+    <
+        hsl_color_space::hue_t,
+        hsl_color_space::saturation_t,
+        hsl_color_space::lightness_t
+    >;
 
 /// \ingroup LayoutModel
 using hsl_layout_t = layout<hsl_t>;
 
 
-BOOST_GIL_DEFINE_ALL_TYPEDEFS(32f, float32_t, hsl)
+GIL_DEFINE_ALL_TYPEDEFS(32f, float32_t, hsl)
 
 /// \ingroup ColorConvert
 /// \brief RGB to HSL
@@ -75,7 +74,6 @@ struct default_color_converter_impl< rgb_t, hsl_t >
       {
 
          float32_t diff = max_color - min_color;
-         float32_t sum = max_color + min_color;
 
          // lightness calculation
 
@@ -85,11 +83,13 @@ struct default_color_converter_impl< rgb_t, hsl_t >
 
          if( lightness < 0.5f )
          {
-            saturation = diff / ( sum );
+            saturation = diff
+                       / ( min_color + max_color );
          }
          else
          {
-            saturation = diff / ( 2.f - sum );
+            saturation = ( max_color - min_color )
+                       / ( 2.f - diff );
 
          }
 
@@ -114,7 +114,7 @@ struct default_color_converter_impl< rgb_t, hsl_t >
          {
             // max_color is blue
             hue = 4.f
-                + ( temp_red - temp_green )
+                + ( temp_red - temp_blue )
                 / diff;
          }
 

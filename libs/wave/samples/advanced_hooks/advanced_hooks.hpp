@@ -50,9 +50,15 @@ public:
     //  preprocessing directive.
     //
     ///////////////////////////////////////////////////////////////////////////
+#if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS != 0
+    template <typename TokenT>
+    void
+    found_directive(TokenT const& directive)
+#else
     template <typename ContextT, typename TokenT>
     bool
     found_directive(ContextT const& ctx, TokenT const& directive)
+#endif
     {
         // print the commented conditional directives
         using namespace boost::wave;
@@ -76,7 +82,9 @@ public:
             break;
         }
 
+#if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS == 0
         return false;
+#endif
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -100,11 +108,18 @@ public:
     //  to force the expression to be re-evaluated.
     //
     ///////////////////////////////////////////////////////////////////////////
+#if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS != 0
+    template <typename ContainerT>
+    bool
+    evaluated_conditional_expression(
+        ContainerT const& expression, bool expression_value)
+#else
     template <typename ContextT, typename TokenT, typename ContainerT>
     bool
     evaluated_conditional_expression(ContextT const &ctx, 
         TokenT const& directive, ContainerT const& expression, 
         bool expression_value)
+#endif
     {
         // print the conditional expressions
         std::cout << boost::wave::util::impl::as_string(expression) << std::endl;
@@ -124,9 +139,15 @@ public:
     //  The parameter 'token' refers to the token to be skipped.
     //
     ///////////////////////////////////////////////////////////////////////////
+#if BOOST_WAVE_USE_DEPRECIATED_PREPROCESSING_HOOKS != 0
+    template <typename TokenT>
+    void
+    skipped_token(TokenT const& token)
+#else
     template <typename ContextT, typename TokenT>
     void
     skipped_token(ContextT const& ctx, TokenT const& token)
+#endif
     {
         // prepend a comment at the beginning of all skipped lines
         using namespace boost::wave;

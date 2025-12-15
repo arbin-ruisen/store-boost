@@ -5,14 +5,15 @@
 #ifndef STATIC_ASSERT_SAME_DWA2003530_HPP
 # define STATIC_ASSERT_SAME_DWA2003530_HPP
 
-#include <type_traits>
+#include <boost/mpl/assert.hpp>
+# include <boost/type_traits/is_same.hpp>
 
-#define STATIC_ASSERT_SAME( T1,T2 ) static_assert(std::is_same<T1, T2>::value, "T1 and T2 are expected to be the same types.")
+#define STATIC_ASSERT_SAME( T1,T2 ) BOOST_MPL_ASSERT((::boost::is_same< T1, T2 >))
 
 template <class T1, class T2>
 struct static_assert_same
 {
-    STATIC_ASSERT_SAME(T1, T2);
+    BOOST_MPL_ASSERT((::boost::is_same< T1, T2 >));
     enum { value = 1 };
 };
 

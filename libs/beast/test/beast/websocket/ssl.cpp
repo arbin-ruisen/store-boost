@@ -62,7 +62,7 @@ public:
             boost::asio::ssl::stream<
                 boost::asio::basic_stream_socket<
                     boost::asio::ip::tcp,
-                    net::any_io_executor>>>();
+                    boost::asio::executor>>>();
 
     }
 };

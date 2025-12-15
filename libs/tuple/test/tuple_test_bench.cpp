@@ -8,17 +8,18 @@
 
 //  tuple_test_bench.cpp  --------------------------------
 
+#define BOOST_INCLUDE_MAIN  // for testing, include rather than link
+#include <boost/test/test_tools.hpp>    // see "Header Implementation Option"
+
 #include "boost/tuple/tuple.hpp"
+
 #include "boost/tuple/tuple_comparison.hpp"
 
 #include "boost/type_traits/is_const.hpp"
-#include "boost/ref.hpp"
-#include "boost/core/lightweight_test.hpp"
 
+#include "boost/ref.hpp"
 #include <string>
 #include <utility>
-
-#define BOOST_CHECK BOOST_TEST
 
 using namespace boost;
 
@@ -81,7 +82,7 @@ typedef tuple<std::string, std::pair<A, B> > t4;
 typedef tuple<A*, tuple<const A*, const B&, C>, bool, void*> t5;
 typedef tuple<volatile int, const volatile char&, int(&)(float) > t6;
 
-# if !defined(BOOST_BORLANDC) || BOOST_BORLANDC > 0x0551
+# if !defined(__BORLANDC__) || __BORLAND__ > 0x0551
 typedef tuple<B(A::*)(C&), A&> t7;
 #endif
 
@@ -306,7 +307,7 @@ make_tuple_test()
   
 // With function pointers, make_tuple works just fine
 
-#if !defined(BOOST_BORLANDC) || BOOST_BORLANDC > 0x0551
+#if !defined(__BORLANDC__) || __BORLAND__ > 0x0551
    make_tuple(&make_tuple_test);
 #endif
       
@@ -421,9 +422,9 @@ void cons_test()
 // ----------------------------------------------------------------------------
 void const_tuple_test()
 {
-  const tuple<int, float> t1(5, 3.25f);
+  const tuple<int, float> t1(5, 3.3f);
   BOOST_CHECK(get<0>(t1) == 5);
-  BOOST_CHECK(get<1>(t1) == 3.25f);
+  BOOST_CHECK(get<1>(t1) == 3.3f);
 }
 
 // ----------------------------------------------------------------------------
@@ -471,7 +472,7 @@ void tuple_swap_test()
 // - main ---------------------------------------------------------------------
 // ----------------------------------------------------------------------------
 
-int main() {
+int test_main(int, char *[]) {
 
   construction_test();
   element_access_test();
@@ -485,6 +486,12 @@ int main() {
   const_tuple_test();
   tuple_length_test();
   tuple_swap_test();
-
-  return boost::report_errors();
+  return 0;
 }
+
+
+
+
+
+
+

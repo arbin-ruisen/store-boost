@@ -11,13 +11,13 @@
 //  Distributed under the Boost Software License, Version 1.0.
 //  See http://www.boost.org/LICENSE_1_0.txt
 
-// test ratio:  The template argument D must not be zero
+// test ratio:  The template argument D mus not be zero
 
 #include <boost/ratio/ratio.hpp>
-#include <cstdint>
+#include <boost/cstdint.hpp>
 
 void test()
 {
-    const std::intmax_t t1 = boost::ratio<1, 0>::num;
+    const boost::intmax_t t1 = boost::ratio<1, 0>::num;
     (void)t1;
 }

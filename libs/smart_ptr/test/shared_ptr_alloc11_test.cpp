@@ -11,10 +11,12 @@
 //  http://www.boost.org/LICENSE_1_0.txt
 
 
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/core/lightweight_test.hpp>
 #include <memory>
 #include <cstddef>
+
+#if !defined( BOOST_NO_CXX11_ALLOCATOR )
 
 template< class T > class cxx11_allocator
 {
@@ -103,3 +105,12 @@ int main()
 
     return boost::report_errors();
 }
+
+#else // !defined( BOOST_NO_CXX11_ALLOCATOR )
+
+int main()
+{
+    return 0;
+}
+
+#endif

@@ -20,19 +20,9 @@
 // We can only build this if we have ICU support:
 //
 #include <boost/regex/config.hpp>
-
 #if defined(BOOST_HAS_ICU) && !defined(BOOST_NO_STD_WSTRING)
 
 #include <boost/regex/icu.hpp>
-#ifndef BOOST_REGEX_STANDALONE
-#include <boost/mpl/int.hpp>
-#else
-#include <type_traits>
-namespace boost { namespace mpl {
-   template <int I>
-   using int_ = ::std::integral_constant<int, I>; 
-} }
-#endif
 #include "test.hpp"
 
 namespace unnecessary_fix{
@@ -96,7 +86,7 @@ void compare_result(const MR1& w1, const MR2& w2, boost::mpl::int_<2> const*)
          {
             BOOST_REGEX_TEST_ERROR("Matched mismatch in match_results class", UChar32);
          }
-         if((w1.position(i) != std::distance(iterator_type(w2.prefix().first), iterator_type(w2[i].first))) || (w1.length(i) != std::distance(iterator_type(w2[i].first), iterator_type(w2[i].second))))
+         if((w1.position(i) != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2.prefix().first), iterator_type(w2[i].first))) || (w1.length(i) != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2[i].first), iterator_type(w2[i].second))))
          {
             BOOST_REGEX_TEST_ERROR("Iterator mismatch in match_results class", UChar32);
          }
@@ -116,7 +106,7 @@ void compare_result(const MR1& w1, const MR2& w2, boost::mpl::int_<2> const*)
       {
          BOOST_REGEX_TEST_ERROR("Matched mismatch in match_results class", UChar32);
       }
-      if ((w1.position("abc") != std::distance(iterator_type(w2.prefix().first), iterator_type(w2["abc"].first))) || (w1.length("abc") != std::distance(iterator_type(w2["abc"].first), iterator_type(w2["abc"].second))))
+      if ((w1.position("abc") != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2.prefix().first), iterator_type(w2["abc"].first))) || (w1.length("abc") != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2["abc"].first), iterator_type(w2["abc"].second))))
       {
          BOOST_REGEX_TEST_ERROR("Iterator mismatch in match_results class", UChar32);
       }
@@ -131,7 +121,7 @@ void compare_result(const MR1& w1, const MR2& w2, boost::mpl::int_<2> const*)
       {
          BOOST_REGEX_TEST_ERROR("Matched mismatch in match_results class", UChar32);
       }
-      if ((w1.position("N") != std::distance(iterator_type(w2.prefix().first), iterator_type(w2["N"].first))) || (w1.length("N") != std::distance(iterator_type(w2["N"].first), iterator_type(w2["N"].second))))
+      if ((w1.position("N") != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2.prefix().first), iterator_type(w2["N"].first))) || (w1.length("N") != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2["N"].first), iterator_type(w2["N"].second))))
       {
          BOOST_REGEX_TEST_ERROR("Iterator mismatch in match_results class", UChar32);
       }
@@ -160,7 +150,7 @@ void compare_result(const MR1& w1, const MR2& w2, boost::mpl::int_<1> const*)
          {
             BOOST_REGEX_TEST_ERROR("Matched mismatch in match_results class", UChar32);
          }
-         if((w1.position(i) != std::distance(iterator_type(w2.prefix().first), iterator_type(w2[i].first))) || (w1.length(i) != std::distance(iterator_type(w2[i].first), iterator_type(w2[i].second))))
+         if((w1.position(i) != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2.prefix().first), iterator_type(w2[i].first))) || (w1.length(i) != boost::BOOST_REGEX_DETAIL_NS::distance(iterator_type(w2[i].first), iterator_type(w2[i].second))))
          {
             BOOST_REGEX_TEST_ERROR("Iterator mismatch in match_results class", UChar32);
          }

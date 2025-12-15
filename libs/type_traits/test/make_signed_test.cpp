@@ -95,7 +95,7 @@ BOOST_CHECK_TYPE(::tt::make_signed<const volatile boost::ulong_long_type>::type,
 #elif defined(BOOST_HAS_MS_INT64)
 BOOST_CHECK_TYPE(::tt::make_signed<const volatile unsigned __int64>::type, const volatile __int64);
 #endif
-#if defined(BOOST_HAS_INT128) && !defined(TEST_CUDA_DEVICE)
+#ifdef BOOST_HAS_INT128
 BOOST_CHECK_TYPE(::tt::make_signed<boost::int128_type>::type, boost::int128_type);
 BOOST_CHECK_TYPE(::tt::make_signed<boost::uint128_type>::type, boost::int128_type);
 #endif

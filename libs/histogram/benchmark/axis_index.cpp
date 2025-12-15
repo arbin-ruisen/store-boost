@@ -10,10 +10,10 @@
 #include "../test/throw_exception.hpp"
 #include "generator.hpp"
 
-#include <cassert>
+#include <boost/assert.hpp>
 struct assert_check {
   assert_check() {
-    assert(false); // don't run with asserts enabled
+    BOOST_ASSERT(false); // don't run with asserts enabled
   }
 } _;
 
@@ -57,12 +57,6 @@ static void category(benchmark::State& state) {
   for (auto _ : state) benchmark::DoNotOptimize(a.index(gen()));
 }
 
-static void boolean(benchmark::State& state) {
-  auto a = axis::boolean<>();
-  generator<uniform_int> gen(1);
-  for (auto _ : state) benchmark::DoNotOptimize(a.index(static_cast<bool>(gen())));
-}
-
 BENCHMARK_TEMPLATE(regular, uniform);
 BENCHMARK_TEMPLATE(regular, normal);
 BENCHMARK_TEMPLATE(circular, uniform);
@@ -74,4 +68,3 @@ BENCHMARK_TEMPLATE(integer, double, normal);
 BENCHMARK_TEMPLATE(variable, uniform)->RangeMultiplier(10)->Range(10, 10000);
 BENCHMARK_TEMPLATE(variable, normal)->RangeMultiplier(10)->Range(10, 10000);
 BENCHMARK(category)->RangeMultiplier(10)->Range(10, 10000);
-BENCHMARK(boolean);

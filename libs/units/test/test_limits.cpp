@@ -41,7 +41,7 @@ struct check_quiet_NaN<true> {
     static void apply() {
         quantity<unit_type, T> q((std::numeric_limits<quantity<unit_type, T> >::quiet_NaN)());
         bool test = isnan BOOST_PREVENT_MACRO_SUBSTITUTION (q);
-        BOOST_TEST(test);
+        BOOST_CHECK(test);
     }
 };
 
@@ -60,7 +60,7 @@ struct check_signaling_NaN<true> {
     static void apply() {
         quantity<unit_type, T> q((std::numeric_limits<quantity<unit_type, T> >::signaling_NaN)());
         bool test = isnan BOOST_PREVENT_MACRO_SUBSTITUTION (q);
-        BOOST_TEST(test);
+        BOOST_CHECK(test);
     }
 };
 
@@ -72,8 +72,8 @@ struct check_signaling_NaN<false> {
 
 template<class T>
 void do_check() {
-    #define CHECK_FUNCTION(name) BOOST_TEST(((std::numeric_limits<T>::name)() == (std::numeric_limits<quantity<unit_type, T> >::name)().value()))
-    #define CHECK_CONSTANT(name) BOOST_TEST((std::numeric_limits<T>::name == std::numeric_limits<quantity<unit_type, T> >::name))
+    #define CHECK_FUNCTION(name) BOOST_CHECK(((std::numeric_limits<T>::name)() == (std::numeric_limits<quantity<unit_type, T> >::name)().value()))
+    #define CHECK_CONSTANT(name) BOOST_CHECK((std::numeric_limits<T>::name == std::numeric_limits<quantity<unit_type, T> >::name))
     CHECK_FUNCTION(min);
     CHECK_FUNCTION(max);
     CHECK_FUNCTION(epsilon);
@@ -114,7 +114,7 @@ void do_check() {
     check_signaling_NaN<std::numeric_limits<quantity<unit_type, T> >::has_signaling_NaN>::template apply<T>();
 }
 
-int main()
+int test_main(int,char *[])
 {
     do_check<float>();
     do_check<double>();
@@ -123,5 +123,5 @@ int main()
     do_check<unsigned>();
     do_check<std::complex<double> >();
 
-    return boost::report_errors();
+    return(0);
 }

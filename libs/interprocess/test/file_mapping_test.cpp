@@ -8,6 +8,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <boost/interprocess/detail/config_begin.hpp>
 #include <ios> //std::streamoff
 #include <fstream>   //std::ofstream, std::ifstream
 #include <iostream>
@@ -20,6 +21,14 @@
 
 using namespace boost::interprocess;
 
+inline std::string get_filename()
+{
+   std::string ret (ipcdetail::get_temporary_path());
+   ret += "/";
+   ret += test::get_process_id_name();
+   return ret;
+}
+
 file_mapping get_file_mapping()
 {
    file_mapping f;
@@ -28,7 +37,7 @@ file_mapping get_file_mapping()
 
 int main ()
 {
-   BOOST_INTERPROCESS_TRY{
+   try{
       const std::size_t FileSize = 99999*2;
       {
          //Create file with given size
@@ -133,27 +142,6 @@ int main ()
             }
          }
       }
-      #ifdef BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
-      {
-         //Create a file mapping
-         file_mapping mapping(get_wfilename().c_str(), read_only);
-
-         //Create a single regions, mapping all the file
-         mapped_region region (mapping
-                              ,read_only
-                              );
-
-         //Check pattern
-         unsigned char *pattern = static_cast<unsigned char*>(region.get_address());
-         for(std::size_t i = 0
-            ;i < FileSize
-            ;++i, ++pattern){
-            if(*pattern != static_cast<unsigned char>(i)){
-               return 1;
-            }
-         }
-      }
-      #endif   //BOOST_INTERPROCESS_WCHAR_NAMED_RESOURCES
       {
          //Now test move semantics
          file_mapping mapping(get_filename().c_str(), read_only);
@@ -164,11 +152,13 @@ int main ()
          file_mapping ret(get_file_mapping());
       }
    }
-   BOOST_INTERPROCESS_CATCH(std::exception &exc){
+   catch(std::exception &exc){
       file_mapping::remove(get_filename().c_str());
       std::cout << "Unhandled exception: " << exc.what() << std::endl;
-      BOOST_INTERPROCESS_RETHROW
-   } BOOST_INTERPROCESS_CATCH_END
+      throw;
+   }
    file_mapping::remove(get_filename().c_str());
    return 0;
 }
+
+#include <boost/interprocess/detail/config_end.hpp>

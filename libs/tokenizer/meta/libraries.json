@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "John R. Bandela <jbandela -at- ufl.edu>"
-    ],
-    "cxxstd": "03"
+    ]
 }

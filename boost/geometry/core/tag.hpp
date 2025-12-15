@@ -3,11 +3,6 @@
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
-// Copyright (c) 2024 Adam Wulkiewicz, Lodz, Poland.
-
-// This file was modified by Oracle on 2020.
-// Modifications copyright (c) 2020 Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
@@ -21,7 +16,7 @@
 
 
 #include <boost/geometry/core/tags.hpp>
-#include <boost/geometry/util/type_traits_std.hpp>
+#include <boost/geometry/util/bare_type.hpp>
 
 
 namespace boost { namespace geometry
@@ -38,7 +33,7 @@ namespace traits
 \par Geometries:
     - all geometries
 \par Specializations should provide:
-    - using type = XXX_tag; (point_tag, box_tag, ...)
+    - typedef XXX_tag type; (point_tag, box_tag, ...)
 \tparam Geometry geometry
 */
 template <typename Geometry, typename Enable = void>
@@ -63,16 +58,11 @@ struct tag
 template <typename Geometry>
 struct tag
 {
-    using type = typename traits::tag
+    typedef typename traits::tag
         <
-            util::remove_cptrref_t<Geometry>
-        >::type;
+            typename geometry::util::bare_type<Geometry>::type
+        >::type type;
 };
-
-
-template <typename Geometry>
-using tag_t = typename tag<Geometry>::type;
-
 
 }} // namespace boost::geometry
 

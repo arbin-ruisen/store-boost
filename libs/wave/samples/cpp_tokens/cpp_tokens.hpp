@@ -13,12 +13,12 @@
     LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
 
-#if !defined(BOOST_CPP_TOKENS_HPP_D6A31137_CE14_4869_9779_6357E2C43187_INCLUDED)
-#define BOOST_CPP_TOKENS_HPP_D6A31137_CE14_4869_9779_6357E2C43187_INCLUDED
+#if !defined(CPP_TOKENS_HPP_D6A31137_CE14_4869_9779_6357E2C43187_INCLUDED)
+#define CPP_TOKENS_HPP_D6A31137_CE14_4869_9779_6357E2C43187_INCLUDED
 
 ///////////////////////////////////////////////////////////////////////////////
 //  include often used files from the stdlib
-#include <iosfwd>
+#include <iostream>
 #include <fstream>
 #include <string>
 
@@ -35,4 +35,4 @@
 #include <boost/assert.hpp>
 #include <boost/pool/pool_alloc.hpp>
 
-#endif // !defined(BOOST_CPP_TOKENS_HPP_D6A31137_CE14_4869_9779_6357E2C43187_INCLUDED)
+#endif // !defined(CPP_TOKENS_HPP_D6A31137_CE14_4869_9779_6357E2C43187_INCLUDED)

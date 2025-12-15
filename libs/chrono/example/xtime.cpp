@@ -47,40 +47,39 @@ round_up(duration<Rep, Period> d)
 
 // demonstrate interaction with xtime-like facility:
 
-// msvc defines ::xtime in <mutex>, so we use xtime_
-struct xtime_
+struct xtime
 {
     long sec;
     unsigned long usec;
 };
 
 template <class Rep, class Period>
-xtime_
+xtime
 to_xtime_truncate(duration<Rep, Period> d)
 {
-    xtime_ xt;
+    xtime xt;
     xt.sec = static_cast<long>(duration_cast<seconds>(d).count());
     xt.usec = static_cast<long>(duration_cast<microseconds>(d - seconds(xt.sec)).count());
     return xt;
 }
 
 template <class Rep, class Period>
-xtime_
+xtime
 to_xtime_round_up(duration<Rep, Period> d)
 {
-    xtime_ xt;
+    xtime xt;
     xt.sec = static_cast<long>(duration_cast<seconds>(d).count());
     xt.usec = static_cast<unsigned long>(round_up<microseconds>(d - seconds(xt.sec)).count());
     return xt;
 }
 
 microseconds
-from_xtime(xtime_ xt)
+from_xtime(xtime xt)
 {
     return seconds(xt.sec) + microseconds(xt.usec);
 }
 
-void print(xtime_ xt)
+void print(xtime xt)
 {
     std::cout << '{' << xt.sec << ',' << xt.usec << "}\n";
 }
@@ -88,7 +87,7 @@ void print(xtime_ xt)
 void test_with_xtime()
 {
     std::cout << "test_with_xtime\n";
-    xtime_ xt = to_xtime_truncate(seconds(3) + milliseconds(251));
+    xtime xt = to_xtime_truncate(seconds(3) + milliseconds(251));
     print(xt);
     milliseconds ms = duration_cast<milliseconds>(from_xtime(xt));
     std::cout << ms.count() << " milliseconds\n";

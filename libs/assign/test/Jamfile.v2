@@ -11,12 +11,10 @@
 import path ;
 import regex ;
 
-project : requirements <library>/boost/assign//boost_assign ;
-
 rule assign-test ( name )
 {
     return [
-        run $(name).cpp /boost/test//boost_unit_test_framework/<link>static /boost/multi_index//boost_multi_index ]
+        run $(name).cpp /boost/test//boost_unit_test_framework/<link>static ]
         ;
 }
 
@@ -29,9 +27,10 @@ rule test_headers
 {
     local all_rules = ;
     local file ;
-    for file in [ glob-tree-ex ../include/boost/assign : *.hpp : assign ]
+    local headers_path = [ path.make $(BOOST_ROOT)/libs/assign/include/boost/assign ] ;
+    for file in [ path.glob-tree $(headers_path) : *.hpp : assign ]
     {
-        local rel_file = [ path.relative-to ../include/boost/assign $(file) ] ;
+        local rel_file = [ path.relative-to $(headers_path) $(file) ] ;
         # Note: The test name starts with '~' in order to group these tests in the test report table, preferably at the end.
         #       All '/' are replaced with '-' because apparently test scripts have a problem with test names containing slashes.
         local test_name = [ regex.replace $(rel_file) "/" "-" ] ;
@@ -40,9 +39,10 @@ rule test_headers
         all_rules += [ compile compile/decl_header.cpp : <define>"BOOST_ASSIGN_TEST_HEADER=$(rel_file)" <dependency>$(file) : $(decl_test_name) ] ;
     }
 
-    for file in [ glob-tree-ex compile-fail : *.cpp ]
+    local tests_path = [ path.make $(BOOST_ROOT)/libs/assign/test/compile-fail ] ;
+    for file in [ path.glob-tree $(tests_path) : *.cpp ]
     {
-        local rel_file = [ path.relative-to compile-fail $(file) ] ;
+        local rel_file = [ path.relative-to $(tests_path) $(file) ] ;
         local test_name = [ regex.replace [ regex.replace $(rel_file) "/" "-" ] ".cpp" "" ] ;
         local decl_test_name = cf-$(test_name) ;
         # ECHO $(rel_file) ;
@@ -69,7 +69,7 @@ test-suite assign :
     [ assign-test list_of_workaround ]
     [ assign-test email_example ]
     [ assign-test my_vector_example ]
-    [ assign-test multi_index_container ]
+    [ assign-test multi_index_container ]      
     ;
 
 

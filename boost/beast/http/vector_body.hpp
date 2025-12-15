@@ -10,18 +10,19 @@
 #ifndef BOOST_BEAST_HTTP_VECTOR_BODY_HPP
 #define BOOST_BEAST_HTTP_VECTOR_BODY_HPP
 
-#include <boost/beast/http/vector_body_fwd.hpp>
-
-#include <boost/beast/core/buffer_traits.hpp>
-#include <boost/beast/core/detail/clamp.hpp>
 #include <boost/beast/core/detail/config.hpp>
+#include <boost/beast/core/buffer_traits.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/core/detail/clamp.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/optional.hpp>
 #include <cstdint>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
-#include <vector>
 
 namespace boost {
 namespace beast {
@@ -33,11 +34,7 @@ namespace http {
     for holding message payloads. Messages using this body type
     may be serialized and parsed.
 */
-#if BOOST_BEAST_DOXYGEN
 template<class T, class Allocator = std::allocator<T>>
-#else
-template<class T, class Allocator>
-#endif
 struct vector_body
 {
 private:
@@ -92,7 +89,7 @@ public:
             {
                 if(*length > body_.max_size())
                 {
-                    BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                    ec = error::buffer_overflow;
                     return;
                 }
                 body_.reserve(beast::detail::clamp(*length));
@@ -109,7 +106,7 @@ public:
             auto const len = body_.size();
             if (n > body_.max_size() - len)
             {
-                BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                ec = error::buffer_overflow;
                 return 0;
             }
 

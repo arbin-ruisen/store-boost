@@ -19,8 +19,6 @@
 
 #include <boost/container/vector.hpp>
 #include <boost/container/allocator.hpp>
-#include <boost/container/node_allocator.hpp>
-#include <boost/container/adaptive_pool.hpp>
 
 #include <boost/move/utility_core.hpp>
 #include "check_equal_containers.hpp"
@@ -63,7 +61,7 @@ struct X;
 template<typename T>
 struct XRef
 {
-   explicit XRef(T* p)  : ptr(p) {}
+   explicit XRef(T* ptr)  : ptr(ptr) {}
    operator T*() const { return ptr; }
    T* ptr;
 };
@@ -84,13 +82,10 @@ bool test_smart_ref_type()
 class recursive_vector
 {
    public:
-   recursive_vector (const recursive_vector &x)
-      : vector_(x.vector_)
-   {}
-
    recursive_vector & operator=(const recursive_vector &x)
    {  this->vector_ = x.vector_;   return *this; }
 
+   int id_;
    vector<recursive_vector> vector_;
    vector<recursive_vector>::iterator it_;
    vector<recursive_vector>::const_iterator cit_;
@@ -128,17 +123,14 @@ int test_cont_variants()
    typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::movable_int>::type MyMoveCont;
    typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::movable_and_copyable_int>::type MyCopyMoveCont;
    typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::copyable_int>::type MyCopyCont;
-   typedef typename GetAllocatorCont<VoidAllocator>::template apply<test::moveconstruct_int>::type MyMoveConstructCont;
 
-   if (test::vector_test<MyCont>())
+   if(test::vector_test<MyCont>())
       return 1;
-   if (test::vector_test<MyMoveCont>())
+   if(test::vector_test<MyMoveCont>())
       return 1;
-   if (test::vector_test<MyCopyMoveCont>())
+   if(test::vector_test<MyCopyMoveCont>())
       return 1;
-   if (test::vector_test<MyCopyCont>())
-      return 1;
-   if (test::vector_test<MyMoveConstructCont>())
+   if(test::vector_test<MyCopyCont>())
       return 1;
 
    return 0;
@@ -198,40 +190,8 @@ bool test_merge_empty_free()
    vector< int, check_dealloc_allocator<int> > empty;
    empty.merge(source.begin(), source.end());
 
-   return !empty.get_stored_allocator().deallocate_called_without_allocate_;
+   return empty.get_stored_allocator().deallocate_called_without_allocate_;
 }
-
-#if defined(__cpp_lib_span) && (!defined(_LIBCPP_VERSION) || (_LIBCPP_VERSION >= 15000))
-//libcpp 14 does not correctly support deduction guides for Span
-#     define BOOST_VECTOR_TEST_HAS_SPAN
-#endif
-
-#ifdef BOOST_VECTOR_TEST_HAS_SPAN
-#include <span>
-
-bool test_span_conversion()
-{
-   boost::container::vector myVec{1, 2, 3, 4, 5};
-   std::span mySpan1{myVec};                                        // (1)
-   std::span mySpan2{myVec.data(), myVec.size()};                   // (2)
-   return mySpan1.size() == myVec.size() && mySpan1.size() == mySpan2.size();
-}
-
-#else //BOOST_VECTOR_TEST_HAS_SPAN
-bool test_span_conversion()
-{
-   return true;
-}
-
-#endif   //BOOST_VECTOR_TEST_HAS_SPAN
-
-#if !defined(_MSC_VER)
-struct POD { int POD::*ptr; };
-BOOST_CONTAINER_STATIC_ASSERT_MSG
-   ( boost::container::dtl::is_pod<POD>::value
-   , "POD test failed"
-   );
-#endif
 
 int main()
 {
@@ -279,10 +239,10 @@ int main()
       return 1;
    }
 
-   {  //Test enum container
+   {
       typedef vector<Test, std::allocator<Test> > MyEnumCont;
       MyEnumCont v;
-      Test t = Test();
+      Test t;
       v.push_back(t);
       v.push_back(::boost::move(t));
       v.push_back(Test());
@@ -334,14 +294,10 @@ int main()
    ////////////////////////////////////
    {
       typedef boost::container::vector<int> cont_int;
-      for (std::size_t i = 10; i <= 10000; i *= 10) {
-         cont_int a;
-         for (int j = 0; j < (int)i; ++j)
-            a.push_back((int)j);
-         boost::intrusive::test::test_iterator_random< cont_int >(a);
-         if (boost::report_errors() != 0) {
-            return 1;
-         }
+      cont_int a; a.push_back(0); a.push_back(1); a.push_back(2);
+      boost::intrusive::test::test_iterator_random< cont_int >(a);
+      if(boost::report_errors() != 0) {
+         return 1;
       }
    }
 
@@ -371,13 +327,8 @@ int main()
    }
 #endif
 
-   if (!test_merge_empty_free()) {
+   if (test_merge_empty_free()) {
       std::cerr << "Merge into empty vector test failed" << std::endl;
-      return 1;
-   }
-
-   if (!test_span_conversion()) {
-      std::cerr << "Span conversion failed" << std::endl;
       return 1;
    }
 
@@ -389,44 +340,25 @@ int main()
       typedef boost::container::vector<int> cont;
       typedef cont::allocator_type allocator_type;
       typedef boost::container::allocator_traits<allocator_type>::pointer pointer;
-      BOOST_CONTAINER_STATIC_ASSERT_MSG
-         ( !boost::has_trivial_destructor_after_move<pointer>::value ||
-           (boost::has_trivial_destructor_after_move<cont>::value ==
-            boost::has_trivial_destructor_after_move<allocator_type>::value)
-         , "has_trivial_destructor_after_move(default allocator) test failed"
-         );
+      if (boost::has_trivial_destructor_after_move<cont>::value !=
+          boost::has_trivial_destructor_after_move<allocator_type>::value &&
+          boost::has_trivial_destructor_after_move<pointer>::value) {
+         std::cerr << "has_trivial_destructor_after_move(default allocator) test failed" << std::endl;
+         return 1;
+      }
    }
    // std::allocator
    {
       typedef boost::container::vector<int, std::allocator<int> > cont;
       typedef cont::allocator_type allocator_type;
       typedef boost::container::allocator_traits<allocator_type>::pointer pointer;
-      BOOST_CONTAINER_STATIC_ASSERT_MSG
-         ( !boost::has_trivial_destructor_after_move<pointer>::value ||
-           (boost::has_trivial_destructor_after_move<cont>::value ==
-            boost::has_trivial_destructor_after_move<allocator_type>::value)
-         , "has_trivial_destructor_after_move(std::allocator) test failed"
-         );
-   }
-
-   ////////////////////////////////////
-   //    POD types should not be 0-filled
-   ////////////////////////////////////
-#if !defined(_MSC_VER)
-   // MSVC miscompiles value initialization of pointers to data members,
-   // https://developercommunity.visualstudio.com/t/Pointer-to-data-member-is-not-initialize/10238905
-   {
-      typedef boost::container::vector<POD> cont;
-      const std::size_t size = 10;
-      cont a(size);
-      for(std::size_t i = 0; i != size; ++i) {
-         if (a[i].ptr != 0) {
-            std::cerr << "POD test failed" << std::endl;
-            return 1;
-         }
+      if (boost::has_trivial_destructor_after_move<cont>::value !=
+          boost::has_trivial_destructor_after_move<allocator_type>::value &&
+          boost::has_trivial_destructor_after_move<pointer>::value) {
+         std::cerr << "has_trivial_destructor_after_move(std::allocator) test failed" << std::endl;
+         return 1;
       }
    }
-#endif
 
    return 0;
 }

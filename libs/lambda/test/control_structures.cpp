@@ -11,8 +11,7 @@
 
 // -----------------------------------------------------------------------
 
-#include <boost/core/lightweight_test.hpp>
-#define BOOST_CHECK BOOST_TEST
+#include <boost/test/minimal.hpp>    // see "Header Implementation Option"
 
 #include "boost/lambda/lambda.hpp"
 #include "boost/lambda/if.hpp"
@@ -116,9 +115,9 @@ void simple_ifs () {
 }
 
 
-int main()
+int test_main(int, char *[]) 
 {
   simple_loops();
   simple_ifs();
-  return boost::report_errors();
+  return 0;
 }

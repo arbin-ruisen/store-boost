@@ -126,6 +126,7 @@ int main(){
 
     <para><code><ulink
     url="../../include/boost/safe_numerics/automatic.hpp"><code>#include
-    &lt;boost/safe_numerics/automatic.hpp&gt; </code></ulink></code></para>
+    &lt;boost/numeric/safe_numerics/automatic.hpp&gt;
+    </code></ulink></code></para>
   </section>
 </section>

@@ -8,7 +8,7 @@
 
 //  VC++ 8.0 warns on usage of certain Standard Library and API functions that
 //  can be cause buffer overruns or other possible security issues if misused.
-//  See https://web.archive.org/web/20071014014301/http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
+//  See http://msdn.microsoft.com/msdnmag/issues/05/05/SafeCandC/default.aspx
 //  But the wording of the warning is misleading and unsettling, there are no
 //  portable alternative functions, and VC++ 8.0's own libraries use the
 //  functions in question. So turn off the warnings.
@@ -26,7 +26,8 @@
 #include <sstream>
 #include <algorithm>
 
-#include <boost/core/lightweight_test.hpp>
+// Boost.Test
+#include <boost/test/minimal.hpp>
 
 // Boost
 #include <boost/archive/text_oarchive.hpp>
@@ -87,27 +88,27 @@ void test_bimap_serialization()
 
         ia >> b;
 
-        BOOST_TEST( std::equal( b.begin(), b.end(), data.begin() ) );
+        BOOST_CHECK( std::equal( b.begin(), b.end(), data.begin() ) );
 
         bm::left_const_iterator left_iter;
 
         ia >> left_iter;
 
-        BOOST_TEST( left_iter == b.left.begin() );
+        BOOST_CHECK( left_iter == b.left.begin() );
 
         bm::const_iterator iter;
 
         ia >> iter;
 
-        BOOST_TEST( iter == ++b.begin() );
+        BOOST_CHECK( iter == ++b.begin() );
     }
 
 }
 
 
-int main()
+int test_main( int, char* [] )
 {
     test_bimap_serialization();
-    return boost::report_errors();
+    return 0;
 }
 

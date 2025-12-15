@@ -14,6 +14,7 @@
 #include <boost/intrusive/slist.hpp>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive/unordered_set.hpp>
+#include <boost/functional/hash.hpp>
 
 using namespace boost::intrusive;
 

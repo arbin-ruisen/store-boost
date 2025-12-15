@@ -8,7 +8,7 @@
 //
 // This is a derivative work based on Zlib, copyright below:
 /*
-    Copyright (C) 1995-2018 Jean-loup Gailly and Mark Adler
+    Copyright (C) 1995-2013 Jean-loup Gailly and Mark Adler
 
     This software is provided 'as-is', without any express or implied
     warranty.  In no event will the authors be held liable for any damages
@@ -326,7 +326,7 @@ doParams(z_params& zs, int level, Strategy strategy, error_code& ec)
         level = 6;
     if(level < 0 || level > 9)
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::stream_error);
+        ec = error::stream_error;
         return;
     }
     func = get_config(level_).func;
@@ -360,18 +360,15 @@ doWrite(z_params& zs, boost::optional<Flush> flush, error_code& ec)
 {
     maybe_init();
 
-    if(zs.next_in == nullptr && zs.avail_in != 0)
-        BOOST_THROW_EXCEPTION(std::invalid_argument{"invalid input"});
-
-    if(zs.next_out == nullptr ||
-        (status_ == finish_state && flush != Flush::finish))
+    if(zs.next_out == 0 || (zs.next_in == 0 && zs.avail_in != 0) ||
+        (status_ == FINISH_STATE && flush != Flush::finish))
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::stream_error);
+        ec = error::stream_error;
         return;
     }
     if(zs.avail_out == 0)
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::need_buffers);
+        ec = error::need_buffers;
         return;
     }
 
@@ -399,28 +396,28 @@ doWrite(z_params& zs, boost::optional<Flush> flush, error_code& ec)
         }
     }
     else if(zs.avail_in == 0 && (
-            old_flush && flush <= *old_flush // Caution: depends on enum order
+            old_flush && flush <= *old_flush
         ) && flush != Flush::finish)
     {
         /* Make sure there is something to do and avoid duplicate consecutive
          * flushes. For repeated and useless calls with Flush::finish, we keep
          * returning Z_STREAM_END instead of Z_BUF_ERROR.
          */
-        BOOST_BEAST_ASSIGN_EC(ec, error::need_buffers);
+        ec = error::need_buffers;
         return;
     }
 
     // User must not provide more input after the first FINISH:
-    if(status_ == finish_state && zs.avail_in != 0)
+    if(status_ == FINISH_STATE && zs.avail_in != 0)
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::need_buffers);
+        ec = error::need_buffers;
         return;
     }
 
     /* Start a new block or continue the current one.
      */
     if(zs.avail_in != 0 || lookahead_ != 0 ||
-        (flush != Flush::none && status_ != finish_state))
+        (flush != Flush::none && status_ != FINISH_STATE))
     {
         block_state bstate;
 
@@ -441,7 +438,7 @@ doWrite(z_params& zs, boost::optional<Flush> flush, error_code& ec)
 
         if(bstate == finish_started || bstate == finish_done)
         {
-            status_ = finish_state;
+            status_ = FINISH_STATE;
         }
         if(bstate == need_more || bstate == finish_started)
         {
@@ -467,7 +464,7 @@ doWrite(z_params& zs, boost::optional<Flush> flush, error_code& ec)
             else if(flush != Flush::block)
             {
                 /* FULL_FLUSH or SYNC_FLUSH */
-                tr_stored_block(nullptr, 0L, 0);
+                tr_stored_block((char*)0, 0L, 0);
                 /* For a full flush, this empty block will be recognized
                  * as a special marker by inflate_sync().
                  */
@@ -493,7 +490,7 @@ doWrite(z_params& zs, boost::optional<Flush> flush, error_code& ec)
 
     if(flush == Flush::finish)
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::end_of_stream);
+        ec = error::end_of_stream;
         return;
     }
 }
@@ -505,7 +502,7 @@ doDictionary(Byte const* dict, uInt dictLength, error_code& ec)
 {
     if(lookahead_)
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::stream_error);
+        ec = error::stream_error;
         return;
     }
 
@@ -559,9 +556,9 @@ doPrime(int bits, int value, error_code& ec)
 {
     maybe_init();
 
-    if((Byte *)(sym_buf_) < pending_out_ + ((Buf_size + 7) >> 3))
+    if((Byte *)(d_buf_) < pending_out_ + ((Buf_size + 7) >> 3))
     {
-        BOOST_BEAST_ASSIGN_EC(ec, error::need_buffers);
+        ec = error::need_buffers;
         return;
     }
 
@@ -628,60 +625,29 @@ init()
     std::memset(prev_, 0, nprev);
     head_   = reinterpret_cast<std::uint16_t*>(buf_.get() + nwindow + nprev);
 
+    /*  We overlay pending_buf_ and d_buf_ + l_buf_. This works
+        since the average output size for(length, distance)
+        codes is <= 24 bits.
+    */
+    auto overlay = reinterpret_cast<std::uint16_t*>(
+        buf_.get() + nwindow + nprev + nhead);
+
     // nothing written to window_ yet
     high_water_ = 0;
 
-
-    /* We overlay pending_buf and sym_buf. This works since the average size
-       for length/distance pairs over any compressed block is assured to be 31
-       bits or less.
-
-       Analysis: The longest fixed codes are a length code of 8 bits plus 5
-       extra bits, for lengths 131 to 257. The longest fixed distance codes are
-       5 bits plus 13 extra bits, for distances 16385 to 32768. The longest
-       possible fixed-codes length/distance pair is then 31 bits total.
-
-       sym_buf starts one-fourth of the way into pending_buf. So there are
-       three bytes in sym_buf for every four bytes in pending_buf. Each symbol
-       in sym_buf is three bytes -- two for the distance and one for the
-       literal/length. As each symbol is consumed, the pointer to the next
-       sym_buf value to read moves forward three bytes. From that symbol, up to
-       31 bits are written to pending_buf. The closest the written pending_buf
-       bits gets to the next sym_buf symbol to read is just before the last
-       code is written. At that time, 31*(n-2) bits have been written, just
-       after 24*(n-2) bits have been consumed from sym_buf. sym_buf starts at
-       8*n bits into pending_buf. (Note that the symbol buffer fills when n-1
-       symbols are written.) The closest the writing gets to what is unread is
-       then n+14 bits. Here n is lit_bufsize, which is 16384 by default, and
-       can range from 128 to 32768.
-
-       Therefore, at a minimum, there are 142 bits of space between what is
-       written and what is read in the overlain buffers, so the symbols cannot
-       be overwritten by the compressed data. That space is actually 139 bits,
-       due to the three-bit fixed-code block header.
-
-       That covers the case where either Z_FIXED is specified, forcing fixed
-       codes, or when the use of fixed codes is chosen, because that choice
-       results in a smaller compressed block than dynamic codes. That latter
-       condition then assures that the above analysis also covers all dynamic
-       blocks. A dynamic-code block will only be chosen to be emitted if it has
-       fewer bits than a fixed-code block would for the same set of symbols.
-       Therefore its average symbol length is assured to be less than 31. So
-       the compressed data for a dynamic block also cannot overwrite the
-       symbols from which it is being constructed.
-     */
     pending_buf_ =
-        buf_.get() + nwindow + nprev + nhead;
+        reinterpret_cast<std::uint8_t*>(overlay);
     pending_buf_size_ =
-        static_cast<std::uint32_t>(lit_bufsize_) * 4;
+        static_cast<std::uint32_t>(lit_bufsize_) *
+            (sizeof(std::uint16_t) + 2L);
 
-    sym_buf_ = pending_buf_ + lit_bufsize_;
-    sym_end_ = (lit_bufsize_ - 1) * 3;
+    d_buf_ = overlay + lit_bufsize_ / sizeof(std::uint16_t);
+    l_buf_ = pending_buf_ + (1 + sizeof(std::uint16_t)) * lit_bufsize_;
 
     pending_ = 0;
     pending_out_ = pending_buf_;
 
-    status_ = busy_state;
+    status_ = BUSY_STATE;
     last_flush_ = Flush::none;
 
     tr_init();
@@ -729,10 +695,10 @@ init_block()
         dyn_dtree_[n].fc = 0;
     for(int n = 0; n < blCodes; n++)
         bl_tree_[n].fc = 0;
-    dyn_ltree_[end_block].fc = 1;
+    dyn_ltree_[END_BLOCK].fc = 1;
     opt_len_ = 0L;
     static_len_ = 0L;
-    sym_next_ = 0;
+    last_lit_ = 0;
     matches_ = 0;
 }
 
@@ -815,7 +781,7 @@ gen_bitlen(tree_desc *desc)
      */
     tree[heap_[heap_max_]].dl = 0; // root of the heap
 
-    for(h = heap_max_+1; h < heap_size; h++) {
+    for(h = heap_max_+1; h < HEAP_SIZE; h++) {
         n = heap_[h];
         bits = tree[tree[n].dl].dl + 1;
         if(bits > max_length) bits = max_length, overflow++;
@@ -899,7 +865,7 @@ build_tree(tree_desc *desc)
      * heap[0] is not used.
      */
     heap_len_ = 0;
-    heap_max_ = heap_size;
+    heap_max_ = HEAP_SIZE;
 
     for(n = 0; n < elems; n++)
     {
@@ -1010,15 +976,15 @@ scan_tree(
         else if(curlen != 0)
         {
             if(curlen != prevlen) bl_tree_[curlen].fc++;
-                bl_tree_[rep_3_6].fc++;
+                bl_tree_[REP_3_6].fc++;
         }
         else if(count <= 10)
         {
-            bl_tree_[repz_3_10].fc++;
+            bl_tree_[REPZ_3_10].fc++;
         }
         else
         {
-            bl_tree_[repz_11_138].fc++;
+            bl_tree_[REPZ_11_138].fc++;
         }
         count = 0;
         prevlen = curlen;
@@ -1088,17 +1054,17 @@ send_tree(
                 count--;
             }
             BOOST_ASSERT(count >= 3 && count <= 6);
-            send_code(rep_3_6, bl_tree_);
+            send_code(REP_3_6, bl_tree_);
             send_bits(count-3, 2);
         }
         else if(count <= 10)
         {
-            send_code(repz_3_10, bl_tree_);
+            send_code(REPZ_3_10, bl_tree_);
             send_bits(count-3, 3);
         }
         else
         {
-            send_code(repz_11_138, bl_tree_);
+            send_code(REPZ_11_138, bl_tree_);
             send_bits(count-11, 7);
         }
         count = 0;
@@ -1189,17 +1155,16 @@ compress_block(
 {
     unsigned dist;      /* distance of matched string */
     int lc;             /* match length or unmatched char (if dist == 0) */
-    unsigned sx = 0;    /* running index in sym_buf */
+    unsigned lx = 0;    /* running index in l_buf */
     unsigned code;      /* the code to send */
     int extra;          /* number of extra bits to send */
 
-    if(sym_next_ != 0)
+    if(last_lit_ != 0)
     {
         do
         {
-            dist = sym_buf_[sx++] & 0xff;
-            dist += (unsigned)(sym_buf_[sx++] & 0xff) << 8;
-            lc = sym_buf_[sx++];
+            dist = d_buf_[lx];
+            lc = l_buf_[lx++];
             if(dist == 0)
             {
                 send_code(lc, ltree); /* send a literal byte */
@@ -1229,20 +1194,20 @@ compress_block(
             } /* literal or match pair ? */
 
             /* Check that the overlay between pending_buf and d_buf+l_buf is ok: */
-            BOOST_ASSERT((uInt)(pending_) < lit_bufsize_ + sx);
+            BOOST_ASSERT((uInt)(pending_) < lit_bufsize_ + 2*lx);
         }
-        while(sx < sym_next_);
+        while(lx < last_lit_);
     }
 
-    send_code(end_block, ltree);
+    send_code(END_BLOCK, ltree);
 }
 
 /*  Check if the data type is TEXT or BINARY, using the following algorithm:
     - TEXT if the two conditions below are satisfied:
         a) There are no non-portable control characters belonging to the
-            "block list" (0..6, 14..25, 28..31).
+            "black list" (0..6, 14..25, 28..31).
         b) There is at least one printable character belonging to the
-            "allow list" (9 {TAB}, 10 {LF}, 13 {CR}, 32..255).
+            "white list" (9 {TAB}, 10 {LF}, 13 {CR}, 32..255).
     - BINARY otherwise.
     - The following partially-portable control characters form a
         "gray list" that is ignored in this detection algorithm:
@@ -1253,19 +1218,19 @@ int
 deflate_stream::
 detect_data_type()
 {
-    /* block_mask is the bit mask of block-listed bytes
+    /* black_mask is the bit mask of black-listed bytes
      * set bits 0..6, 14..25, and 28..31
      * 0xf3ffc07f = binary 11110011111111111100000001111111
      */
-    unsigned long block_mask = 0xf3ffc07fUL;
+    unsigned long black_mask = 0xf3ffc07fUL;
     int n;
 
-    // Check for non-textual ("block-listed") bytes.
-    for(n = 0; n <= 31; n++, block_mask >>= 1)
-        if((block_mask & 1) && (dyn_ltree_[n].fc != 0))
+    // Check for non-textual ("black-listed") bytes.
+    for(n = 0; n <= 31; n++, black_mask >>= 1)
+        if((black_mask & 1) && (dyn_ltree_[n].fc != 0))
             return binary;
 
-    // Check for textual ("allow-listed") bytes. */
+    // Check for textual ("white-listed") bytes. */
     if(dyn_ltree_[9].fc != 0 || dyn_ltree_[10].fc != 0
             || dyn_ltree_[13].fc != 0)
         return text;
@@ -1273,7 +1238,7 @@ detect_data_type()
         if(dyn_ltree_[n].fc != 0)
             return text;
 
-    /* There are no "block-listed" or "white-listed" bytes:
+    /* There are no "black-listed" or "white-listed" bytes:
      * this stream either is empty or has tolerated ("gray-listed") bytes only.
      */
     return binary;
@@ -1330,9 +1295,9 @@ copy_block(
         put_short((std::uint16_t)len);
         put_short((std::uint16_t)~len);
     }
-    if(buf)
-        std::memcpy(&pending_buf_[pending_], buf, len);
-    pending_ += len;
+    // VFALCO Use memcpy?
+    while (len--)
+        put_byte(*buf++);
 }
 
 //------------------------------------------------------------------------------
@@ -1366,8 +1331,8 @@ void
 deflate_stream::
 tr_align()
 {
-    send_bits(static_trees<<1, 3);
-    send_code(end_block, lut_.ltree);
+    send_bits(STATIC_TREES<<1, 3);
+    send_code(END_BLOCK, lut_.ltree);
     bi_flush();
 }
 
@@ -1389,7 +1354,7 @@ tr_stored_block(
     std::uint32_t stored_len,   // length of input block
     int last)                   // one if this is the last block for a file
 {
-    send_bits((stored_block<<1)+last, 3);       // send block type
+    send_bits((STORED_BLOCK<<1)+last, 3);       // send block type
     copy_block(buf, (unsigned)stored_len, 1);   // with header
 }
 
@@ -1397,24 +1362,22 @@ void
 deflate_stream::
 tr_tally_dist(std::uint16_t dist, std::uint8_t len, bool& flush)
 {
-    sym_buf_[sym_next_++] = dist & 0xFF;
-    sym_buf_[sym_next_++] = dist >> 8;
-    sym_buf_[sym_next_++] = len;
+    d_buf_[last_lit_] = dist;
+    l_buf_[last_lit_++] = len;
     dist--;
     dyn_ltree_[lut_.length_code[len]+literals+1].fc++;
     dyn_dtree_[d_code(dist)].fc++;
-    flush = (sym_next_ == sym_end_);
+    flush = (last_lit_ == lit_bufsize_-1);
 }
 
 void
 deflate_stream::
 tr_tally_lit(std::uint8_t c, bool& flush)
 {
-    sym_buf_[sym_next_++] = 0;
-    sym_buf_[sym_next_++] = 0;
-    sym_buf_[sym_next_++] = c;
+    d_buf_[last_lit_] = 0;
+    l_buf_[last_lit_++] = c;
     dyn_ltree_[c].fc++;
-    flush = (sym_next_ == sym_end_);
+    flush = (last_lit_ == lit_bufsize_-1);
 }
 
 //------------------------------------------------------------------------------
@@ -1497,12 +1460,12 @@ tr_flush_block(
     else if(strategy_ == Strategy::fixed || static_lenb == opt_lenb)
     {
 #endif
-        send_bits((static_trees<<1)+last, 3);
+        send_bits((STATIC_TREES<<1)+last, 3);
         compress_block(lut_.ltree, lut_.dtree);
     }
     else
     {
-        send_bits((dyn_trees<<1)+last, 3);
+        send_bits((DYN_TREES<<1)+last, 3);
         send_all_trees(l_desc_.max_code+1, d_desc_.max_code+1,
                        max_blindex+1);
         compress_block((const ct_data *)dyn_ltree_,
@@ -1559,8 +1522,6 @@ fill_window(z_params& zs)
             match_start_ -= wsize;
             strstart_    -= wsize; // we now have strstart >= max_dist
             block_start_ -= (long) wsize;
-            if (insert_ > strstart_)
-                insert_ = strstart_;
 
             /* Slide the hash table (could be avoided with 32 bit values
                at the expense of memory usage). We slide even when level == 0
@@ -2029,7 +1990,7 @@ f_fast(z_params& zs, Flush flush) ->
             return finish_started;
         return finish_done;
     }
-    if(sym_next_)
+    if(last_lit_)
     {
         flush_block(zs, false);
         if(zs.avail_out == 0)
@@ -2174,7 +2135,7 @@ f_slow(z_params& zs, Flush flush) ->
             return finish_started;
         return finish_done;
     }
-    if(sym_next_)
+    if(last_lit_)
     {
         flush_block(zs, false);
         if(zs.avail_out == 0)
@@ -2260,7 +2221,7 @@ f_rle(z_params& zs, Flush flush) ->
             return finish_started;
         return finish_done;
     }
-    if(sym_next_)
+    if(last_lit_)
     {
         flush_block(zs, false);
         if(zs.avail_out == 0)
@@ -2314,7 +2275,7 @@ f_huff(z_params& zs, Flush flush) ->
             return finish_started;
         return finish_done;
     }
-    if(sym_next_)
+    if(last_lit_)
     {
         flush_block(zs, false);
         if(zs.avail_out == 0)

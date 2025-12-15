@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Tobias Schwinger <tschwinger -at- isonews2.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

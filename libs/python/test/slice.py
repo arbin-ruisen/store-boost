@@ -33,8 +33,6 @@ test passed
 0
 >>> check_slice_get_indices( slice( -2, -5, -2))
 6
->>> check_slice_get_indices.__doc__.strip().split('\\n')[0]
-'check_slice_get_indices( (slice)arg1) -> int :'
 """
 
 # Performs an affirmative and negative argument resolution check.

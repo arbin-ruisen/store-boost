@@ -11,6 +11,5 @@
     ],
     "maintainers": [
         "Ion Gaztanaga <igaztanaga -at- gmail.com>"
-    ],
-    "cxxstd": "03"
+    ]
 }

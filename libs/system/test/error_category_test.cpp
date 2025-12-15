@@ -8,9 +8,11 @@
 
 // See library home page at http://www.boost.org/libs/system
 
+// Avoid spurious VC++ warnings
+# define _CRT_SECURE_NO_WARNINGS
+
 #include <boost/system/error_code.hpp>
 #include <boost/core/lightweight_test.hpp>
-#include <boost/core/snprintf.hpp>
 #include <cstdio>
 
 //
@@ -21,7 +23,7 @@ class user_category: public sys::error_category
 {
 public:
 
-    virtual const char * name() const noexcept
+    virtual const char * name() const BOOST_NOEXCEPT
     {
         return "user";
     }
@@ -29,7 +31,7 @@ public:
     virtual std::string message( int ev ) const
     {
         char buffer[ 256 ];
-        boost::core::snprintf( buffer, sizeof( buffer ), "user message %d", ev );
+        std::sprintf( buffer, "user message %d", ev );
 
         return buffer;
     }

@@ -11,8 +11,7 @@
 
 // -----------------------------------------------------------------------
 
-#include <boost/core/lightweight_test.hpp>
-#define BOOST_CHECK BOOST_TEST
+#include <boost/test/minimal.hpp>    // see "Header Implementation Option"
 
 #include "boost/lambda/lambda.hpp"
 
@@ -596,7 +595,7 @@ void return_type_matching() {
   BOOST_CHECK(a == 'b');
 }
   
-int main() {
+int test_main(int, char *[]) {   
 
   try 
   {
@@ -614,5 +613,9 @@ int main() {
   }
 
 
-  return boost::report_errors();
+  return EXIT_SUCCESS;
 }
+
+
+
+

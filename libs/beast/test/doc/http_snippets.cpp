@@ -37,10 +37,7 @@ net::const_buffer get_next_chunk_body()
 void fxx() {
 
     net::io_context ioc;
-    net::any_io_executor work =
-        net::require(
-            ioc.get_executor(),
-            net::execution::outstanding_work.tracked);
+    auto work = net::make_work_guard(ioc);
     std::thread t{[&](){ ioc.run(); }};
     net::ip::tcp::socket sock{ioc};
 

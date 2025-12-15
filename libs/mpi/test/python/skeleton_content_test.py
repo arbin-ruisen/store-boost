@@ -6,8 +6,7 @@
 
 # Test skeleton/content
 
-from __future__ import print_function
-import mpi
+import boost.parallel.mpi as mpi
 import skeleton_content
 
 def test_skeleton_and_content(comm, root, manual_broadcast = True):
@@ -26,7 +25,7 @@ def test_skeleton_and_content(comm, root, manual_broadcast = True):
             for p in range(0,comm.size):
                 if p != comm.rank:
                     comm.send(p, 0, value = mpi.skeleton(original_list))
-        print ("OK.")
+        print "OK."
 
         # Broadcast content
         print ("Broadcasting integer list content from root %d..." % (root)),
@@ -35,7 +34,7 @@ def test_skeleton_and_content(comm, root, manual_broadcast = True):
                 if p != comm.rank:
                     comm.send(p, 0, value = mpi.get_content(original_list))
 
-        print ("OK.")
+        print "OK."
 
         # Broadcast reversed content
         original_list.reverse()
@@ -45,7 +44,7 @@ def test_skeleton_and_content(comm, root, manual_broadcast = True):
                 if p != comm.rank:
                     comm.send(p, 0, value = mpi.get_content(original_list))
 
-        print ("OK.")
+        print "OK."
     else:
         # Allocate some useless data, to try to get the addresses of
         # the underlying lists used later to be different across

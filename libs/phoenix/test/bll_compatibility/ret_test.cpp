@@ -8,7 +8,7 @@
 //
 // For more information, see www.boost.org
 
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 
 #include <boost/lambda/lambda.hpp>
 
@@ -19,14 +19,14 @@ template<class R, class F>
 void test_ret(R r, F f) {
     typename F::result_type x = f();
     BOOST_MPL_ASSERT((boost::is_same<R, typename F::result_type>));
-    BOOST_TEST(x == r);
+    BOOST_CHECK(x == r);
 }
 
 template<class R, class F, class T1>
 void test_ret(R r, F f, T1& t1) {
     typename F::result_type x = f(t1);
     BOOST_MPL_ASSERT((boost::is_same<R, typename F::result_type>));
-    BOOST_TEST(x == r);
+    BOOST_CHECK(x == r);
 }
 
 class add_result {
@@ -44,11 +44,10 @@ add_result operator+(addable, addable) {
     return add_result(7);
 }
 
-int main()
-{
+int test_main(int, char*[]) {
     addable test;
     test_ret(add_result(7), boost::lambda::ret<add_result>(boost::lambda::_1 + test), test);
     test_ret(8.0, boost::lambda::ret<double>(boost::lambda::constant(7) + 1));
 
-    return boost::report_errors();
+    return 0;
 }

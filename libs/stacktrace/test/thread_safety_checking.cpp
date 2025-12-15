@@ -1,4 +1,4 @@
-// Copyright Antony Polukhin, 2016-2025.
+// Copyright Antony Polukhin, 2016-2019.
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -7,13 +7,14 @@
 #include "test_impl.hpp"
 #include <boost/stacktrace/stacktrace_fwd.hpp>
 
-#include <chrono> 
 #include <sstream>
-#include <thread>
 
 #include <boost/stacktrace.hpp>
+#include <boost/thread.hpp>
 #include <boost/optional.hpp>
 #include <boost/core/lightweight_test.hpp>
+
+#include <boost/timer/timer.hpp>
 
 using boost::stacktrace::stacktrace;
 
@@ -40,21 +41,32 @@ void main_test_loop() {
     }
 }
 
-int main() {
-    const auto t = std::chrono::steady_clock::now();
+#if defined(BOOST_STACKTRACE_TEST_COM_PREINIT_MT) || defined(BOOST_STACKTRACE_TEST_COM_PREINIT_ST)
+#   include <windows.h>
+#   include "dbgeng.h"
+#endif
 
-    std::thread t1(main_test_loop);
-    std::thread t2(main_test_loop);
-    std::thread t3(main_test_loop);
+int main() {
+#if defined(BOOST_STACKTRACE_TEST_COM_PREINIT_MT)
+    ::CoInitializeEx(0, COINIT_MULTITHREADED);
+#elif defined(BOOST_STACKTRACE_TEST_COM_PREINIT_ST)
+    ::CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+#endif
+
+    boost::timer::auto_cpu_timer t;
+
+    boost::thread t1(main_test_loop);
+    boost::thread t2(main_test_loop);
+    boost::thread t3(main_test_loop);
     main_test_loop();
 
     t1.join();
     t2.join();
     t3.join();
 
-    const auto elapsed = t - std::chrono::steady_clock::now();
-    std::cout << "Elapsed: " << std::chrono::duration_cast<std::chrono::milliseconds>(
-        elapsed
-    ). count() << "ms";
+#if defined(BOOST_STACKTRACE_TEST_COM_PREINIT_MT) || defined(BOOST_STACKTRACE_TEST_COM_PREINIT_ST)
+    ::CoUninitialize();
+#endif
+
     return boost::report_errors();
 }

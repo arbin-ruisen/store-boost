@@ -1,6 +1,6 @@
 // Boost.Geometry
 
-// Copyright (c) 2016-2020, Oracle and/or its affiliates.
+// Copyright (c) 2016-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -29,7 +29,7 @@
 #include <boost/geometry/formulas/result_direct.hpp>
 
 namespace boost { namespace geometry {
-
+    
 namespace formula {
 
 template <typename T>
@@ -45,7 +45,7 @@ struct result_spherical
 };
 
 template <typename T>
-inline void sph_to_cart3d(T const& lon, T const& lat, T & x, T & y, T & z)
+static inline void sph_to_cart3d(T const& lon, T const& lat, T & x, T & y, T & z)
 {
     T const cos_lat = cos(lat);
     x = cos_lat * cos(lon);
@@ -54,9 +54,9 @@ inline void sph_to_cart3d(T const& lon, T const& lat, T & x, T & y, T & z)
 }
 
 template <typename Point3d, typename PointSph>
-inline Point3d sph_to_cart3d(PointSph const& point_sph)
+static inline Point3d sph_to_cart3d(PointSph const& point_sph)
 {
-    using calc_t = coordinate_type_t<Point3d>;
+    typedef typename coordinate_type<Point3d>::type calc_t;
 
     calc_t const lon = get_as_radian<0>(point_sph);
     calc_t const lat = get_as_radian<1>(point_sph);
@@ -72,17 +72,17 @@ inline Point3d sph_to_cart3d(PointSph const& point_sph)
 }
 
 template <typename T>
-inline void cart3d_to_sph(T const& x, T const& y, T const& z, T & lon, T & lat)
+static inline void cart3d_to_sph(T const& x, T const& y, T const& z, T & lon, T & lat)
 {
     lon = atan2(y, x);
     lat = asin(z);
 }
 
 template <typename PointSph, typename Point3d>
-inline PointSph cart3d_to_sph(Point3d const& point_3d)
+static inline PointSph cart3d_to_sph(Point3d const& point_3d)
 {
-    using coord_t = coordinate_type_t<PointSph>;
-    using calc_t = coordinate_type_t<Point3d>;
+    typedef typename coordinate_type<PointSph>::type coord_t;
+    typedef typename coordinate_type<Point3d>::type calc_t;
 
     calc_t const x = get<0>(point_3d);
     calc_t const y = get<1>(point_3d);
@@ -99,7 +99,7 @@ inline PointSph cart3d_to_sph(Point3d const& point_3d)
 
     math::normalize_spheroidal_coordinates
         <
-            typename geometry::detail::cs_angular_units<PointSph>::type,
+            typename detail::cs_angular_units<PointSph>::type,
             coord_t
         >(lon, lat);
 
@@ -113,7 +113,7 @@ inline PointSph cart3d_to_sph(Point3d const& point_3d)
 // 1 left
 // 0 on
 template <typename Point3d1, typename Point3d2>
-inline int sph_side_value(Point3d1 const& norm, Point3d2 const& pt)
+static inline int sph_side_value(Point3d1 const& norm, Point3d2 const& pt)
 {
     typedef typename select_coordinate_type<Point3d1, Point3d2>::type calc_t;
     calc_t c0 = 0;
@@ -124,7 +124,7 @@ inline int sph_side_value(Point3d1 const& norm, Point3d2 const& pt)
 }
 
 template <typename CT, bool ReverseAzimuth, typename T1, typename T2>
-inline result_spherical<CT> spherical_azimuth(T1 const& lon1,
+static inline result_spherical<CT> spherical_azimuth(T1 const& lon1,
                                                      T1 const& lat1,
                                                      T2 const& lon2,
                                                      T2 const& lat2)
@@ -186,13 +186,17 @@ inline int azimuth_side_value(T const& azi_a1_p, T const& azi_a1_a2)
 {
     T const c0 = 0;
     T const pi = math::pi<T>();
+    T const two_pi = math::two_pi<T>();
 
     // instead of the formula from XTD
     //calc_t a_diff = asin(sin(azi_a1_p - azi_a1_a2));
 
     T a_diff = azi_a1_p - azi_a1_a2;
-    // normalize, angle in (-pi, pi]
-    math::detail::normalize_angle_loop<radian>(a_diff);
+    // normalize, angle in [-pi, pi]
+    while (a_diff > pi)
+        a_diff -= two_pi;
+    while (a_diff < -pi)
+        a_diff += two_pi;
 
     // NOTE: in general it shouldn't be required to support the pi/-pi case
     // because in non-cartesian systems it makes sense to check the side
@@ -201,7 +205,7 @@ inline int azimuth_side_value(T const& azi_a1_p, T const& azi_a1_a2)
     // for vertical segments to check if the point is "between the endpoints.
     // This could be avoided since the side strategy is not required for that
     // because meridian is the shortest path. So a difference of
-    // longitudes would be sufficient (of course normalized to (-pi, pi]).
+    // longitudes would be sufficient (of course normalized to [-pi, pi]).
 
     // NOTE: with the above said, the pi/-pi check is temporary
     // however in case if this was required
@@ -263,10 +267,6 @@ inline result_direct<CT> spherical_direct(CT const& lon1,
 
         result.lon2 = lon1 + lon2 - omg1;
         result.lat2 = lat2;
-
-        // For longitudes close to the antimeridian the result can be out
-        // of range. Therefore normalize.
-        math::detail::normalize_angle_cond<radian>(result.lon2);
     }
 
     if (ReverseAzimuth)

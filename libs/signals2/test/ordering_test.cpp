@@ -7,9 +7,8 @@
 
 // For more information, see http://www.boost.org
 
+#include <boost/test/minimal.hpp>
 #include <boost/signals2.hpp>
-#define BOOST_TEST_MODULE ordering_test
-#include <boost/test/included/unit_test.hpp>
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -84,10 +83,10 @@ void test_group_compare()
   BOOST_CHECK(sig() == 1);
 }
 
-BOOST_AUTO_TEST_CASE(test_main)
+int test_main(int, char* [])
 {
   using namespace std;
-  srand(static_cast<unsigned>(time(0)));
+  srand(time(0));
 
   std::vector<int> sortedValues;
 
@@ -125,4 +124,6 @@ BOOST_AUTO_TEST_CASE(test_main)
   BOOST_CHECK(ungrouped3);
 
   test_group_compare();
+
+  return 0;
 }

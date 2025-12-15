@@ -77,7 +77,7 @@ inline void pick_seeds(Elements const& elements,
             content_type free_content = ( index::detail::content(enlarged_box)
                                             - index::detail::content(bounded_ind1) )
                                                 - index::detail::content(bounded_ind2);
-
+                
             if ( greatest_free_content < free_content )
             {
                 greatest_free_content = free_content;
@@ -92,36 +92,33 @@ inline void pick_seeds(Elements const& elements,
 
 } // namespace quadratic
 
-template <typename MembersHolder>
-struct redistribute_elements<MembersHolder, quadratic_tag>
+template <typename Value, typename Options, typename Translator, typename Box, typename Allocators>
+struct redistribute_elements<Value, Options, Translator, Box, Allocators, quadratic_tag>
 {
-    typedef typename MembersHolder::box_type box_type;
-    typedef typename MembersHolder::parameters_type parameters_type;
-    typedef typename MembersHolder::translator_type translator_type;
-    typedef typename MembersHolder::allocators_type allocators_type;
+    typedef typename Options::parameters_type parameters_type;
 
-    typedef typename MembersHolder::node node;
-    typedef typename MembersHolder::internal_node internal_node;
-    typedef typename MembersHolder::leaf leaf;
+    typedef typename rtree::node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type node;
+    typedef typename rtree::internal_node<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type internal_node;
+    typedef typename rtree::leaf<Value, parameters_type, Box, Allocators, typename Options::node_tag>::type leaf;
 
-    typedef typename index::detail::default_content_result<box_type>::type content_type;
+    typedef typename index::detail::default_content_result<Box>::type content_type;
 
     template <typename Node>
     static inline void apply(Node & n,
                              Node & second_node,
-                             box_type & box1,
-                             box_type & box2,
+                             Box & box1,
+                             Box & box2,
                              parameters_type const& parameters,
-                             translator_type const& translator,
-                             allocators_type & allocators)
+                             Translator const& translator,
+                             Allocators & allocators)
     {
         typedef typename rtree::elements_type<Node>::type elements_type;
         typedef typename elements_type::value_type element_type;
-        typedef typename rtree::element_indexable_type<element_type, translator_type>::type indexable_type;
+        typedef typename rtree::element_indexable_type<element_type, Translator>::type indexable_type;
 
         elements_type & elements1 = rtree::elements(n);
         elements_type & elements2 = rtree::elements(second_node);
-
+        
         BOOST_GEOMETRY_INDEX_ASSERT(elements1.size() == parameters.get_max_elements() + 1, "unexpected elements number");
 
         // copy original elements - use in-memory storage (std::allocator)
@@ -130,11 +127,11 @@ struct redistribute_elements<MembersHolder, quadratic_tag>
             container_type;
         container_type elements_copy(elements1.begin(), elements1.end());                                   // MAY THROW, STRONG (alloc, copy)
         container_type elements_backup(elements1.begin(), elements1.end());                                 // MAY THROW, STRONG (alloc, copy)
-
+        
         // calculate initial seeds
         size_t seed1 = 0;
         size_t seed2 = 0;
-        quadratic::pick_seeds<box_type>(elements_copy, parameters, translator, seed1, seed2);
+        quadratic::pick_seeds<Box>(elements_copy, parameters, translator, seed1, seed2);
 
         // prepare nodes' elements containers
         elements1.clear();
@@ -252,7 +249,7 @@ struct redistribute_elements<MembersHolder, quadratic_tag>
             elements1.clear();
             elements2.clear();
 
-            rtree::destroy_elements<MembersHolder>::apply(elements_backup, allocators);
+            rtree::destroy_elements<Value, Options, Translator, Box, Allocators>::apply(elements_backup, allocators);
             //elements_backup.clear();
 
             BOOST_RETHROW                                                                                     // RETHROW, BASIC
@@ -264,28 +261,28 @@ struct redistribute_elements<MembersHolder, quadratic_tag>
 
     template <typename It>
     static inline It pick_next(It first, It last,
-                               box_type const& box1, box_type const& box2,
+                               Box const& box1, Box const& box2,
                                content_type const& content1, content_type const& content2,
-                               translator_type const& translator,
+                               Translator const& translator,
                                typename index::detail::strategy_type<parameters_type>::type const& strategy,
                                content_type & out_content_increase1, content_type & out_content_increase2)
     {
         typedef typename boost::iterator_value<It>::type element_type;
-        typedef typename rtree::element_indexable_type<element_type, translator_type>::type indexable_type;
+        typedef typename rtree::element_indexable_type<element_type, Translator>::type indexable_type;
 
         content_type greatest_content_incrase_diff = 0;
         It out_it = first;
         out_content_increase1 = 0;
         out_content_increase2 = 0;
-
+        
         // find element with greatest difference between increased group's boxes areas
         for ( It el_it = first ; el_it != last ; ++el_it )
         {
             indexable_type const& indexable = rtree::element_indexable(*el_it, translator);
 
             // calculate enlarged boxes and areas
-            box_type enlarged_box1(box1);
-            box_type enlarged_box2(box2);
+            Box enlarged_box1(box1);
+            Box enlarged_box2(box2);
             index::detail::expand(enlarged_box1, indexable, strategy);
             index::detail::expand(enlarged_box2, indexable, strategy);
             content_type enlarged_content1 = index::detail::content(enlarged_box1);

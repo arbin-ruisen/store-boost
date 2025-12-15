@@ -12,7 +12,6 @@
       "High-performance templated sort functions.",
     "category": [
       "Algorithms"
-    ],
-    "cxxstd": "03"
+    ]
   }
 ]
