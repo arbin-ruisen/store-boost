@@ -1,7 +1,5 @@
 /*=============================================================================
     Copyright (c) 2001-2014 Joel de Guzman
-    Copyright (c) 2017 wanghan02
-    Copyright (c) 2024 Nana Sakisaka
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -9,13 +7,10 @@
 #if !defined(BOOST_SPIRIT_X3_SEQUENCE_JAN_06_2013_1015AM)
 #define BOOST_SPIRIT_X3_SEQUENCE_JAN_06_2013_1015AM
 
-#include <boost/spirit/home/x3/support/traits/attribute_of_binary.hpp>
-#include <boost/spirit/home/x3/support/expectation.hpp>
+#include <boost/spirit/home/x3/support/traits/attribute_of.hpp>
 #include <boost/spirit/home/x3/core/parser.hpp>
 #include <boost/spirit/home/x3/operator/detail/sequence.hpp>
 #include <boost/spirit/home/x3/directive/expect.hpp>
-
-#include <boost/fusion/include/deque_fwd.hpp>
 
 namespace boost { namespace spirit { namespace x3
 {
@@ -24,7 +19,7 @@ namespace boost { namespace spirit { namespace x3
     {
         typedef binary_parser<Left, Right, sequence<Left, Right>> base_type;
 
-        constexpr sequence(Left const& left, Right const& right)
+        sequence(Left const& left, Right const& right)
             : base_type(left, right) {}
 
         template <typename Iterator, typename Context, typename RContext>
@@ -32,20 +27,10 @@ namespace boost { namespace spirit { namespace x3
             Iterator& first, Iterator const& last
           , Context const& context, RContext& rcontext, unused_type) const
         {
-            Iterator const save = first;
-
+            Iterator save = first;
             if (this->left.parse(first, last, context, rcontext, unused)
                 && this->right.parse(first, last, context, rcontext, unused))
                 return true;
-
-        #if !BOOST_SPIRIT_X3_THROW_EXPECTATION_FAILURE
-            if (has_expectation_failure(context))
-            {
-                // don't rollback iterator (mimicking exception-like behavior)
-                return false;
-            }
-        #endif
-
             first = save;
             return false;
         }
@@ -62,7 +47,7 @@ namespace boost { namespace spirit { namespace x3
     };
 
     template <typename Left, typename Right>
-    constexpr sequence<
+    inline sequence<
         typename extension::as_parser<Left>::value_type
       , typename extension::as_parser<Right>::value_type>
     operator>>(Left const& left, Right const& right)
@@ -71,8 +56,7 @@ namespace boost { namespace spirit { namespace x3
     }
 
     template <typename Left, typename Right>
-    constexpr auto operator>(Left const& left, Right const& right)
-      -> decltype(left >> expect[right])
+    auto operator>(Left const& left, Right const& right)
     {
         return left >> expect[right];
     }
@@ -82,7 +66,7 @@ namespace boost { namespace spirit { namespace x3 { namespace traits
 {
     template <typename Left, typename Right, typename Context>
     struct attribute_of<x3::sequence<Left, Right>, Context>
-        : x3::detail::attribute_of_binary<fusion::deque, x3::sequence, Left, Right, Context> {};
+        : x3::detail::attribute_of_sequence<Left, Right, Context> {};
 }}}}
 
 #endif

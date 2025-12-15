@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,11 +10,10 @@
 #ifndef BOOST_BEAST_HTTP_BASIC_FILE_BODY_HPP
 #define BOOST_BEAST_HTTP_BASIC_FILE_BODY_HPP
 
-#include <boost/beast/http/basic_file_body_fwd.hpp>
-
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/file_base.hpp>
+#include <boost/beast/core/type_traits.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>
@@ -40,14 +39,14 @@ namespace http {
     content from a directory as part of a web service.
 
     @tparam File The implementation to use for accessing files.
-    This type must meet the requirements of <em>File</em>.
+    This type must meet the requirements of @b File.
 */
 template<class File>
 struct basic_file_body
 {
     // Make sure the type meets the requirements
     static_assert(is_file<File>::value,
-        "File type requirements not met");
+        "File requirements not met");
 
     /// The type of File this body uses
     using file_type = File;
@@ -87,11 +86,9 @@ class basic_file_body<File>::value_type
     // This body container holds a handle to the file
     // when it is open, and also caches the size when set.
 
-#ifndef BOOST_BEAST_DOXYGEN
     friend class reader;
     friend class writer;
     friend struct basic_file_body;
-#endif
 
     // This represents the open file
     File file_;
@@ -114,12 +111,6 @@ public:
 
     /// Move assignment
     value_type& operator=(value_type&& other) = default;
-
-    /// Return the file
-    File& file()
-    {
-        return file_;
-    }
 
     /// Returns `true` if the file is open
     bool
@@ -162,19 +153,6 @@ public:
     */
     void
     reset(File&& file, error_code& ec);
-
-    /** Set the cursor position of the file.
-
-        This function can be used to move the cursor of the file ahead
-        so that only a part gets read. This file will also adjust the
-        value_type, in case the file is already part of a body.
-
-        @param offset The offset in bytes from the beginning of the file
-
-        @param ec Set to the error, if any occurred
-    */
-
-    void seek(std::uint64_t offset, error_code& ec);
 };
 
 template<class File>
@@ -225,28 +203,7 @@ reset(File&& file, error_code& ec)
 
     // Cache the size
     file_size_ = file_.size(ec);
-
-    // Consider the offset
-    if (!ec)
-        file_size_ -= file_.pos(ec);
 }
-
-template<class File>
-void
-basic_file_body<File>::
-value_type::
-seek(std::uint64_t offset, error_code& ec)
-{
-    file_.seek(offset, ec);
-    // Cache the size
-    if (!ec)
-        file_size_ = file_.size(ec);
-
-    // Consider the offset
-    if (!ec)
-        file_size_ -= file_.pos(ec);
-}
-
 
 // This is called from message::payload_size
 template<class File>
@@ -270,15 +227,15 @@ size(value_type const& body)
 template<class File>
 class basic_file_body<File>::writer
 {
-    value_type& body_;                       // The body we are reading from
-    std::uint64_t remain_;                   // The number of unread bytes
-    char buf_[BOOST_BEAST_FILE_BUFFER_SIZE]; // Small buffer for reading
+    value_type& body_;      // The body we are reading from
+    std::uint64_t remain_;  // The number of unread bytes
+    char buf_[4096];        // Small buffer for reading
 
 public:
     // The type of buffer sequence returned by `get`.
     //
     using const_buffers_type =
-        net::const_buffer;
+        boost::asio::const_buffer;
 
     // Constructor.
     //
@@ -362,7 +319,7 @@ init(error_code& ec)
     // to indicate no error.
     //
     // We don't do anything fancy so set "no error"
-    ec = {};
+    ec.assign(0, ec.category());
 }
 
 // This function is called repeatedly by the serializer to
@@ -392,7 +349,7 @@ get(error_code& ec) ->
         //      into the library to get the generic category because
         //      that saves us a possibly expensive atomic operation.
         //
-        ec = {};
+        ec.assign(0, ec.category());
         return boost::none;
     }
 
@@ -400,12 +357,6 @@ get(error_code& ec) ->
     auto const nread = body_.file_.read(buf_, amount, ec);
     if(ec)
         return boost::none;
-
-    if (nread == 0)
-    {
-        BOOST_BEAST_ASSIGN_EC(ec, error::short_read);
-        return boost::none;
-    }
 
     // Make sure there is forward progress
     BOOST_ASSERT(nread != 0);
@@ -422,7 +373,7 @@ get(error_code& ec) ->
     // we set this bool to `false` so we will not be called
     // again.
     //
-    ec = {};
+    ec.assign(0, ec.category());
     return {{
         const_buffers_type{buf_, nread},    // buffer to return.
         remain_ > 0                         // `true` if there are more buffers.
@@ -523,7 +474,7 @@ init(
     // to indicate no error.
     //
     // We don't do anything fancy so set "no error"
-    ec = {};
+    ec.assign(0, ec.category());
 }
 
 // This will get called one or more times with body buffers
@@ -541,11 +492,11 @@ put(ConstBufferSequence const& buffers, error_code& ec)
 
     // Loop over all the buffers in the sequence,
     // and write each one to the file.
-    for(auto it = net::buffer_sequence_begin(buffers);
-        it != net::buffer_sequence_end(buffers); ++it)
+    for(auto it = boost::asio::buffer_sequence_begin(buffers);
+        it != boost::asio::buffer_sequence_end(buffers); ++it)
     {
         // Write this buffer to the file
-        net::const_buffer buffer = *it;
+        boost::asio::const_buffer buffer = *it;
         nwritten += body_.file_.write(
             buffer.data(), buffer.size(), ec);
         if(ec)
@@ -554,7 +505,7 @@ put(ConstBufferSequence const& buffers, error_code& ec)
 
     // Indicate success
     // This is required by the error_code specification
-    ec = {};
+    ec.assign(0, ec.category());
 
     return nwritten;
 }
@@ -568,7 +519,7 @@ finish(error_code& ec)
 {
     // This has to be cleared before returning, to
     // indicate no error. The specification requires it.
-    ec = {};
+    ec.assign(0, ec.category());
 }
 
 //]
@@ -577,8 +528,8 @@ finish(error_code& ec)
 // operator<< is not supported for file_body
 template<bool isRequest, class File, class Fields>
 std::ostream&
-operator<<(std::ostream&, message<
-    isRequest, basic_file_body<File>, Fields> const&) = delete;
+operator<<(std::ostream& os, message<
+    isRequest, basic_file_body<File>, Fields> const& msg) = delete;
 #endif
 
 } // http

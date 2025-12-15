@@ -14,7 +14,7 @@ import modules ;
 import os ;
 import toolset ;
 
-project
+project boost/fiber/example/numa
     : requirements
       <library>../../build//boost_fiber
       <library>../../build//boost_fiber_numa

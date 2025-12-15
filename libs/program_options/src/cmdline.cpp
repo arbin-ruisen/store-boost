@@ -3,9 +3,7 @@
 // (See accompanying file LICENSE_1_0.txt
 // or copy at http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef BOOST_PROGRAM_OPTIONS_SOURCE
-# define BOOST_PROGRAM_OPTIONS_SOURCE
-#endif
+#define BOOST_PROGRAM_OPTIONS_SOURCE
 #include <boost/program_options/config.hpp>
 
 #include <boost/config.hpp>
@@ -17,7 +15,7 @@
 #include <boost/program_options/positional_options.hpp>
 #include <boost/throw_exception.hpp>
 
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 
 #include <string>
 #include <utility>
@@ -30,8 +28,6 @@
 #include <cstdio>
 
 #include <iostream>
-
-using namespace boost::placeholders;
 
 namespace boost { namespace program_options {
 

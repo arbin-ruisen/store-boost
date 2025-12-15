@@ -10,11 +10,9 @@
 #pragma once
 #endif
 
-#include <boost/math/tools/config.hpp>
 #include <boost/math/special_functions/detail/bessel_y0.hpp>
 #include <boost/math/special_functions/detail/bessel_y1.hpp>
 #include <boost/math/special_functions/detail/bessel_jy_series.hpp>
-#include <boost/math/special_functions/sign.hpp>
 #include <boost/math/policies/error_handling.hpp>
 
 // Bessel function of the second kind of integer order
@@ -23,22 +21,23 @@
 namespace boost { namespace math { namespace detail{
 
 template <typename T, typename Policy>
-BOOST_MATH_GPU_ENABLED T bessel_yn(int n, T x, const Policy& pol)
+T bessel_yn(int n, T x, const Policy& pol)
 {
     BOOST_MATH_STD_USING
     T value, factor, current, prev;
 
     using namespace boost::math::tools;
 
-    constexpr auto function = "boost::math::bessel_yn<%1%>(%1%,%1%)";
+    static const char* function = "boost::math::bessel_yn<%1%>(%1%,%1%)";
 
     if ((x == 0) && (n == 0))
     {
-       return -policies::raise_overflow_error<T>(function, nullptr, pol);
+       return -policies::raise_overflow_error<T>(function, 0, pol);
     }
     if (x <= 0)
     {
-       return policies::raise_domain_error<T>(function, "Got x = %1%, but x must be > 0, complex result not supported.", x, pol);
+       return policies::raise_domain_error<T>(function,
+            "Got x = %1%, but x must be > 0, complex result not supported.", x, pol);
     }
 
     //
@@ -57,13 +56,13 @@ BOOST_MATH_GPU_ENABLED T bessel_yn(int n, T x, const Policy& pol)
     {
        T scale = 1;
        value = bessel_yn_small_z(n, x, &scale, pol);
-       if (tools::max_value<T>() * fabs(scale) < fabs(value))
-          return boost::math::sign(scale) * boost::math::sign(value) * policies::raise_overflow_error<T>(function, nullptr, pol);
-       value = (factor * value) / scale;
+       if(tools::max_value<T>() * fabs(scale) < fabs(value))
+          return boost::math::sign(scale) * boost::math::sign(value) * policies::raise_overflow_error<T>(function, 0, pol);
+       value /= scale;
     }
     else if(asymptotic_bessel_large_x_limit(n, x))
     {
-       value = factor * asymptotic_bessel_y_large_x_2(static_cast<T>(abs(n)), x, pol);
+       value = factor * asymptotic_bessel_y_large_x_2(static_cast<T>(abs(n)), x);
     }
     else if (n == 0)
     {
@@ -78,7 +77,7 @@ BOOST_MATH_GPU_ENABLED T bessel_yn(int n, T x, const Policy& pol)
        prev = bessel_y0(x, pol);
        current = bessel_y1(x, pol);
        int k = 1;
-       BOOST_MATH_ASSERT(k < n);
+       BOOST_ASSERT(k < n);
        policies::check_series_iterations<T>("boost::math::bessel_y_n<%1%>(%1%,%1%)", n, pol);
        T mult = 2 * k / x;
        value = mult * current - prev;
@@ -100,8 +99,8 @@ BOOST_MATH_GPU_ENABLED T bessel_yn(int n, T x, const Policy& pol)
            current = value;
            ++k;
        }
-       if (fabs(tools::max_value<T>() * factor) < fabs(value))
-          return sign(value) * sign(factor) * policies::raise_overflow_error<T>(function, nullptr, pol);
+       if(fabs(tools::max_value<T>() * factor) < fabs(value))
+          return sign(value) * sign(factor) * policies::raise_overflow_error<T>(function, 0, pol);
        value /= factor;
     }
     return value;

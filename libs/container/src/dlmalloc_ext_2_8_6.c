@@ -35,8 +35,7 @@
 #ifdef __GNUC__
 #define FORCEINLINE inline
 #endif
-
-#define DLMALLOC_EXT_GCC_VERSION 
+#include "dlmalloc_2_8_6.c"
 
 #ifdef _MSC_VER
 #pragma warning (push)
@@ -46,24 +45,7 @@
 #pragma warning (disable : 4702)
 #pragma warning (disable : 4390) /*empty controlled statement found; is this the intent?*/
 #pragma warning (disable : 4251 4231 4660) /*dll warnings*/
-#pragma warning (disable : 4057) /*differs in indirection to slightly different base types from*/
-#pragma warning (disable : 4702) /*unreachable code*/
-#pragma warning (disable : 4127) /*conditional expression is constant*/
-#elif defined(__GNUC__)
-
-# if ((__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) >= 40800)
-   //Disable false positives triggered by -Waggressive-loop-optimizations
-#  pragma GCC diagnostic ignored "-Waggressive-loop-optimizations"
-#  endif
-
-# if ((__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) >= 40600)
-   //Disable false positives triggered by -Warray-bounds
-#  pragma GCC diagnostic ignored "-Warray-bounds"
-#  endif
-
 #endif
-
-#include "dlmalloc_2_8_6.c"
 
 #define DL_SIZE_IMPL(p) (chunksize(mem2chunk(p)) - overhead_for(mem2chunk(p)))
 
@@ -809,21 +791,21 @@ static int internal_node_multialloc
 	/*Error if wrong element_size parameter */
 	if (!element_size ||
 		/*OR Error if n_elements less than contiguous_elements */
-		((contiguous_elements + 1) > (BOOST_CONTAINER_DL_MULTIALLOC_DEFAULT_CONTIGUOUS + 1) && n_elements < contiguous_elements) ||
+		((contiguous_elements + 1) > (DL_MULTIALLOC_DEFAULT_CONTIGUOUS + 1) && n_elements < contiguous_elements) ||
 		/* OR Error if integer overflow */
 		(SQRT_MAX_SIZE_T < (element_req_size | contiguous_elements) &&
 		(MAX_SIZE_T / element_req_size) < contiguous_elements)) {
 		return 0;
 	}
 	switch (contiguous_elements) {
-	case BOOST_CONTAINER_DL_MULTIALLOC_DEFAULT_CONTIGUOUS:
+	case DL_MULTIALLOC_DEFAULT_CONTIGUOUS:
 	{
 		/* Default contiguous, just check that we can store at least one element */
 		elements_per_segment = INTERNAL_MULTIALLOC_DEFAULT_CONTIGUOUS_MEM / element_req_size;
 		elements_per_segment += (size_t)(!elements_per_segment);
 	}
 	break;
-	case BOOST_CONTAINER_DL_MULTIALLOC_ALL_CONTIGUOUS:
+	case DL_MULTIALLOC_ALL_CONTIGUOUS:
 		/* All elements should be allocated in a single call */
 		elements_per_segment = n_elements;
 		break;
@@ -1020,11 +1002,11 @@ static int internal_multialloc_arrays
    max_size = MAX_REQUEST/element_size;
    /* Different sizes*/
    switch(contiguous_elements){
-      case BOOST_CONTAINER_DL_MULTIALLOC_DEFAULT_CONTIGUOUS:
+      case DL_MULTIALLOC_DEFAULT_CONTIGUOUS:
          /* Use default contiguous mem */
          boost_cont_multialloc_segmented_malloc_size = INTERNAL_MULTIALLOC_DEFAULT_CONTIGUOUS_MEM;
       break;
-      case BOOST_CONTAINER_DL_MULTIALLOC_ALL_CONTIGUOUS:
+      case DL_MULTIALLOC_ALL_CONTIGUOUS:
          boost_cont_multialloc_segmented_malloc_size = MAX_REQUEST + CHUNK_OVERHEAD;
       break;
       default:
@@ -1238,12 +1220,14 @@ size_t boost_cont_allocated_memory()
       if (is_initialized(m)) {
       size_t nfree = SIZE_T_ONE; /* top always free */
       size_t mfree = m->topsize + TOP_FOOT_SIZE;
+      size_t sum = mfree;
       msegmentptr s = &m->seg;
       while (s != 0) {
          mchunkptr q = align_as_chunk(s->base);
          while (segment_holds(s, q) &&
                q != m->top && q->head != FENCEPOST_HEAD) {
             size_t sz = chunksize(q);
+            sum += sz;
             if (!is_inuse(q)) {
             mfree += sz;
             ++nfree;

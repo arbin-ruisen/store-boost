@@ -1,26 +1,14 @@
 #ifndef BOOST_MP11_INTEGER_SEQUENCE_HPP_INCLUDED
 #define BOOST_MP11_INTEGER_SEQUENCE_HPP_INCLUDED
 
-// Copyright 2015, 2017, 2019 Peter Dimov.
+//  Copyright 2015, 2017 Peter Dimov.
 //
-// Distributed under the Boost Software License, Version 1.0.
+//  Distributed under the Boost Software License, Version 1.0.
 //
-// See accompanying file LICENSE_1_0.txt or copy at
-// http://www.boost.org/LICENSE_1_0.txt
+//  See accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/mp11/version.hpp>
 #include <cstddef>
-
-#if defined(_MSC_VER) || defined(__GNUC__)
-# pragma push_macro( "I" )
-# undef I
-#endif
-
-#if defined(__has_builtin)
-# if __has_builtin(__make_integer_seq)
-#  define BOOST_MP11_HAS_MAKE_INTEGER_SEQ
-# endif
-#endif
 
 namespace boost
 {
@@ -31,12 +19,6 @@ namespace mp11
 template<class T, T... I> struct integer_sequence
 {
 };
-
-#if defined(BOOST_MP11_HAS_MAKE_INTEGER_SEQ)
-
-template<class T, T N> using make_integer_sequence = __make_integer_seq<integer_sequence, T, N>;
-
-#else
 
 // detail::make_integer_sequence_impl
 namespace detail
@@ -100,8 +82,6 @@ template<class T, T N> struct make_integer_sequence_impl: iseq_if_c<N == 0, iseq
 // make_integer_sequence
 template<class T, T N> using make_integer_sequence = typename detail::make_integer_sequence_impl<T, N>::type;
 
-#endif // defined(BOOST_MP11_HAS_MAKE_INTEGER_SEQ)
-
 // index_sequence
 template<std::size_t... I> using index_sequence = integer_sequence<std::size_t, I...>;
 
@@ -113,9 +93,5 @@ template<class... T> using index_sequence_for = make_integer_sequence<std::size_
 
 } // namespace mp11
 } // namespace boost
-
-#if defined(_MSC_VER) || defined(__GNUC__)
-# pragma pop_macro( "I" )
-#endif
 
 #endif // #ifndef BOOST_MP11_INTEGER_SEQUENCE_HPP_INCLUDED

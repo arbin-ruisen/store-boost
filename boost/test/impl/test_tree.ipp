@@ -30,6 +30,9 @@
 
 #include <boost/test/unit_test_parameters.hpp>
 
+// Boost
+#include <boost/timer.hpp>
+
 // STL
 #include <algorithm>
 #include <vector>
@@ -435,7 +438,7 @@ namespace ut_detail {
 std::string
 normalize_test_case_name( const_string name )
 {
-    std::string norm_name( name.begin(), name.end() );
+    std::string norm_name( name.begin(), name.size() );
 
     if( name[0] == '&' )
         norm_name = norm_name.substr( 1 );
@@ -452,7 +455,7 @@ normalize_test_case_name( const_string name )
     }
 
     // sanitize all chars that might be used in runtime filters
-    static const char to_replace[] = { ':', '*', '@', '+', '!', '/', ',' };
+    static const char to_replace[] = { ':', '*', '@', '+', '!', '/' };
     for(std::size_t index = 0;
         index < sizeof(to_replace)/sizeof(to_replace[0]);
         index++) {
@@ -501,16 +504,16 @@ auto_test_unit_registrar::auto_test_unit_registrar( const_string ts_name, const_
 
 //____________________________________________________________________________//
 
-auto_test_unit_registrar::auto_test_unit_registrar( test_unit_generator const& tc_generator, decorator::collector_t& decorators )
+auto_test_unit_registrar::auto_test_unit_registrar( test_unit_generator const& tc_gen, decorator::collector_t& decorators )
 {
-    framework::current_auto_test_suite().add( tc_generator, decorators );
+    framework::current_auto_test_suite().add( tc_gen, decorators );
 }
 
 //____________________________________________________________________________//
 
-auto_test_unit_registrar::auto_test_unit_registrar( boost::shared_ptr<test_unit_generator> tc_generator, decorator::collector_t& decorators )
+auto_test_unit_registrar::auto_test_unit_registrar( boost::shared_ptr<test_unit_generator> tc_gen, decorator::collector_t& decorators )
 {
-    framework::current_auto_test_suite().add( tc_generator, decorators );
+    framework::current_auto_test_suite().add( tc_gen, decorators );
 }
 
 
@@ -529,49 +532,28 @@ auto_test_unit_registrar::auto_test_unit_registrar( int )
 // **************                global_fixture                ************** //
 // ************************************************************************** //
 
-global_fixture::global_fixture(): registered(false)
+global_fixture::global_fixture()
 {
     framework::register_global_fixture( *this );
-    registered = true;
-}
-
-void global_fixture::unregister_from_framework() {
-    // not accessing the framework singleton after deregistering -> release
-    // of the observer from the framework
-    if(registered) {
-        framework::deregister_global_fixture( *this );
-    }
-    registered = false;
 }
 
 global_fixture::~global_fixture()
 {
-    this->unregister_from_framework();
+    framework::deregister_global_fixture( *this );
 }
 
 // ************************************************************************** //
 // **************            global_configuration              ************** //
 // ************************************************************************** //
 
-global_configuration::global_configuration(): registered(false)
+global_configuration::global_configuration()
 {
     framework::register_observer( *this );
-    registered = true;
-}
-
-void global_configuration::unregister_from_framework()
-{
-    // not accessing the framework singleton after deregistering -> release
-    // of the observer from the framework
-    if(registered) {
-        framework::deregister_observer( *this );
-    }
-    registered = false;
 }
 
 global_configuration::~global_configuration()
 {
-    this->unregister_from_framework();
+    framework::deregister_observer( *this );
 }
 
 //____________________________________________________________________________//

@@ -4,17 +4,15 @@
   Distributed under the Boost Software License, Version 1.0. (See accompanying
   file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
   =============================================================================*/
-#ifndef BOOST_SPIRIT_REPOSITORY_QI_OPERATOR_DETAIL_KEYWORDS_HPP
-#define BOOST_SPIRIT_REPOSITORY_QI_OPERATOR_DETAIL_KEYWORDS_HPP
+#if !defined(SPIRIT_KEYWORDS_DETAIL_MARCH_13_2007_1145PM)
+#define SPIRIT_KEYWORDS_DETAIL_MARCH_13_2007_1145PM
 
 #if defined(_MSC_VER)
 #pragma once
 #endif
-#include <boost/spirit/repository/home/qi/directive/kwd.hpp> // for skipper_keyword_marker
+#include <boost/fusion/include/nview.hpp>
 #include <boost/spirit/home/qi/string/lit.hpp>
 #include <boost/fusion/include/at.hpp>
-#include <boost/fusion/include/any.hpp>
-
 namespace boost { namespace spirit { namespace repository { namespace qi { namespace detail {
     // Variant visitor class which handles dispatching the parsing to the selected parser
     // This also handles passing the correct attributes and flags/counters to the subject parsers
@@ -69,7 +67,7 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
                     {
                         return true;
                     }
-                    first = save;
+                    save = save;
                     return false;
                 }
 
@@ -84,20 +82,14 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
                     Iterator save = first;
                     skipper_keyword_marker<Skipper,NoCasePass> 
                         marked_skipper(skipper,flags[Index::value],counters[Index::value]);
-                    typename fusion::result_of::at_c<typename remove_reference<Attribute>::type, Index::value>::type
-                        attr_ = fusion::at_c<Index::value>(attr);
-                    if(subject.parse(first,last,context,marked_skipper,attr_))
+                    if(subject.parse(first,last,context,marked_skipper,fusion::at_c<Index::value>(attr)))
                     {
                         return true;
                     }
-                    first = save;
+                    save = save;
                     return false;
                 }
 
-#if defined(_MSC_VER)
-# pragma warning(push)
-# pragma warning(disable: 4127) // conditional expression is constant
-#endif
             // Handle unused attributes
             template <typename T> bool call(T &idx, mpl::false_) const{
  
@@ -122,9 +114,6 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
                   }
                 return false;
             }
-#if defined(_MSC_VER)
-# pragma warning(pop)
-#endif
 
             const Elements &elements;
             Iterator &first;
@@ -192,7 +181,7 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
             ///////////////////////////////////////////////////////////////////////////
             // get_keyword_char_type
             //
-            // Collapses the character type coming from the subject kwd parsers and
+            // Collapses the character type comming from the subject kwd parsers and
             // and checks that they are all identical (necessary in order to be able
             // to build a tst parser to parse the keywords.
             ///////////////////////////////////////////////////////////////////////////
@@ -486,7 +475,7 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
             return true;
                     }
                     // Second pass case insensitive
-                    if(parser_index_type* val_ptr
+                    else if(parser_index_type* val_ptr
                             = lookup->find(saved_first,last,nc_filter()))
                     {
                         first = saved_first;
@@ -649,10 +638,6 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
             }
     };
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4512) // assignment operator could not be generated.
-#endif
     template <typename ParseDispatcher>
         struct complex_kwd_function
         {
@@ -703,10 +688,11 @@ namespace boost { namespace spirit { namespace repository { namespace qi { names
             Context& context;
             Skipper const& skipper;
             ParseDispatcher const& dispatcher;
+
+            private:
+            // silence MSVC warning C4512: assignment operator could not be generated
+            complex_kwd_function& operator= (complex_kwd_function const&);
         };
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 
 }}}}}

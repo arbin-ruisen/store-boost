@@ -13,7 +13,6 @@
 #include <boost/gil/extension/io/raw/detail/is_allowed.hpp>
 #include <boost/gil/extension/io/raw/detail/reader_backend.hpp>
 
-#include <boost/gil/io/detail/dynamic.hpp>
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/bit_operations.hpp>
 #include <boost/gil/io/conversion_policies.hpp>
@@ -23,8 +22,6 @@
 #include <boost/gil/io/typedefs.hpp>
 
 #include <cstdio>
-#include <sstream>
-#include <type_traits>
 #include <vector>
 
 namespace boost { namespace gil {
@@ -60,12 +57,18 @@ class reader< Device
 {
 private:
 
-    using this_t = reader<Device, raw_tag, ConversionPolicy>;
-    using cc_t = typename ConversionPolicy::color_converter_type;
+    typedef reader< Device
+                  , raw_tag
+                  , ConversionPolicy
+                  > this_t;
+
+    typedef typename ConversionPolicy::color_converter_type cc_t;
 
 public:
 
-    using backend_t = reader_backend<Device, raw_tag>;
+    typedef reader_backend< Device, raw_tag > backend_t;
+
+public:
 
     //
     // Constructor
@@ -101,11 +104,9 @@ public:
             io_error( "Image header was not read." );
         }
 
-        using is_read_and_convert_t = typename std::is_same
-            <
-                ConversionPolicy,
-                detail::read_and_no_convert
-            >::type;
+        typedef typename is_same< ConversionPolicy
+                                , detail::read_and_no_convert
+                                >::type is_read_and_convert_t;
 
         io_error_if( !detail::is_allowed< View >( this->_info
                                                 , is_read_and_convert_t()
@@ -165,8 +166,11 @@ struct raw_type_format_checker
     template< typename Image >
     bool apply()
     {
-        using view_t = typename Image::view_t;
-        return is_allowed<view_t>(_info, std::true_type{});
+        typedef typename Image::view_t view_t;
+
+        return is_allowed< view_t >( _info
+                                   , mpl::true_()
+                                   );
     }
 
 private:
@@ -188,7 +192,10 @@ class dynamic_image_reader< Device
                    , detail::read_and_no_convert
                    >
 {
-    using parent_t = reader<Device, raw_tag, detail::read_and_no_convert>;
+    typedef reader< Device
+                  , raw_tag
+                  , detail::read_and_no_convert
+                  > parent_t;
 
 public:
 
@@ -200,12 +207,12 @@ public:
               )
     {}
 
-    template< typename ...Images >
-    void apply( any_image< Images... >& images )
+    template< typename Images >
+    void apply( any_image< Images >& images )
     {
         detail::raw_type_format_checker format_checker( this->_info );
 
-        if( !detail::construct_matched( images
+        if( !construct_matched( images
                                , format_checker
                                ))
         {
@@ -224,8 +231,8 @@ public:
                                     , parent_t
                                     > op( this );
 
-            variant2::visit( op
-                            , view( images )
+            apply_operation( view( images )
+                            , op
                             );
         }
     }

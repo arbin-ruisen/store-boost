@@ -2,7 +2,7 @@
 // detail/thread_group.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,23 +16,19 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <boost/asio/detail/config.hpp>
-#include <boost/asio/detail/memory.hpp>
+#include <boost/asio/detail/scoped_ptr.hpp>
 #include <boost/asio/detail/thread.hpp>
-
-#include <boost/asio/detail/push_options.hpp>
 
 namespace boost {
 namespace asio {
 namespace detail {
 
-template <typename Allocator>
 class thread_group
 {
 public:
   // Constructor initialises an empty thread group.
-  explicit thread_group(const Allocator& a)
-    : allocator_(a),
-      first_(0)
+  thread_group()
+    : first_(0)
   {
   }
 
@@ -46,7 +42,7 @@ public:
   template <typename Function>
   void create_thread(Function f)
   {
-    first_ = allocate_object<item>(allocator_, allocator_, f, first_);
+    first_ = new item(f, first_);
   }
 
   // Create new threads in the group.
@@ -65,14 +61,8 @@ public:
       first_->thread_.join();
       item* tmp = first_;
       first_ = first_->next_;
-      deallocate_object(allocator_, tmp);
+      delete tmp;
     }
-  }
-
-  // Test whether the group is empty.
-  bool empty() const
-  {
-    return first_ == 0;
   }
 
 private:
@@ -80,8 +70,8 @@ private:
   struct item
   {
     template <typename Function>
-    explicit item(const Allocator& a, Function f, item* next)
-      : thread_(std::allocator_arg, a, f),
+    explicit item(Function f, item* next)
+      : thread_(f),
         next_(next)
     {
     }
@@ -90,9 +80,6 @@ private:
     item* next_;
   };
 
-  // The allocator to be used to create items in the group.
-  Allocator allocator_;
-
   // The first thread in the group.
   item* first_;
 };
@@ -100,7 +87,5 @@ private:
 } // namespace detail
 } // namespace asio
 } // namespace boost
-
-#include <boost/asio/detail/pop_options.hpp>
 
 #endif // BOOST_ASIO_DETAIL_THREAD_GROUP_HPP

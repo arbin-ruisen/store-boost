@@ -2,7 +2,7 @@
 @file
 Adapts `std::tuple` for use with Hana.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -51,7 +51,7 @@ namespace std {
 #endif
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     namespace ext { namespace std { struct tuple_tag; }}
 
     template <typename ...Xs>
@@ -90,7 +90,11 @@ namespace boost { namespace hana {
         template <typename Xs, std::size_t ...i>
         static constexpr decltype(auto)
         flatten_helper(Xs&& xs, std::index_sequence<i...>) {
+#if defined(BOOST_HANA_CONFIG_LIBCPP_HAS_BUG_22806)
+            return std::tuple_cat(std::get<i>(xs)...);
+#else
             return std::tuple_cat(std::get<i>(static_cast<Xs&&>(xs))...);
+#endif
         }
 
         template <typename Xs>
@@ -175,6 +179,6 @@ namespace boost { namespace hana {
     struct Sequence<ext::std::tuple_tag> {
         static constexpr bool value = true;
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_EXT_STD_TUPLE_HPP

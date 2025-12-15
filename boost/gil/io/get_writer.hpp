@@ -8,98 +8,114 @@
 #ifndef BOOST_GIL_IO_GET_WRITER_HPP
 #define BOOST_GIL_IO_GET_WRITER_HPP
 
-#include <boost/gil/detail/mp11.hpp>
 #include <boost/gil/io/get_write_device.hpp>
-
-#include <type_traits>
 
 namespace boost { namespace gil {
 
 /// \brief Helper metafunction to generate writer type.
-template <typename T, typename FormatTag, class Enable = void>
-struct get_writer {};
-
-
-template <typename String, typename FormatTag>
+template< typename T
+        , typename FormatTag
+        , class Enable = void
+        >
 struct get_writer
-<
-    String,
-    FormatTag,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            detail::is_supported_path_spec<String>,
-            is_format_tag<FormatTag>
-        >::value
-    >::type
->
+{};
+
+
+template< typename String
+        , typename FormatTag
+        >
+struct get_writer< String
+                 , FormatTag
+                 , typename enable_if< mpl::and_< detail::is_supported_path_spec< String >
+                                                , is_format_tag< FormatTag >
+                                                >
+                                     >::type
+                 >
 {
-    using device_t = typename get_write_device<String, FormatTag>::type;
-    using type = writer<device_t, FormatTag>;
+    typedef typename get_write_device< String
+                                     , FormatTag
+                                     >::type device_t;
+
+    typedef writer< device_t
+                  , FormatTag
+                  > type;
 };
 
-template <typename Device, typename FormatTag>
-struct get_writer
-<
-    Device,
-    FormatTag,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            detail::is_adaptable_output_device<FormatTag, Device>,
-            is_format_tag<FormatTag>
-        >::value
-    >::type
->
+template< typename Device
+        , typename FormatTag
+        >
+struct get_writer< Device
+                 , FormatTag
+                 , typename enable_if< mpl::and_< detail::is_adaptable_output_device< FormatTag
+                                                                                    , Device
+                                                                                    >
+                                                , is_format_tag< FormatTag >
+                                                >
+                                     >::type
+                 >
 {
-    using device_t = typename get_write_device<Device, FormatTag>::type;
-    using type = writer<device_t, FormatTag>;
+    typedef typename get_write_device< Device
+                                     , FormatTag
+                                     >::type device_t;
+
+    typedef writer< device_t
+                  , FormatTag
+                  > type;
 };
+
 
 /// \brief Helper metafunction to generate dynamic image writer type.
-template <typename T, typename FormatTag, class Enable = void>
-struct get_dynamic_image_writer {};
-
-template <typename String, typename FormatTag>
+template< typename T
+        , typename FormatTag
+        , class Enable = void
+        >
 struct get_dynamic_image_writer
-<
-    String,
-    FormatTag,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            detail::is_supported_path_spec<String>,
-            is_format_tag<FormatTag>
-        >::value
-    >::type
->
+{};
+
+template< typename String
+        , typename FormatTag
+        >
+struct get_dynamic_image_writer< String
+                               , FormatTag
+                               , typename enable_if< mpl::and_< detail::is_supported_path_spec< String >
+                                                              , is_format_tag< FormatTag >
+                                                              >
+                                                   >::type
+                               >
 {
-    using device_t = typename get_write_device<String, FormatTag>::type;
-    using type = dynamic_image_writer<device_t, FormatTag>;
+    typedef typename get_write_device< String
+                                     , FormatTag
+                                     >::type device_t;
+
+    typedef dynamic_image_writer< device_t
+                                , FormatTag
+                                > type;
 };
 
-template <typename Device, typename FormatTag>
-struct get_dynamic_image_writer
-<
-    Device,
-    FormatTag,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            detail::is_write_device<FormatTag, Device>,
-            is_format_tag<FormatTag>
-        >::value
-    >::type
->
+template< typename Device
+        , typename FormatTag
+        >
+struct get_dynamic_image_writer< Device
+                               , FormatTag
+                               , typename enable_if< mpl::and_< detail::is_write_device< FormatTag
+                                                                                       , Device
+                                                                                       >
+                                                              , is_format_tag< FormatTag >
+                                                              >
+                                                   >::type
+                               >
 {
-    using device_t = typename get_write_device<Device, FormatTag>::type;
-    using type = dynamic_image_writer<device_t, FormatTag>;
+    typedef typename get_write_device< Device
+                                     , FormatTag
+                                     >::type device_t;
+
+    typedef dynamic_image_writer< device_t
+                                , FormatTag
+                                > type;
 };
 
-}} // namespace boost::gil
+
+} // namespace gil
+} // namespace boost
 
 #endif

@@ -15,8 +15,8 @@
 #include <boost/property_tree/ptree_fwd.hpp>
 
 #include <boost/any.hpp>
-#include <stdexcept>
 #include <string>
+#include <stdexcept>
 
 namespace boost { namespace property_tree
 {
@@ -30,6 +30,8 @@ namespace boost { namespace property_tree
         /// Instantiate a ptree_error instance with the given message.
         /// @param what The message to associate with this error.
         ptree_error(const std::string &what);
+
+        ~ptree_error() throw();
     };
 
 
@@ -45,6 +47,8 @@ namespace boost { namespace property_tree
         ///             of the translation failure.
         template<class T> ptree_bad_data(const std::string &what,
                                          const T &data);
+
+        ~ptree_bad_data() throw();
 
         /// Retrieve the data associated with this error. This is the source
         /// value that failed to be translated. You need to explicitly
@@ -65,6 +69,8 @@ namespace boost { namespace property_tree
         /// @param path The path that could not be found in the property_tree.
         template<class T> ptree_bad_path(const std::string &what,
                                          const T &path);
+
+        ~ptree_bad_path() throw();
 
         /// Retrieve the invalid path. You need to explicitly specify the
         /// type of path.

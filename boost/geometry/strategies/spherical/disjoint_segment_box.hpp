@@ -1,6 +1,6 @@
 // Boost.Geometry
 
-// Copyright (c) 2017-2019 Oracle and/or its affiliates.
+// Copyright (c) 2017 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
@@ -16,6 +16,11 @@
 #include <cstddef>
 #include <utility>
 
+#include <boost/numeric/conversion/cast.hpp>
+
+#include <boost/geometry/util/math.hpp>
+#include <boost/geometry/util/calculation_type.hpp>
+
 #include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/tags.hpp>
 #include <boost/geometry/core/coordinate_dimension.hpp>
@@ -24,16 +29,8 @@
 #include <boost/geometry/algorithms/detail/assign_indexed_point.hpp>
 #include <boost/geometry/algorithms/detail/disjoint/segment_box.hpp>
 
-// TODO: spherical_point_box currently defined in the same file as cartesian
-#include <boost/geometry/strategies/cartesian/point_in_box.hpp>
-#include <boost/geometry/strategies/disjoint.hpp>
-#include <boost/geometry/strategies/normalize.hpp>
 #include <boost/geometry/strategies/spherical/azimuth.hpp>
-#include <boost/geometry/strategies/spherical/disjoint_box_box.hpp>
-
-#include <boost/geometry/util/math.hpp>
-#include <boost/geometry/util/calculation_type.hpp>
-
+#include <boost/geometry/strategies/disjoint.hpp>
 
 namespace boost { namespace geometry { namespace strategy { namespace disjoint
 {
@@ -44,26 +41,33 @@ namespace boost { namespace geometry { namespace strategy { namespace disjoint
 // other strategies that are used are intersection and covered_by strategies.
 struct segment_box_spherical
 {
-    typedef covered_by::spherical_point_box disjoint_point_box_strategy_type;
+    template <typename Segment, typename Box>
+    struct point_in_geometry_strategy
+        : services::default_strategy
+            <
+                typename point_type<Segment>::type,
+                Box
+            >
+    {};
 
-    static inline disjoint_point_box_strategy_type get_disjoint_point_box_strategy()
+    template <typename Segment, typename Box>
+    static inline typename point_in_geometry_strategy<Segment, Box>::type
+        get_point_in_geometry_strategy()
     {
-        return disjoint_point_box_strategy_type();
+        typedef typename point_in_geometry_strategy<Segment, Box>::type strategy_type;
+
+        return strategy_type();
     }
 
     template <typename Segment, typename Box>
     static inline bool apply(Segment const& segment, Box const& box)
     {
-        geometry::strategy::azimuth::spherical<coordinate_type_t<point_type_t<Segment>>> azimuth_strategy;
+        typedef typename point_type<Segment>::type segment_point_type;
+        typedef typename coordinate_type<segment_point_type>::type CT;
+        geometry::strategy::azimuth::spherical<CT> azimuth_strategy;
 
         return geometry::detail::disjoint::disjoint_segment_box_sphere_or_spheroid
-                <
-                    spherical_equatorial_tag
-                >::apply(segment, box,
-                         azimuth_strategy,
-                         strategy::normalize::spherical_point(),
-                         strategy::covered_by::spherical_point_box(),
-                         strategy::disjoint::spherical_box_box());
+                <spherical_equatorial_tag>::apply(segment, box, azimuth_strategy);
     }
 };
 

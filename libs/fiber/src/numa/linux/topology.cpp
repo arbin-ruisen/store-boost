@@ -68,11 +68,11 @@ public:
         }
     }
 
-    bool operator==( directory_iterator const& other) const {
+    bool operator==( directory_iterator const& other) {
         return i_ == other.i_;
     }
 
-    bool operator!=( directory_iterator const& other) const {
+    bool operator!=( directory_iterator const& other) {
         return i_ != other.i_;
     }
 

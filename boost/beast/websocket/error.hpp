@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,6 +10,7 @@
 #ifndef BOOST_BEAST_WEBSOCKET_ERROR_HPP
 #define BOOST_BEAST_WEBSOCKET_ERROR_HPP
 
+#include <boost/beast/websocket/detail/error.hpp>
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/core/error.hpp>
 
@@ -17,7 +18,7 @@ namespace boost {
 namespace beast {
 namespace websocket {
 
-/// Error codes returned from @ref boost::beast::websocket::stream operations.
+/// Error codes returned from @ref beast::websocket::stream operations.
 enum class error
 {
     /** The WebSocket stream was gracefully closed at both endpoints
@@ -248,9 +249,6 @@ enum class condition
 } // beast
 } // boost
 
-#include <boost/beast/websocket/impl/error.hpp>
-#ifdef BOOST_BEAST_HEADER_ONLY
 #include <boost/beast/websocket/impl/error.ipp>
-#endif
 
 #endif

@@ -6,15 +6,14 @@
 #
 
 import project ;
-import ../../build/log-platform-config ;
+import log-platform-config ;
 
-project
+project /boost/log/atomic-int32
     : source-location .
     : requirements
         <conditional>@log-platform-config.set-platform-defines
-        <library>/boost/atomic//boost_atomic
+
         <pch>off
     ;
 
 obj atomic_int32 : atomic_int32.cpp ;
-explicit atomic_int32 ;

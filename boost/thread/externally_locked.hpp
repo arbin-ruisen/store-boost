@@ -18,13 +18,12 @@
 #include <boost/static_assert.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/throw_exception.hpp>
-#include <boost/core/invoke_swap.hpp>
+#include <boost/core/swap.hpp>
 
 #include <boost/config/abi_prefix.hpp>
 
 namespace boost
 {
-  class mutex;
 
   /**
    * externally_locked cloaks an object of type T, and actually provides full
@@ -105,8 +104,8 @@ namespace boost
 
     void swap(externally_locked& rhs) //BOOST_NOEXCEPT_IF(BOOST_NOEXCEPT_EXPR)
     {
-      boost::core::invoke_swap(obj_, rhs.obj_);
-      boost::core::invoke_swap(mtx_, rhs.mtx_);
+      swap(obj_, rhs.obj_);
+      swap(mtx_, rhs.mtx_);
     }
 
     /**
@@ -245,8 +244,8 @@ namespace boost
 
     void swap(externally_locked& rhs) BOOST_NOEXCEPT
     {
-      boost::core::invoke_swap(obj_, rhs.obj_);
-      boost::core::invoke_swap(mtx_, rhs.mtx_);
+      swap(obj_, rhs.obj_);
+      swap(mtx_, rhs.mtx_);
     }
     /**
      * Requires: The lk parameter must be locking the associated mtx.

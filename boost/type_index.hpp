@@ -1,5 +1,5 @@
 //
-// Copyright 2012-2025 Antony Polukhin.
+// Copyright (c) Antony Polukhin, 2012-2018.
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -14,7 +14,7 @@
 /// By inclusion of this file most optimal type index classes will be included and used 
 /// as a boost::typeindex::type_index and boost::typeindex::type_info.
 
-#include <boost/type_index/detail/config.hpp>
+#include <boost/config.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 # pragma once
@@ -49,11 +49,7 @@
 #define BOOST_TYPE_INDEX_REGISTER_CLASS
 #endif
 
-#if !defined(BOOST_USE_MODULES) || defined(BOOST_TYPE_INDEX_INTERFACE_UNIT)
-
 namespace boost { namespace typeindex {
-
-BOOST_TYPE_INDEX_BEGIN_MODULE_EXPORT
 
 #if defined(BOOST_TYPE_INDEX_DOXYGEN_INVOKED)
 
@@ -212,7 +208,7 @@ typedef type_index::type_info_t type_info;
 /// \throw Nothing.
 /// \return boost::typeindex::type_index with information about the specified type T.
 template <class T>
-inline type_index type_id() noexcept {
+inline type_index type_id() BOOST_NOEXCEPT {
     return type_index::type_id<T>();
 }
 
@@ -232,7 +228,7 @@ inline type_index type_id() noexcept {
 /// \throw Nothing.
 /// \return boost::typeindex::type_index with information about the specified type T.
 template <class T>
-inline type_index type_id_with_cvr() noexcept {
+inline type_index type_id_with_cvr() BOOST_NOEXCEPT {
     return type_index::type_id_with_cvr<T>();
 }
 
@@ -257,15 +253,13 @@ inline type_index type_id_with_cvr() noexcept {
 /// \throw Nothing.
 /// \return boost::typeindex::type_index with information about the specified variable.
 template <class T>
-inline type_index type_id_runtime(const T& runtime_val) noexcept {
+inline type_index type_id_runtime(const T& runtime_val) BOOST_NOEXCEPT {
     return type_index::type_id_runtime(runtime_val);
 }
 
-BOOST_TYPE_INDEX_END_MODULE_EXPORT
-
 }} // namespace boost::typeindex
 
-#endif  // #if !defined(BOOST_USE_MODULES) || defined(BOOST_TYPE_INDEX_INTERFACE_UNIT)
+
 
 #endif // BOOST_TYPE_INDEX_HPP
 

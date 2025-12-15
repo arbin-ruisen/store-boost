@@ -13,9 +13,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <iostream>
 #include <iomanip>
-#ifndef BOOST_MATH_NO_RTTI
 #include <typeinfo>
-#endif
 
 namespace boost{ namespace math{ namespace constants{
 
@@ -24,11 +22,7 @@ namespace boost{ namespace math{ namespace constants{
       template <class T>
       const char* nameof(BOOST_MATH_EXPLICIT_TEMPLATE_TYPE_SPEC(T))
       {
-         #ifndef BOOST_MATH_NO_RTTI
          return typeid(T).name();
-         #else
-         return "unknown";
-         #endif
       }
       template <>
       const char* nameof<float>(BOOST_MATH_EXPLICIT_TEMPLATE_TYPE_SPEC(float))
@@ -52,7 +46,7 @@ template <class T, class Policy>
 void print_info_on_type(std::ostream& os = std::cout BOOST_MATH_APPEND_EXPLICIT_TEMPLATE_TYPE_SPEC(T) BOOST_MATH_APPEND_EXPLICIT_TEMPLATE_TYPE_SPEC(Policy))
 {
    using detail::nameof;
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(push)
 #pragma warning(disable:4127)
 #endif
@@ -153,7 +147,7 @@ void print_info_on_type(std::ostream& os = std::cout BOOST_MATH_APPEND_EXPLICIT_
       break;
    }
    os << std::endl;
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(pop)
 #endif
 }

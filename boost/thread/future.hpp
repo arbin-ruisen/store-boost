@@ -54,7 +54,7 @@ struct shared_state_base {
 #endif
 
 #include <boost/assert.hpp>
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #ifdef BOOST_THREAD_USES_CHRONO
 #include <boost/chrono/system_clocks.hpp>
 #endif
@@ -63,6 +63,7 @@ struct shared_state_base {
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/exception_ptr.hpp>
 #include <boost/function.hpp>
+#include <boost/next_prior.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/smart_ptr/make_shared.hpp>
@@ -117,7 +118,6 @@ namespace boost
     namespace executors {
         class executor;
     }
-    using executors::executor;
 #endif
     typedef shared_ptr<executor> executor_ptr_type;
 
@@ -4668,7 +4668,7 @@ namespace detail
       }
       run_it& operator=(BOOST_THREAD_RV_REF(run_it) x) BOOST_NOEXCEPT {
         if (this != &x) {
-          that_=x.that_;
+          that_=x.that;
           x.that_.reset();
         }
         return *this;

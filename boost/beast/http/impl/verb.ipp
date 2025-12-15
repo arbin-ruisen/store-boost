@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,7 +10,7 @@
 #ifndef BOOST_BEAST_HTTP_IMPL_VERB_IPP
 #define BOOST_BEAST_HTTP_IMPL_VERB_IPP
 
-#include <boost/beast/http/verb.hpp>
+#include <boost/beast/core/detail/config.hpp>
 #include <boost/throw_exception.hpp>
 #include <stdexcept>
 
@@ -18,59 +18,63 @@ namespace boost {
 namespace beast {
 namespace http {
 
+namespace detail {
+
+template<class = void>
+inline
 string_view
-to_string(verb v)
+verb_to_string(verb v)
 {
-    using namespace beast::detail::string_literals;
     switch(v)
     {
-    case verb::delete_:       return "DELETE"_sv;
-    case verb::get:           return "GET"_sv;
-    case verb::head:          return "HEAD"_sv;
-    case verb::post:          return "POST"_sv;
-    case verb::put:           return "PUT"_sv;
-    case verb::connect:       return "CONNECT"_sv;
-    case verb::options:       return "OPTIONS"_sv;
-    case verb::trace:         return "TRACE"_sv;
+    case verb::delete_:       return "DELETE";
+    case verb::get:           return "GET";
+    case verb::head:          return "HEAD";
+    case verb::post:          return "POST";
+    case verb::put:           return "PUT";
+    case verb::connect:       return "CONNECT";
+    case verb::options:       return "OPTIONS";
+    case verb::trace:         return "TRACE";
 
-    case verb::copy:          return "COPY"_sv;
-    case verb::lock:          return "LOCK"_sv;
-    case verb::mkcol:         return "MKCOL"_sv;
-    case verb::move:          return "MOVE"_sv;
-    case verb::propfind:      return "PROPFIND"_sv;
-    case verb::proppatch:     return "PROPPATCH"_sv;
-    case verb::search:        return "SEARCH"_sv;
-    case verb::unlock:        return "UNLOCK"_sv;
-    case verb::bind:          return "BIND"_sv;
-    case verb::rebind:        return "REBIND"_sv;
-    case verb::unbind:        return "UNBIND"_sv;
-    case verb::acl:           return "ACL"_sv;
+    case verb::copy:          return "COPY";
+    case verb::lock:          return "LOCK";
+    case verb::mkcol:         return "MKCOL";
+    case verb::move:          return "MOVE";
+    case verb::propfind:      return "PROPFIND";
+    case verb::proppatch:     return "PROPPATCH";
+    case verb::search:        return "SEARCH";
+    case verb::unlock:        return "UNLOCK";
+    case verb::bind:          return "BIND";
+    case verb::rebind:        return "REBIND";
+    case verb::unbind:        return "UNBIND";
+    case verb::acl:           return "ACL";
 
-    case verb::report:        return "REPORT"_sv;
-    case verb::mkactivity:    return "MKACTIVITY"_sv;
-    case verb::checkout:      return "CHECKOUT"_sv;
-    case verb::merge:         return "MERGE"_sv;
+    case verb::report:        return "REPORT";
+    case verb::mkactivity:    return "MKACTIVITY";
+    case verb::checkout:      return "CHECKOUT";
+    case verb::merge:         return "MERGE";
 
-    case verb::msearch:       return "M-SEARCH"_sv;
-    case verb::notify:        return "NOTIFY"_sv;
-    case verb::subscribe:     return "SUBSCRIBE"_sv;
-    case verb::unsubscribe:   return "UNSUBSCRIBE"_sv;
+    case verb::msearch:       return "M-SEARCH";
+    case verb::notify:        return "NOTIFY";
+    case verb::subscribe:     return "SUBSCRIBE";
+    case verb::unsubscribe:   return "UNSUBSCRIBE";
 
-    case verb::patch:         return "PATCH"_sv;
-    case verb::purge:         return "PURGE"_sv;
+    case verb::patch:         return "PATCH";
+    case verb::purge:         return "PURGE";
 
-    case verb::mkcalendar:    return "MKCALENDAR"_sv;
+    case verb::mkcalendar:    return "MKCALENDAR";
 
-    case verb::link:          return "LINK"_sv;
-    case verb::unlink:        return "UNLINK"_sv;
-
+    case verb::link:          return "LINK";
+    case verb::unlink:        return "UNLINK";
+    
     case verb::unknown:
-        return "<unknown>"_sv;
+        return "<unknown>";
     }
 
     BOOST_THROW_EXCEPTION(std::invalid_argument{"unknown verb"});
 }
 
+template<class = void>
 verb
 string_to_verb(string_view v)
 {
@@ -109,20 +113,34 @@ string_to_verb(string_view v)
     UNLOCK
     UNSUBSCRIBE
 */
-    using namespace beast::detail::string_literals;
     if(v.size() < 3)
         return verb::unknown;
+    // s must be null terminated
+    auto const eq =
+        [](string_view sv, char const* s)
+        {
+            auto p = sv.data();
+            for(;;)
+            {
+                if(*s != *p)
+                    return false;
+                ++s;
+                ++p;
+                if(! *s)
+                    return p == (sv.data() + sv.size());
+            }
+        };
     auto c = v[0];
     v.remove_prefix(1);
     switch(c)
     {
     case 'A':
-        if(v == "CL"_sv)
+        if(v == "CL")
             return verb::acl;
         break;
 
     case 'B':
-        if(v == "IND"_sv)
+        if(v == "IND")
             return verb::bind;
         break;
 
@@ -132,14 +150,14 @@ string_to_verb(string_view v)
         switch(c)
         {
         case 'H':
-            if(v == "ECKOUT"_sv)
+            if(eq(v, "ECKOUT"))
                 return verb::checkout;
             break;
 
         case 'O':
-            if(v == "NNECT"_sv)
+            if(eq(v, "NNECT"))
                 return verb::connect;
-            if(v == "PY"_sv)
+            if(eq(v, "PY"))
                 return verb::copy;
             BOOST_FALLTHROUGH;
 
@@ -149,24 +167,24 @@ string_to_verb(string_view v)
         break;
 
     case 'D':
-        if(v == "ELETE"_sv)
+        if(eq(v, "ELETE"))
             return verb::delete_;
         break;
 
     case 'G':
-        if(v == "ET"_sv)
+        if(eq(v, "ET"))
             return verb::get;
         break;
 
     case 'H':
-        if(v == "EAD"_sv)
+        if(eq(v, "EAD"))
             return verb::head;
         break;
 
     case 'L':
-        if(v == "INK"_sv)
+        if(eq(v, "INK"))
             return verb::link;
-        if(v == "OCK"_sv)
+        if(eq(v, "OCK"))
             return verb::lock;
         break;
 
@@ -176,31 +194,31 @@ string_to_verb(string_view v)
         switch(c)
         {
         case '-':
-            if(v == "SEARCH"_sv)
+            if(eq(v, "SEARCH"))
                 return verb::msearch;
             break;
 
         case 'E':
-            if(v == "RGE"_sv)
+            if(eq(v, "RGE"))
                 return verb::merge;
             break;
 
         case 'K':
-            if(v == "ACTIVITY"_sv)
+            if(eq(v, "ACTIVITY"))
                 return verb::mkactivity;
             if(v[0] == 'C')
             {
                 v.remove_prefix(1);
-                if(v == "ALENDAR"_sv)
+                if(eq(v, "ALENDAR"))
                     return verb::mkcalendar;
-                if(v == "OL"_sv)
+                if(eq(v, "OL"))
                     return verb::mkcol;
                 break;
             }
             break;
-
+        
         case 'O':
-            if(v == "VE"_sv)
+            if(eq(v, "VE"))
                 return verb::move;
             BOOST_FALLTHROUGH;
 
@@ -210,12 +228,12 @@ string_to_verb(string_view v)
         break;
 
     case 'N':
-        if(v == "OTIFY"_sv)
+        if(eq(v, "OTIFY"))
             return verb::notify;
         break;
 
     case 'O':
-        if(v == "PTIONS"_sv)
+        if(eq(v, "PTIONS"))
             return verb::options;
         break;
 
@@ -225,26 +243,26 @@ string_to_verb(string_view v)
         switch(c)
         {
         case 'A':
-            if(v == "TCH"_sv)
+            if(eq(v, "TCH"))
                 return verb::patch;
             break;
 
         case 'O':
-            if(v == "ST"_sv)
+            if(eq(v, "ST"))
                 return verb::post;
             break;
 
         case 'R':
-            if(v == "OPFIND"_sv)
+            if(eq(v, "OPFIND"))
                 return verb::propfind;
-            if(v == "OPPATCH"_sv)
+            if(eq(v, "OPPATCH"))
                 return verb::proppatch;
             break;
 
         case 'U':
-            if(v == "RGE"_sv)
+            if(eq(v, "RGE"))
                 return verb::purge;
-            if(v == "T"_sv)
+            if(eq(v, "T"))
                 return verb::put;
             BOOST_FALLTHROUGH;
 
@@ -257,21 +275,21 @@ string_to_verb(string_view v)
         if(v[0] != 'E')
             break;
         v.remove_prefix(1);
-        if(v == "BIND"_sv)
+        if(eq(v, "BIND"))
             return verb::rebind;
-        if(v == "PORT"_sv)
+        if(eq(v, "PORT"))
             return verb::report;
         break;
 
     case 'S':
-        if(v == "EARCH"_sv)
+        if(eq(v, "EARCH"))
             return verb::search;
-        if(v == "UBSCRIBE"_sv)
+        if(eq(v, "UBSCRIBE"))
             return verb::subscribe;
         break;
 
     case 'T':
-        if(v == "RACE"_sv)
+        if(eq(v, "RACE"))
             return verb::trace;
         break;
 
@@ -279,13 +297,13 @@ string_to_verb(string_view v)
         if(v[0] != 'N')
             break;
         v.remove_prefix(1);
-        if(v == "BIND"_sv)
+        if(eq(v, "BIND"))
             return verb::unbind;
-        if(v == "LINK"_sv)
+        if(eq(v, "LINK"))
             return verb::unlink;
-        if(v == "LOCK"_sv)
+        if(eq(v, "LOCK"))
             return verb::unlock;
-        if(v == "SUBSCRIBE"_sv)
+        if(eq(v, "SUBSCRIBE"))
             return verb::unsubscribe;
         break;
 
@@ -294,6 +312,22 @@ string_to_verb(string_view v)
     }
 
     return verb::unknown;
+}
+
+} // detail
+
+inline
+string_view
+to_string(verb v)
+{
+    return detail::verb_to_string(v);
+}
+
+inline
+verb
+string_to_verb(string_view s)
+{
+    return detail::string_to_verb(s);
 }
 
 } // http

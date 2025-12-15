@@ -26,41 +26,36 @@ bool test_vector() {
 
     V a(3), ra(3);
     a <<=  1, 2, 3;
-    ra(0) = typename V::value_type(1); ra(1) = typename V::value_type(2); ra(2) = typename V::value_type(3);
-    pass &= compare_distance(a, ra);
+    ra(0) = 1; ra(1) = 2; ra(2) = 3;
+    pass &= compare_to(a, ra);
 
     V b(7), rb(7);
     b<<= a, 10, a;
-    rb(0) = typename V::value_type(1); rb(1) = typename V::value_type(2); rb(2) = typename V::value_type(3);
-    rb(3) = typename V::value_type(10); rb(4) = typename V::value_type(1); rb(5) = typename V::value_type(2); rb(6) = typename V::value_type(3);
-    pass &= compare_distance(b, rb);
+    rb(0) = 1; rb(1) = 2; rb(2) = 3; rb(3)=10, rb(4)= 1; rb(5)=2; rb(6)=3;
+    pass &= compare_to(b, rb);
 
     {
     V c(6), rc(6);
     c <<= 1, move(2), 3 ,4, 5, move(-5), 10, 10;
-    rc(0) = typename V::value_type(1); rc(1) = typename V::value_type(10); rc(2) = typename V::value_type(10);
-    rc(3) = typename V::value_type(3); rc(4) = typename V::value_type(4); rc(5) = typename V::value_type(5);
-    pass &= compare_distance(c, rc);
+    rc(0) = 1; rc(1) = 10; rc(2) = 10; rc(3) = 3; rc(4) = 4; rc(5) = 5;
+    pass &= compare_to(c, rc);
 
     V d(6), rd(6);
     d <<= 1, move_to(3), 3 ,4, 5, move_to(1), 10, 10;
-    rd(0) = typename V::value_type(1); rd(1) = typename V::value_type(10); rd(2) = typename V::value_type(10);
-    rd(3) = typename V::value_type(3); rd(4) = typename V::value_type(4); rd(5) = typename V::value_type(5);
-    pass &= compare_distance(d, rd);
+    rd(0) = 1; rd(1) = 10; rd(2) = 10; rd(3) = 3; rd(4) = 4; rd(5) = 5;
+    pass &= compare_to(d, rd);
     }
 
     {
     V c(6), rc(6);
     c <<= 1, move<2>(), 3 ,4, 5, move<-5>(), 10, 10;
-    rc(0) = typename V::value_type(1); rc(1) = typename V::value_type(10); rc(2) = typename V::value_type(10);
-    rc(3) = typename V::value_type(3); rc(4) = typename V::value_type(4); rc(5) = typename V::value_type(5);
-    pass &= compare_distance(c, rc);
+    rc(0) = 1; rc(1) = 10; rc(2) = 10; rc(3) = 3; rc(4) = 4; rc(5) = 5;
+    pass &= compare_to(c, rc);
 
     V d(6), rd(6);
     d <<= 1, move_to<3>(), 3 ,4, 5, move_to<1>(), 10, 10;
-    rd(0) = typename V::value_type(1); rd(1) = typename V::value_type(10); rd(2) = typename V::value_type(10);
-    rd(3) = typename V::value_type(3); rd(4) = typename V::value_type(4); rd(5) = typename V::value_type(5);
-    pass &= compare_distance(d, rd);
+    rd(0) = 1; rd(1) = 10; rd(2) = 10; rd(3) = 3; rd(4) = 4; rd(5) = 5;
+    pass &= compare_to(d, rd);
     }
 
 
@@ -70,7 +65,7 @@ bool test_vector() {
     V fa(3); fa<<= 1, 2, 3;
     f <<= fill_policy::index_plus_assign(), fa;
     rf <<= 6,7,8, 5, 5, 5;
-    pass &= compare_distance(f, rf);
+    pass &= compare_to(f, rf);
     }
 
     {
@@ -79,7 +74,7 @@ bool test_vector() {
     V fa(3); fa<<= 1, 2, 3;
     f <<= fill_policy::index_minus_assign(), fa;
     rf <<= 4,3,2, 5, 5, 5;
-    pass &= compare_distance(f, rf);
+    pass &= compare_to(f, rf);
     }
 
     return pass;
@@ -91,32 +86,28 @@ bool test_vector_sparse_push_back() {
 
     V a(3), ra(3);
     a <<= fill_policy::sparse_push_back(), 1, 2, 3;
-    ra(0) = typename V::value_type(1); ra(1) = typename V::value_type(2); ra(2) = typename V::value_type(3);
-    pass &= compare_distance(a, ra);
+    ra(0) = 1; ra(1) = 2; ra(2) = 3;
+    pass &= compare_to(a, ra);
 
     V b(7), rb(7);
     b<<= fill_policy::sparse_push_back(), a, 10, a;
-    rb(0) = typename V::value_type(1); rb(1) = typename V::value_type(2); rb(2) = typename V::value_type(3);
-    rb(3) = typename V::value_type(10), rb(4)= typename V::value_type(1); rb(5) = typename V::value_type(2); rb(6) = typename V::value_type(3);
-    pass &= compare_distance(b, rb);
+    rb(0) = 1; rb(1) = 2; rb(2) = 3; rb(3)=10, rb(4)= 1; rb(5)=2; rb(6)=3;
+    pass &= compare_to(b, rb);
 
     V c(6), rc(6);
     c <<= fill_policy::sparse_push_back(), 1, move(2), 3 ,4, 5; // Move back (i.e. negative is dangerous for push_back)
-    rc(0) = typename V::value_type(1); rc(1) = typename V::value_type(0); rc(2) = typename V::value_type(0);
-    rc(3) = typename V::value_type(3); rc(4) = typename V::value_type(4); rc(5) = typename V::value_type(5);
-    pass &= compare_distance(c, rc);
+    rc(0) = 1; rc(1) = 0; rc(2) = 0; rc(3) = 3; rc(4) = 4; rc(5) = 5;
+    pass &= compare_to(c, rc);
 
     V d(6), rd(6);
     d <<= fill_policy::sparse_push_back(), 1, move_to(3), 3 ,4, 5; // Move back (i.e. before current index is dangerous for push_back)
-    rd(0) = typename V::value_type(1); rd(1) = typename V::value_type(0); rd(2) = typename V::value_type(0);
-    rd(3) = typename V::value_type(3); rd(4) = typename V::value_type(4); rd(5) = typename V::value_type(5);
-    pass &= compare_distance(d, rd);
+    rd(0) = 1; rd(1) = 0; rd(2) = 0; rd(3) = 3; rd(4) = 4; rd(5) = 5;
+    pass &= compare_to(d, rd);
 
     V e(6), re(6);
     e <<= fill_policy::sparse_push_back(), 1, move_to(3), 3 ,4, 5, fill_policy::sparse_insert(), move_to(1), 10, 10; // If you want to move back, use this
-    re(0) = typename V::value_type(1); re(1) = typename V::value_type(10); re(2) = typename V::value_type(10);
-    re(3) = typename V::value_type(3); re(4) = typename V::value_type(4); re(5) = typename V::value_type(5);
-    pass &= compare_distance(e, re);
+    re(0) = 1; re(1) = 10; re(2) = 10; re(3) = 3; re(4) = 4; re(5) = 5;
+    pass &= compare_to(e, re);
 
     return pass;
 }
@@ -128,27 +119,24 @@ bool test_vector_sparse_insert() {
 
     V a(3), ra(3);
     a <<= fill_policy::sparse_insert(), 1, 2, 3;
-    ra(0) = typename V::value_type(1); ra(1) = typename V::value_type(2); ra(2) = typename V::value_type(3);
-    pass &= compare_distance(a, ra);
+    ra(0) = 1; ra(1) = 2; ra(2) = 3;
+    pass &= compare_to(a, ra);
 
     V b(7), rb(7);
     b<<= fill_policy::sparse_insert(), a, 10, a;
-    rb(0) = typename V::value_type(1); rb(1) = typename V::value_type(2); rb(2) = typename V::value_type(3);
-    rb(3) = typename V::value_type(10), rb(4) = typename V::value_type(1); rb(5)= typename V::value_type(2); rb(6) = typename V::value_type(3);
-    pass &= compare_distance(b, rb);
+    rb(0) = 1; rb(1) = 2; rb(2) = 3; rb(3)=10, rb(4)= 1; rb(5)=2; rb(6)=3;
+    pass &= compare_to(b, rb);
 
     V c(6), rc(6);
     c <<= fill_policy::sparse_insert(), 1, move(2), 3 ,4, 5, move(-5), 10, 10; // Move back (i.e. negative is dangerous for sparse)
-    rc(0) = typename V::value_type(1); rc(1) = typename V::value_type(10); rc(2) = typename V::value_type(10);
-    rc(3) = typename V::value_type(3); rc(4) = typename V::value_type(4); rc(5) = typename V::value_type(5);
-    pass &= compare_distance(c, rc);
+    rc(0) = 1; rc(1) = 10; rc(2) = 10; rc(3) = 3; rc(4) = 4; rc(5) = 5;
+    pass &= compare_to(c, rc);
 
 
     V d(6), rd(6);
     d <<= fill_policy::sparse_insert(), 1, move_to(3), 3 ,4, 5, move_to(1), 10, 10; // Move back (i.e.before is dangerous for sparse)
-    rd(0) = typename V::value_type(1); rd(1) = typename V::value_type(10); rd(2) = typename V::value_type(10);
-    rd(3) = typename V::value_type(3); rd(4) = typename V::value_type(4); rd(5) = typename V::value_type(5);
-    pass &= compare_distance(d, rd);
+    rd(0) = 1; rd(1) = 10; rd(2) = 10; rd(3) = 3; rd(4) = 4; rd(5) = 5;
+    pass &= compare_to(d, rd);
 
 
     return pass;
@@ -161,10 +149,10 @@ bool test_matrix() {
 
     V A(3,3), RA(3,3);
     A <<= 1, 2, 3, 4, 5, 6, 7, 8, 9;
-    RA(0,0)= typename V::value_type(1); RA(0,1)=typename V::value_type(2); RA(0,2)=typename V::value_type(3);
-    RA(1,0)= typename V::value_type(4); RA(1,1)=typename V::value_type(5); RA(1,2)=typename V::value_type(6);
-    RA(2,0)= typename V::value_type(7); RA(2,1)=typename V::value_type(8); RA(2,2)=typename V::value_type(9);
-    pass &= compare_distance(A, RA);
+    RA(0,0)= 1; RA(0,1)=2; RA(0,2)=3;
+    RA(1,0)= 4; RA(1,1)=5; RA(1,2)=6;
+    RA(2,0)= 7; RA(2,1)=8; RA(2,2)=9;
+    pass &= compare_to(A, RA);
 
     {
     V B(3,3), RB(3,3);
@@ -172,7 +160,7 @@ bool test_matrix() {
     b<<= 4,5,6;
     B<<= 1, 2, 3, b, 7, project(b, range(1,3));
     RB<<=1, 2, 3, 4, 5, 6, 7, 5, 6; // If the first worked we can now probably use it.
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -181,7 +169,7 @@ bool test_matrix() {
     b<<= 4,5,6;
     B<<= move(1,0), b, move_to(0,0), 1, 2, 3, move(1,0), 7, project(b, range(1,3));
     RB<<=1, 2, 3, 4, 5, 6, 7, 5, 6;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -190,7 +178,7 @@ bool test_matrix() {
     b<<= 1, 2, 3, 4, 5, 6, 7, 8, 9;
     B<<=b;
     RB<<=1, 2, 3, 4, 5, 6, 7, 8, 9;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -204,7 +192,7 @@ bool test_matrix() {
             4,5,4,5,
             2,3,2,3,
             4,5,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -217,7 +205,7 @@ bool test_matrix() {
             4,5,0,0,
             0,0,2,3,
             0,0,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -230,7 +218,7 @@ bool test_matrix() {
             4,5,0,0,
             0,0,2,3,
             0,0,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -243,7 +231,7 @@ bool test_matrix() {
             0,2,3,0,
             0,4,5,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -254,7 +242,7 @@ bool test_matrix() {
             1,2,0,0,
             4,5,0,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -265,7 +253,7 @@ bool test_matrix() {
             0,3,5,0,
             0,6,0,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -276,7 +264,7 @@ bool test_matrix() {
             0,3,0,0,
             0,0,0,0,
             4,5,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -287,7 +275,7 @@ bool test_matrix() {
             0,3,0,0,
             4,5,6,7,
             8,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -298,7 +286,7 @@ bool test_matrix() {
             0,3,0,0,
             4,5,6,7,
             8,9,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -311,7 +299,7 @@ bool test_matrix() {
             1,2,3,1,
             1,4,5,1,
             1,1,1,1;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -324,7 +312,7 @@ bool test_matrix() {
             5,4,3,5,
             5,2,1,5,
             5,5,5,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
 
@@ -337,10 +325,10 @@ bool test_matrix_sparse_push_back() {
 
     V A(3,3), RA(3,3);
     A <<= fill_policy::sparse_push_back(), 1, 2, 3, 4, 5, 6, 7, 8, 9;
-    RA(0,0)= typename V::value_type(1); RA(0,1)= typename V::value_type(2); RA(0,2)= typename V::value_type(3);
-    RA(1,0)= typename V::value_type(4); RA(1,1)= typename V::value_type(5); RA(1,2)= typename V::value_type(6);
-    RA(2,0)= typename V::value_type(7); RA(2,1)= typename V::value_type(8); RA(2,2)= typename V::value_type(9);
-    pass &= compare_distance(A, RA);
+    RA(0,0)= 1; RA(0,1)=2; RA(0,2)=3;
+    RA(1,0)= 4; RA(1,1)=5; RA(1,2)=6;
+    RA(2,0)= 7; RA(2,1)=8; RA(2,2)=9;
+    pass &= compare_to(A, RA);
 
     {
     V B(3,3), RB(3,3);
@@ -348,7 +336,7 @@ bool test_matrix_sparse_push_back() {
     b<<= 4,5,6;
     B<<=fill_policy::sparse_push_back(), 1, 2, 3, b, 7, project(b, range(1,3));
     RB<<= 1, 2, 3, 4, 5, 6, 7, 5, 6; // If the first worked we can now probably use it.
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -357,7 +345,7 @@ bool test_matrix_sparse_push_back() {
     b<<= 4,5,6;
     B<<=fill_policy::sparse_push_back(), move(1,0), b, fill_policy::sparse_insert(), move_to(0,0), 1, 2, 3, move(1,0), 7, project(b, range(1,3));
     RB<<=1, 2, 3, 4, 5, 6, 7, 5, 6;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -366,7 +354,7 @@ bool test_matrix_sparse_push_back() {
     b<<= 1, 2, 3, 4, 5, 6, 7, 8, 9;
     B<<=b;
     RB<<=1, 2, 3, 4, 5, 6, 7, 8, 9;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
 
@@ -381,7 +369,7 @@ bool test_matrix_sparse_push_back() {
             4,5,4,5,
             2,3,2,3,
             4,5,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
 
@@ -394,7 +382,7 @@ bool test_matrix_sparse_push_back() {
             4,5,0,0,
             0,0,2,3,
             0,0,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -406,7 +394,7 @@ bool test_matrix_sparse_push_back() {
             0,2,3,0,
             0,4,5,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -417,7 +405,7 @@ bool test_matrix_sparse_push_back() {
             1,2,0,0,
             4,5,0,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
     // The next will not work with sparse push_back because elements that are prior to the ones already in are attempted to be added
 /*
@@ -429,7 +417,7 @@ bool test_matrix_sparse_push_back() {
             0,3,5,0,
             0,6,0,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 */
     {
@@ -440,7 +428,7 @@ bool test_matrix_sparse_push_back() {
             0,3,0,0,
             0,0,0,0,
             4,5,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -451,7 +439,7 @@ bool test_matrix_sparse_push_back() {
             0,3,0,0,
             4,5,6,7,
             8,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     // The next will not work with sparse push_back because elements that are prior to the ones already in are attempted to be added
@@ -464,7 +452,7 @@ bool test_matrix_sparse_push_back() {
             0,3,0,0,
             4,5,6,7,
             8,9,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 */
     return pass;
@@ -476,10 +464,10 @@ bool test_matrix_sparse_insert() {
 
     V A(3,3), RA(3,3);
     A <<= fill_policy::sparse_insert(), 1, 2, 3, 4, 5, 6, 7, 8, 9;
-    RA(0,0)= typename V::value_type(1); RA(0,1)= typename V::value_type(2); RA(0,2)= typename V::value_type(3);
-    RA(1,0)= typename V::value_type(4); RA(1,1)= typename V::value_type(5); RA(1,2)= typename V::value_type(6);
-    RA(2,0)= typename V::value_type(7); RA(2,1)= typename V::value_type(8); RA(2,2)= typename V::value_type(9);
-    pass &= compare_distance(A, RA);
+    RA(0,0)= 1; RA(0,1)=2; RA(0,2)=3;
+    RA(1,0)= 4; RA(1,1)=5; RA(1,2)=6;
+    RA(2,0)= 7; RA(2,1)=8; RA(2,2)=9;
+    pass &= compare_to(A, RA);
 
     {
     V B(3,3), RB(3,3);
@@ -487,7 +475,7 @@ bool test_matrix_sparse_insert() {
     b<<= 4,5,6;
     B<<=fill_policy::sparse_insert(), 1, 2, 3, b, 7, project(b, range(1,3));
     RB<<=1, 2, 3, 4, 5, 6, 7, 5, 6; // If the first worked we can now probably use it.
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -496,7 +484,7 @@ bool test_matrix_sparse_insert() {
     b<<= 4,5,6;
     B<<=fill_policy::sparse_insert(), move(1,0), b, fill_policy::sparse_insert(), move_to(0,0), 1, 2, 3, move(1,0), 7, project(b, range(1,3));
     RB<<=1, 2, 3, 4, 5, 6, 7, 5, 6;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -505,7 +493,7 @@ bool test_matrix_sparse_insert() {
     b<<= 1, 2, 3, 4, 5, 6, 7, 8, 9;
     B<<=b;
     RB<<=1, 2, 3, 4, 5, 6, 7, 8, 9;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
 
@@ -519,7 +507,7 @@ bool test_matrix_sparse_insert() {
             4,5,4,5,
             2,3,2,3,
             4,5,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
 
@@ -532,7 +520,7 @@ bool test_matrix_sparse_insert() {
             4,5,0,0,
             0,0,2,3,
             0,0,4,5;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -544,7 +532,7 @@ bool test_matrix_sparse_insert() {
             0,2,3,0,
             0,4,5,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -555,7 +543,7 @@ bool test_matrix_sparse_insert() {
             1,2,0,0,
             4,5,0,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -566,7 +554,7 @@ bool test_matrix_sparse_insert() {
             0,3,5,0,
             0,6,0,0,
             0,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -577,7 +565,7 @@ bool test_matrix_sparse_insert() {
             0,3,0,0,
             0,0,0,0,
             4,5,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -588,7 +576,7 @@ bool test_matrix_sparse_insert() {
             0,3,0,0,
             4,5,6,7,
             8,0,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     {
@@ -599,7 +587,7 @@ bool test_matrix_sparse_insert() {
             0,3,0,0,
             4,5,6,7,
             8,9,0,0;
-    pass &= compare_distance(B, RB);
+    pass &= compare_to(B, RB);
     }
 
     return pass;
@@ -787,4 +775,6 @@ int main () {
     BOOST_UBLAS_TEST_DO( test_matrix );
 
     BOOST_UBLAS_TEST_END();
+
+    return EXIT_SUCCESS;
 }

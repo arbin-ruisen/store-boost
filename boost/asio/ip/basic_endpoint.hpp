@@ -2,7 +2,7 @@
 // ip/basic_endpoint.hpp
 // ~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,8 +16,6 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <boost/asio/detail/config.hpp>
-#include <functional>
-#include <boost/asio/detail/cstdint.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/detail/endpoint.hpp>
 
@@ -30,9 +28,6 @@
 namespace boost {
 namespace asio {
 namespace ip {
-
-/// Type used for storing port numbers.
-typedef uint_least16_t port_type;
 
 /// Describes an endpoint for a version-independent IP socket.
 /**
@@ -62,7 +57,7 @@ public:
 #endif
 
   /// Default constructor.
-  basic_endpoint() noexcept
+  basic_endpoint()
     : impl_()
   {
   }
@@ -84,7 +79,7 @@ public:
    * @endcode
    */
   basic_endpoint(const InternetProtocol& internet_protocol,
-      port_type port_num) noexcept
+      unsigned short port_num)
     : impl_(internet_protocol.family(), port_num)
   {
   }
@@ -92,40 +87,43 @@ public:
   /// Construct an endpoint using a port number and an IP address. This
   /// constructor may be used for accepting connections on a specific interface
   /// or for making a connection to a remote endpoint.
-  basic_endpoint(const boost::asio::ip::address& addr,
-      port_type port_num) noexcept
+  basic_endpoint(const boost::asio::ip::address& addr, unsigned short port_num)
     : impl_(addr, port_num)
   {
   }
 
   /// Copy constructor.
-  basic_endpoint(const basic_endpoint& other) noexcept
+  basic_endpoint(const basic_endpoint& other)
     : impl_(other.impl_)
   {
   }
 
+#if defined(BOOST_ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
   /// Move constructor.
-  basic_endpoint(basic_endpoint&& other) noexcept
+  basic_endpoint(basic_endpoint&& other)
     : impl_(other.impl_)
   {
   }
+#endif // defined(BOOST_ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
 
   /// Assign from another endpoint.
-  basic_endpoint& operator=(const basic_endpoint& other) noexcept
+  basic_endpoint& operator=(const basic_endpoint& other)
   {
     impl_ = other.impl_;
     return *this;
   }
 
+#if defined(BOOST_ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
   /// Move-assign from another endpoint.
-  basic_endpoint& operator=(basic_endpoint&& other) noexcept
+  basic_endpoint& operator=(basic_endpoint&& other)
   {
     impl_ = other.impl_;
     return *this;
   }
+#endif // defined(BOOST_ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
 
   /// The protocol associated with the endpoint.
-  protocol_type protocol() const noexcept
+  protocol_type protocol() const
   {
     if (impl_.is_v4())
       return InternetProtocol::v4();
@@ -133,19 +131,19 @@ public:
   }
 
   /// Get the underlying endpoint in the native type.
-  data_type* data() noexcept
+  data_type* data()
   {
     return impl_.data();
   }
 
   /// Get the underlying endpoint in the native type.
-  const data_type* data() const noexcept
+  const data_type* data() const
   {
     return impl_.data();
   }
 
   /// Get the underlying size of the endpoint in the native type.
-  std::size_t size() const noexcept
+  std::size_t size() const
   {
     return impl_.size();
   }
@@ -157,75 +155,75 @@ public:
   }
 
   /// Get the capacity of the endpoint in the native type.
-  std::size_t capacity() const noexcept
+  std::size_t capacity() const
   {
     return impl_.capacity();
   }
 
   /// Get the port associated with the endpoint. The port number is always in
   /// the host's byte order.
-  port_type port() const noexcept
+  unsigned short port() const
   {
     return impl_.port();
   }
 
   /// Set the port associated with the endpoint. The port number is always in
   /// the host's byte order.
-  void port(port_type port_num) noexcept
+  void port(unsigned short port_num)
   {
     impl_.port(port_num);
   }
 
   /// Get the IP address associated with the endpoint.
-  boost::asio::ip::address address() const noexcept
+  boost::asio::ip::address address() const
   {
     return impl_.address();
   }
 
   /// Set the IP address associated with the endpoint.
-  void address(const boost::asio::ip::address& addr) noexcept
+  void address(const boost::asio::ip::address& addr)
   {
     impl_.address(addr);
   }
 
   /// Compare two endpoints for equality.
   friend bool operator==(const basic_endpoint<InternetProtocol>& e1,
-      const basic_endpoint<InternetProtocol>& e2) noexcept
+      const basic_endpoint<InternetProtocol>& e2)
   {
     return e1.impl_ == e2.impl_;
   }
 
   /// Compare two endpoints for inequality.
   friend bool operator!=(const basic_endpoint<InternetProtocol>& e1,
-      const basic_endpoint<InternetProtocol>& e2) noexcept
+      const basic_endpoint<InternetProtocol>& e2)
   {
     return !(e1 == e2);
   }
 
   /// Compare endpoints for ordering.
   friend bool operator<(const basic_endpoint<InternetProtocol>& e1,
-      const basic_endpoint<InternetProtocol>& e2) noexcept
+      const basic_endpoint<InternetProtocol>& e2)
   {
     return e1.impl_ < e2.impl_;
   }
 
   /// Compare endpoints for ordering.
   friend bool operator>(const basic_endpoint<InternetProtocol>& e1,
-      const basic_endpoint<InternetProtocol>& e2) noexcept
+      const basic_endpoint<InternetProtocol>& e2)
   {
     return e2.impl_ < e1.impl_;
   }
 
   /// Compare endpoints for ordering.
   friend bool operator<=(const basic_endpoint<InternetProtocol>& e1,
-      const basic_endpoint<InternetProtocol>& e2) noexcept
+      const basic_endpoint<InternetProtocol>& e2)
   {
     return !(e2 < e1);
   }
 
   /// Compare endpoints for ordering.
   friend bool operator>=(const basic_endpoint<InternetProtocol>& e1,
-      const basic_endpoint<InternetProtocol>& e2) noexcept
+      const basic_endpoint<InternetProtocol>& e2)
   {
     return !(e1 < e2);
   }
@@ -259,23 +257,6 @@ std::basic_ostream<Elem, Traits>& operator<<(
 } // namespace ip
 } // namespace asio
 } // namespace boost
-
-namespace std {
-
-template <typename InternetProtocol>
-struct hash<boost::asio::ip::basic_endpoint<InternetProtocol>>
-{
-  std::size_t operator()(
-      const boost::asio::ip::basic_endpoint<InternetProtocol>& ep)
-    const noexcept
-  {
-    std::size_t hash1 = std::hash<boost::asio::ip::address>()(ep.address());
-    std::size_t hash2 = std::hash<unsigned short>()(ep.port());
-    return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
-  }
-};
-
-} // namespace std
 
 #include <boost/asio/detail/pop_options.hpp>
 

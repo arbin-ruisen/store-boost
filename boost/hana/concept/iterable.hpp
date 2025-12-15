@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::Iterable`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -21,7 +21,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/is_empty.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     template <typename It>
     struct Iterable
         : hana::integral_constant<bool,
@@ -30,6 +30,6 @@ namespace boost { namespace hana {
             !is_default<is_empty_impl<typename tag_of<It>::type>>::value
         >
     { };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_CONCEPT_ITERABLE_HPP

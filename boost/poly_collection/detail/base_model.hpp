@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Joaquin M Lopez Munoz.
+/* Copyright 2016-2017 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -34,7 +34,6 @@ template<typename Base>
 struct base_model
 {
   using value_type=Base;
-  using type_index=std::type_info;
   template<typename Derived>
   using is_implementation=std::is_base_of<Base,Derived>;
   template<typename T>
@@ -49,14 +48,11 @@ private:
     typename std::enable_if<is_terminal<T>::value>::type*;
 
 public:
-  template<typename T> 
-  static const std::type_info& index(){return typeid(T);}
-
   template<typename T,enable_if_not_terminal<T> =nullptr>
-  static const std::type_info& subindex(const T& x){return typeid(x);}
+  static const std::type_info& subtypeid(const T& x){return typeid(x);}
 
   template<typename T,enable_if_terminal<T> =nullptr>
-  static const std::type_info& subindex(const T&){return typeid(T);}
+  static const std::type_info& subtypeid(const T&){return typeid(T);}
 
   template<typename T,enable_if_not_terminal<T> =nullptr>
   static void* subaddress(T& x)
@@ -84,11 +80,15 @@ public:
   using iterator=Derived*;
   template<typename Derived>
   using const_iterator=const Derived*;
-  template<typename Allocator>
-  using segment_backend=detail::segment_backend<base_model,Allocator>;
+  using segment_backend=detail::segment_backend<base_model>;
   template<typename Derived,typename Allocator>
-  using segment_backend_implementation=
-    packed_segment<base_model,Derived,Allocator>;
+  using segment_backend_implementation=packed_segment<
+    base_model,
+    Derived,
+    typename std::allocator_traits<Allocator>::template rebind_alloc<Derived>
+  >;
+  using segment_backend_unique_ptr=
+    typename segment_backend::segment_backend_unique_ptr;
 
   static base_iterator nonconst_iterator(const_base_iterator it)
   {
@@ -102,6 +102,12 @@ public:
   static iterator<T> nonconst_iterator(const_iterator<T> it)
   {
     return const_cast<iterator<T>>(it);
+  }
+
+  template<typename Derived,typename Allocator>
+  static segment_backend_unique_ptr make(const Allocator& al)
+  {
+    return segment_backend_implementation<Derived,Allocator>::new_(al,al);
   }
 
 private:

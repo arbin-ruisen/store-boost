@@ -4,12 +4,11 @@
 //  Distributed under the Boost Software License, Version 1.0.
 //  See http://www.boost.org/LICENSE_1_0.txt
 
-#include "../example/timer.hpp"
 #include <boost/chrono/chrono.hpp>
 #include <boost/chrono/chrono_io.hpp>
+#include <libs/chrono/example/timer.hpp>
 #include <boost/chrono/process_cpu_clocks.hpp>
 #include <vector>
-#include <iostream>
 
 //#define BOOST_CHRONO_HAS_TIMES_AND_CLOCK
 
@@ -22,7 +21,7 @@
 
 static const std::size_t size = 1000000;
 
-typedef boost_ex::chrono::timer<boost::chrono::high_resolution_clock> Stopwatch;
+typedef boost::chrono::timer<boost::chrono::high_resolution_clock> Stopwatch;
 
 template <typename Clock>
 void perf_constant(std::vector<typename Clock::time_point>& vec)
@@ -150,5 +149,5 @@ int main() {
   std::cout << "clock ";
   test3();
 #endif
-  return 0;
+  return 1;
 }

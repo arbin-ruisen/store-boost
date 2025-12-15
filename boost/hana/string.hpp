@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::string`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -46,7 +46,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <type_traits>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //////////////////////////////////////////////////////////////////////////
     // string<>
     //////////////////////////////////////////////////////////////////////////
@@ -114,10 +114,10 @@ namespace boost { namespace hana {
     //////////////////////////////////////////////////////////////////////////
     namespace literals {
         template <typename CharT, CharT ...s>
-        constexpr auto operator ""_s() {
+        constexpr auto operator"" _s() {
             static_assert(std::is_same<CharT, char>::value,
             "hana::string: Only narrow string literals are supported with "
-            "the _s string literal right now. See https://github.com/boostorg/hana/issues/80 "
+            "the _s string literal right now. See https://goo.gl/fBbKD7 "
             "if you need support for fancier types of compile-time strings.");
             return hana::string_c<s...>;
         }
@@ -271,7 +271,7 @@ namespace boost { namespace hana {
         template <char ...xs, typename N>
         static constexpr auto apply(string<xs...> const& s, N const&) {
             return helper<N::value>(s, std::make_index_sequence<
-                (N::value < sizeof...(xs)) ? sizeof...(xs) - N::value : 0
+                N::value < sizeof...(xs) ? sizeof...(xs) - N::value : 0
             >{});
         }
 
@@ -344,6 +344,6 @@ namespace boost { namespace hana {
             return hana::type_c<String>;
         }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_STRING_HPP

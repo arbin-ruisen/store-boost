@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,19 +10,20 @@
 #ifndef BOOST_BEAST_HTTP_MESSAGE_HPP
 #define BOOST_BEAST_HTTP_MESSAGE_HPP
 
-#include <boost/beast/http/message_fwd.hpp>
-
 #include <boost/beast/core/detail/config.hpp>
-#include <boost/beast/core/string.hpp>
 #include <boost/beast/http/fields.hpp>
+#include <boost/beast/http/verb.hpp>
 #include <boost/beast/http/status.hpp>
 #include <boost/beast/http/type_traits.hpp>
-#include <boost/beast/http/verb.hpp>
-#include <boost/assert.hpp>
+#include <boost/beast/core/string.hpp>
+#include <boost/beast/core/detail/integer_sequence.hpp>
 #include <boost/core/empty_value.hpp>
-#include <boost/mp11/integer_sequence.hpp>
+#include <boost/assert.hpp>
 #include <boost/optional.hpp>
 #include <boost/throw_exception.hpp>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <tuple>
 #include <utility>
 
@@ -46,15 +47,18 @@ namespace http {
 */
 #if BOOST_BEAST_DOXYGEN
 template<bool isRequest, class Fields = fields>
-class header : public Fields
+struct header : Fields
+
 #else
+template<bool isRequest, class Fields = fields>
+struct header;
+
 template<class Fields>
-class header<true, Fields> : public Fields
+struct header<true, Fields> : Fields
 #endif
 {
-public:
     static_assert(is_fields<Fields>::value,
-        "Fields type requirements not met");
+        "Fields requirements not met");
 
     /// Indicates if the header is a request or response.
 #if BOOST_BEAST_DOXYGEN
@@ -124,7 +128,7 @@ public:
 
         @note This function is only available when `isRequest == true`.
 
-        @see method_string
+        @see @ref method_string
     */
     verb
     method() const;
@@ -147,7 +151,7 @@ public:
 
         @note This function is only available when `isRequest == true`.
 
-        @see method
+        @see @ref method
     */
     string_view
     method_string() const;
@@ -218,14 +222,14 @@ public:
             ! std::is_convertible<typename
                 std::decay<Arg1>::type, verb>::value &&
             ! std::is_convertible<typename
-                std::decay<Arg1>::type, status>::value
+                std::decay<Arg1>::type, header>::value
         >::type>
     explicit
     header(Arg1&& arg1, ArgN&&... argn);
 
 private:
     template<bool, class, class>
-    friend class message;
+    friend struct message;
 
     template<class T>
     friend
@@ -254,11 +258,10 @@ private:
     A `header` includes the start-line and header-fields.
 */
 template<class Fields>
-class header<false, Fields> : public Fields
+struct header<false, Fields> : Fields
 {
-public:
     static_assert(is_fields<Fields>::value,
-        "Fields type requirements not met");
+        "Fields requirements not met");
 
     /// Indicates if the header is a request or response.
     using is_request = std::false_type;
@@ -294,11 +297,9 @@ public:
     template<class Arg1, class... ArgN,
         class = typename std::enable_if<
             ! std::is_convertible<typename
-                std::decay<Arg1>::type, header>::value &&
+                std::decay<Arg1>::type, status>::value &&
             ! std::is_convertible<typename
-                std::decay<Arg1>::type, verb>::value &&
-            ! std::is_convertible<typename
-                std::decay<Arg1>::type, status>::value
+                std::decay<Arg1>::type, header>::value
         >::type>
     explicit
     header(Arg1&& arg1, ArgN&&... argn);
@@ -417,7 +418,7 @@ public:
 private:
 #if ! BOOST_BEAST_DOXYGEN
     template<bool, class, class>
-    friend class message;
+    friend struct message;
 
     template<class T>
     friend
@@ -440,7 +441,6 @@ private:
 #endif
 };
 
-#if BOOST_BEAST_DOXYGEN
 /// A typical HTTP request header
 template<class Fields = fields>
 using request_header = header<true, Fields>;
@@ -448,7 +448,6 @@ using request_header = header<true, Fields>;
 /// A typical HTTP response header
 template<class Fields = fields>
 using response_header = header<false, Fields>;
-#endif
 
 #if defined(BOOST_MSVC)
 // Workaround for MSVC bug with private base classes
@@ -487,19 +486,14 @@ using value_type_t = typename T::value_type;
     @tparam Fields The type of container used to hold the
     field value pairs.
 */
-#if BOOST_BEAST_DOXYGEN
 template<bool isRequest, class Body, class Fields = fields>
-#else
-template<bool isRequest, class Body, class Fields>
-#endif
-class message
-    : public header<isRequest, Fields>
+struct message
+    : header<isRequest, Fields>
 #if ! BOOST_BEAST_DOXYGEN
     , boost::empty_value<
         typename Body::value_type>
 #endif
 {
-public:
     /// The base class used to hold the header portion of the message.
     using header_type = header<isRequest, Fields>;
 
@@ -548,11 +542,11 @@ public:
 
     /** Constructor
 
-        @param method The request-method to use.
+        @param method The request-method to use
 
         @param target The request-target.
 
-        @param version The HTTP-version.
+        @param version The HTTP-version
 
         @note This function is only available when `isRequest == true`.
     */
@@ -567,11 +561,11 @@ public:
 
     /** Constructor
 
-        @param method The request-method to use.
+        @param method The request-method to use
 
         @param target The request-target.
 
-        @param version The HTTP-version.
+        @param version The HTTP-version
 
         @param body_arg An argument forwarded to the `body` constructor.
 
@@ -591,11 +585,11 @@ public:
 
     /** Constructor
 
-        @param method The request-method to use.
+        @param method The request-method to use
 
         @param target The request-target.
 
-        @param version The HTTP-version.
+        @param version The HTTP-version
 
         @param body_arg An argument forwarded to the `body` constructor.
 
@@ -617,9 +611,9 @@ public:
 
     /** Constructor
 
-        @param result The status-code for the response.
+        @param result The status-code for the response
 
-        @param version The HTTP-version.
+        @param version The HTTP-version
 
         @note This member is only available when `isRequest == false`.
     */
@@ -634,9 +628,9 @@ public:
 
     /** Constructor
 
-        @param result The status-code for the response.
+        @param result The status-code for the response
 
-        @param version The HTTP-version.
+        @param version The HTTP-version
 
         @param body_arg An argument forwarded to the `body` constructor.
 
@@ -654,9 +648,9 @@ public:
 
     /** Constructor
 
-        @param result The status-code for the response.
+        @param result The status-code for the response
 
-        @param version The HTTP-version.
+        @param version The HTTP-version
 
         @param body_arg An argument forwarded to the `body` constructor.
 
@@ -728,7 +722,7 @@ public:
 
     /** Set or clear the chunked Transfer-Encoding
 
-        This function will set or remove the "chunked" transfer
+        This function will set or removed the "chunked" transfer
         encoding as the last item in the list of encodings in the
         field.
 
@@ -810,7 +804,7 @@ public:
         @li @ref chunked would return `true`
 
         @li @ref result returns @ref status::no_content
-
+        
         @li @ref result returns @ref status::not_modified
 
         @li @ref result returns any informational status class (100 to 199)
@@ -827,7 +821,7 @@ public:
 
     /** Returns the payload size of the body in octets if possible.
 
-        This function invokes the <em>Body</em> algorithm to measure
+        This function invokes the @b Body algorithm to measure
         the number of octets in the serialized body container. If
         there is no body, this will return zero. Otherwise, if the
         body exists but is not known ahead of time, `boost::none`
@@ -853,13 +847,6 @@ public:
         req.body() = "Hello, world!";
         req.prepare_payload();
         @endcode
-
-        @note
-
-        This function is not necessary to call in the following situations:
-
-        @li The request doesn't contain a body, such as in a GET or HEAD request.
-        @li The Content-Length and Transfer-Encoding are set manually.
     */
     void
     prepare_payload()
@@ -906,7 +893,7 @@ public:
 
 private:
     static_assert(is_body<Body>::value,
-        "Body type requirements not met");
+        "Body requirements not met");
 
     template<
         class... BodyArgs,
@@ -914,7 +901,7 @@ private:
     message(
         std::piecewise_construct_t,
         std::tuple<BodyArgs...>& body_args,
-        mp11::index_sequence<IBodyArgs...>)
+        beast::detail::index_sequence<IBodyArgs...>)
         : boost::empty_value<
             typename Body::value_type>(boost::empty_init_t(),
                 std::forward<BodyArgs>(
@@ -932,8 +919,8 @@ private:
         std::piecewise_construct_t,
         std::tuple<BodyArgs...>& body_args,
         std::tuple<FieldsArgs...>& fields_args,
-        mp11::index_sequence<IBodyArgs...>,
-        mp11::index_sequence<IFieldsArgs...>)
+        beast::detail::index_sequence<IBodyArgs...>,
+        beast::detail::index_sequence<IFieldsArgs...>)
         : header_type(std::forward<FieldsArgs>(
             std::get<IFieldsArgs>(fields_args))...)
         , boost::empty_value<
@@ -973,7 +960,6 @@ private:
     prepare_payload(std::false_type);
 };
 
-#if BOOST_BEAST_DOXYGEN
 /// A typical HTTP request
 template<class Body, class Fields = fields>
 using request = message<true, Body, Fields>;
@@ -981,7 +967,6 @@ using request = message<true, Body, Fields>;
 /// A typical HTTP response
 template<class Body, class Fields = fields>
 using response = message<false, Body, Fields>;
-#endif
 
 //------------------------------------------------------------------------------
 
@@ -1013,6 +998,6 @@ swap(
 } // beast
 } // boost
 
-#include <boost/beast/http/impl/message.hpp>
+#include <boost/beast/http/impl/message.ipp>
 
 #endif

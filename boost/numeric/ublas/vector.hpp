@@ -903,14 +903,21 @@ namespace boost { namespace numeric { namespace ublas {
             vector_assign<scalar_assign> (*this, ae);
         }
 
-    /// \brief Construct a fixed_vector from a list of values
-    /// This constructor enables initialization by using any of:
-    /// fixed_vector<double, 3> v = { 1, 2, 3 } or fixed_vector<double,3> v( {1, 2, 3} ) or fixed_vector<double,3> v( 1, 2, 3 )
+        /// \brief Construct a fixed_vector from a list of values
+        /// This constructor enables initialization by using any of:
+        /// fixed_vector<double, 3> v = { 1, 2, 3 } or fixed_vector<double,3> v( {1, 2, 3} ) or fixed_vector<double,3> v( 1, 2, 3 )
+#if defined(BOOST_MSVC)
+        // This may or may not work. Maybe use this for all instead only for MSVC
+        template <typename... U>
+        fixed_vector(U&&... values) :
+            vector_container<self_type> (),
+            data_{{ std::forward<U>(values)... }} {}
+#else
         template <typename... Types>
-        BOOST_UBLAS_INLINE
         fixed_vector(value_type v0, Types... vrest) :
             vector_container<self_type> (),
-            data_( array_type{ v0, vrest... } ) {}
+            data_{ { v0, vrest... } } {}
+#endif
 
     // -----------------------
     // Random Access Container
@@ -1691,8 +1698,8 @@ namespace boost { namespace numeric { namespace ublas {
 #ifdef BOOST_UBLAS_ENABLE_PROXY_SHORTCUTS
 	     using vector_container<self_type>::operator ();
 #endif
-         typedef typename boost::allocator_size_type<ALLOC>::type size_type;
-         typedef typename boost::allocator_difference_type<ALLOC>::type difference_type;
+	     typedef typename ALLOC::size_type size_type;
+	     typedef typename ALLOC::difference_type difference_type;
 	     typedef T value_type;
 	     typedef const T &const_reference;
 	     typedef T &reference;
@@ -1912,8 +1919,8 @@ namespace boost { namespace numeric { namespace ublas {
 #ifdef BOOST_UBLAS_ENABLE_PROXY_SHORTCUTS
 	     using vector_container<self_type>::operator ();
 #endif
-         typedef typename boost::allocator_size_type<ALLOC>::type size_type;
-         typedef typename boost::allocator_difference_type<ALLOC>::type difference_type;
+	     typedef typename ALLOC::size_type size_type;
+	     typedef typename ALLOC::difference_type difference_type;
 	     typedef T value_type;
 	     typedef const T &const_reference;
 	     typedef T &reference;
@@ -2175,8 +2182,8 @@ namespace boost { namespace numeric { namespace ublas {
 #ifdef BOOST_UBLAS_ENABLE_PROXY_SHORTCUTS
 	     using vector_container<self_type>::operator ();
 #endif
-         typedef typename boost::allocator_size_type<ALLOC>::type size_type;
-         typedef typename boost::allocator_difference_type<ALLOC>::type difference_type;
+	     typedef typename ALLOC::size_type size_type;
+	     typedef typename ALLOC::difference_type difference_type;
 	     typedef T value_type;
 	     typedef const T &const_reference;
 	     typedef T &reference;

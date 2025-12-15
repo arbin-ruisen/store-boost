@@ -27,7 +27,7 @@ struct reader_backend< Device
 {
 public:
 
-    using format_tag_t = tiff_tag;
+    typedef tiff_tag format_tag_t;
 
 public:
 
@@ -40,9 +40,9 @@ public:
 
     , _scanline_length( 0 )
 
-    , _red  ( nullptr )
-    , _green( nullptr )
-    , _blue ( nullptr )
+    , _red  ( NULL )
+    , _green( NULL )
+    , _blue ( NULL )
     {
         init_multipage_read( settings );
 
@@ -103,7 +103,7 @@ public:
     }
 
     /// Check if image is large enough.
-    void check_image_size( point_t const& img_dim )
+    void check_image_size( const point_t& img_dim )
     {
         if( _settings._dim.x > 0 )
         {

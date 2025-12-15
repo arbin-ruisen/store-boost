@@ -3,7 +3,7 @@
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * Copyright (c) 2018, 2025 Andrey Semashev
+ * Copyright (c) 2018 Andrey Semashev
  */
 /*!
  * \file   atomic/detail/addressof.hpp
@@ -16,7 +16,6 @@
 #define BOOST_ATOMIC_DETAIL_ADDRESSOF_HPP_INCLUDED_
 
 #include <boost/atomic/detail/config.hpp>
-#include <boost/atomic/detail/header.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
@@ -38,11 +37,7 @@ namespace atomics {
 namespace detail {
 
 template< typename T >
-BOOST_FORCEINLINE
-#if defined(BOOST_ATOMIC_DETAIL_HAS_BUILTIN_ADDRESSOF)
-constexpr
-#endif
-T* addressof(T& value) noexcept
+BOOST_FORCEINLINE T* addressof(T& value) BOOST_NOEXCEPT
 {
 #if defined(BOOST_ATOMIC_DETAIL_HAS_BUILTIN_ADDRESSOF)
     return __builtin_addressof(value);
@@ -59,7 +54,5 @@ T* addressof(T& value) noexcept
 } // namespace detail
 } // namespace atomics
 } // namespace boost
-
-#include <boost/atomic/detail/footer.hpp>
 
 #endif // BOOST_ATOMIC_DETAIL_ADDRESSOF_HPP_INCLUDED_

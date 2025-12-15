@@ -17,6 +17,7 @@
 #include <boost/intrusive/splaytree.hpp>
 #include <boost/intrusive/detail/mpl.hpp>
 #include <boost/move/utility_core.hpp>
+#include <boost/static_assert.hpp>
 
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
@@ -117,61 +118,61 @@ class splay_set_impl
    ~splay_set_impl();
 
    //! @copydoc ::boost::intrusive::splaytree::begin()
-   iterator begin() BOOST_NOEXCEPT;
+   iterator begin();
 
    //! @copydoc ::boost::intrusive::splaytree::begin()const
-   const_iterator begin() const BOOST_NOEXCEPT;
+   const_iterator begin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::cbegin()const
-   const_iterator cbegin() const BOOST_NOEXCEPT;
+   const_iterator cbegin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::end()
-   iterator end() BOOST_NOEXCEPT;
+   iterator end();
 
    //! @copydoc ::boost::intrusive::splaytree::end()const
-   const_iterator end() const BOOST_NOEXCEPT;
+   const_iterator end() const;
 
    //! @copydoc ::boost::intrusive::splaytree::cend()const
-   const_iterator cend() const BOOST_NOEXCEPT;
+   const_iterator cend() const;
 
    //! @copydoc ::boost::intrusive::splaytree::rbegin()
-   reverse_iterator rbegin() BOOST_NOEXCEPT;
+   reverse_iterator rbegin();
 
    //! @copydoc ::boost::intrusive::splaytree::rbegin()const
-   const_reverse_iterator rbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator rbegin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::crbegin()const
-   const_reverse_iterator crbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator crbegin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::rend()
-   reverse_iterator rend() BOOST_NOEXCEPT;
+   reverse_iterator rend();
 
    //! @copydoc ::boost::intrusive::splaytree::rend()const
-   const_reverse_iterator rend() const BOOST_NOEXCEPT;
+   const_reverse_iterator rend() const;
 
    //! @copydoc ::boost::intrusive::splaytree::crend()const
-   const_reverse_iterator crend() const BOOST_NOEXCEPT;
+   const_reverse_iterator crend() const;
 
    //! @copydoc ::boost::intrusive::splaytree::root()
-   iterator root() BOOST_NOEXCEPT;
+   iterator root();
 
    //! @copydoc ::boost::intrusive::splaytree::root()const
-   const_iterator root() const BOOST_NOEXCEPT;
+   const_iterator root() const;
 
    //! @copydoc ::boost::intrusive::splaytree::croot()const
-   const_iterator croot() const BOOST_NOEXCEPT;
+   const_iterator croot() const;
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_end_iterator(iterator)
-   static splay_set_impl &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT;
+   static splay_set_impl &container_from_end_iterator(iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_end_iterator(const_iterator)
-   static const splay_set_impl &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT;
+   static const splay_set_impl &container_from_end_iterator(const_iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_iterator(iterator)
-   static splay_set_impl &container_from_iterator(iterator it) BOOST_NOEXCEPT;
+   static splay_set_impl &container_from_iterator(iterator it);
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_iterator(const_iterator)
-   static const splay_set_impl &container_from_iterator(const_iterator it) BOOST_NOEXCEPT;
+   static const splay_set_impl &container_from_iterator(const_iterator it);
 
    //! @copydoc ::boost::intrusive::splaytree::key_comp()const
    key_compare key_comp() const;
@@ -180,10 +181,10 @@ class splay_set_impl
    value_compare value_comp() const;
 
    //! @copydoc ::boost::intrusive::splaytree::empty()const
-   bool empty() const BOOST_NOEXCEPT;
+   bool empty() const;
 
    //! @copydoc ::boost::intrusive::splaytree::size()const
-   size_type size() const BOOST_NOEXCEPT;
+   size_type size() const;
 
    //! @copydoc ::boost::intrusive::splaytree::swap
    void swap(splay_set_impl& other);
@@ -241,24 +242,24 @@ class splay_set_impl
    {  tree_type::insert_unique(b, e);  }
 
    //! @copydoc ::boost::intrusive::splaytree::insert_unique_commit
-   iterator insert_commit(reference value, const insert_commit_data &commit_data) BOOST_NOEXCEPT
+   iterator insert_commit(reference value, const insert_commit_data &commit_data)
    {  return tree_type::insert_unique_commit(value, commit_data);  }
 
    #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
    //! @copydoc ::boost::intrusive::splaytree::insert_before
-   iterator insert_before(const_iterator pos, reference value) BOOST_NOEXCEPT;
+   iterator insert_before(const_iterator pos, reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::push_back
-   void push_back(reference value) BOOST_NOEXCEPT;
+   void push_back(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::push_front
-   void push_front(reference value) BOOST_NOEXCEPT;
+   void push_front(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::erase(const_iterator)
-   iterator erase(const_iterator i) BOOST_NOEXCEPT;
+   iterator erase(const_iterator i);
 
    //! @copydoc ::boost::intrusive::splaytree::erase(const_iterator,const_iterator)
-   iterator erase(const_iterator b, const_iterator e) BOOST_NOEXCEPT;
+   iterator erase(const_iterator b, const_iterator e);
 
    //! @copydoc ::boost::intrusive::splaytree::erase(const key_type &)
    size_type erase(const key_type &key);
@@ -269,11 +270,11 @@ class splay_set_impl
 
    //! @copydoc ::boost::intrusive::splaytree::erase_and_dispose(const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator i, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator i, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::erase_and_dispose(const_iterator,const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::erase_and_dispose(const key_type &, Disposer)
    template<class Disposer>
@@ -284,11 +285,11 @@ class splay_set_impl
    size_type erase_and_dispose(const KeyType& key, KeyTypeKeyCompare comp, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::clear
-   void clear() BOOST_NOEXCEPT;
+   void clear();
 
    //! @copydoc ::boost::intrusive::splaytree::clear_and_dispose
    template<class Disposer>
-   void clear_and_dispose(Disposer disposer) BOOST_NOEXCEPT;
+   void clear_and_dispose(Disposer disposer);
 
    #endif   //   #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
 
@@ -395,31 +396,31 @@ class splay_set_impl
       (const KeyType& lower_key, const KeyType& upper_key, KeyTypeKeyCompare comp, bool left_closed, bool right_closed) const;
 
    //! @copydoc ::boost::intrusive::splaytree::s_iterator_to(reference)
-   static iterator s_iterator_to(reference value) BOOST_NOEXCEPT;
+   static iterator s_iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::s_iterator_to(const_reference)
-   static const_iterator s_iterator_to(const_reference value) BOOST_NOEXCEPT;
+   static const_iterator s_iterator_to(const_reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::iterator_to(reference)
-   iterator iterator_to(reference value) BOOST_NOEXCEPT;
+   iterator iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::iterator_to(const_reference)const
-   const_iterator iterator_to(const_reference value) const BOOST_NOEXCEPT;
+   const_iterator iterator_to(const_reference value) const;
 
    //! @copydoc ::boost::intrusive::splaytree::init_node(reference)
-   static void init_node(reference value) BOOST_NOEXCEPT;
+   static void init_node(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::unlink_leftmost_without_rebalance
-   pointer unlink_leftmost_without_rebalance() BOOST_NOEXCEPT;
+   pointer unlink_leftmost_without_rebalance();
 
    //! @copydoc ::boost::intrusive::splaytree::replace_node
-   void replace_node(iterator replace_this, reference with_this) BOOST_NOEXCEPT;
+   void replace_node(iterator replace_this, reference with_this);
 
    //! @copydoc ::boost::intrusive::splaytree::remove_node
-   void remove_node(reference value) BOOST_NOEXCEPT;
+   void remove_node(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::splay_up(iterator)
-   void splay_up(iterator i) BOOST_NOEXCEPT;
+   void splay_up(iterator i);
 
    //! @copydoc ::boost::intrusive::splaytree::splay_down(const KeyType&,KeyTypeKeyCompare)
    template<class KeyType, class KeyTypeKeyCompare>
@@ -429,10 +430,10 @@ class splay_set_impl
    iterator splay_down(const key_type &key);
 
    //! @copydoc ::boost::intrusive::splaytree::rebalance
-   void rebalance() BOOST_NOEXCEPT;
+   void rebalance();
 
    //! @copydoc ::boost::intrusive::splaytree::rebalance_subtree
-   iterator rebalance_subtree(iterator root) BOOST_NOEXCEPT;
+   iterator rebalance_subtree(iterator root);
 
    //! @copydoc ::boost::intrusive::splaytree::merge_unique
    template<class ...Options2>
@@ -543,52 +544,48 @@ class splay_set
    typedef typename Base::const_iterator     const_iterator;
 
    //Assert if passed value traits are compatible with the type
-   BOOST_INTRUSIVE_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
+   BOOST_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
 
-   inline splay_set()
+   splay_set()
       :  Base()
    {}
 
-   inline explicit splay_set( const key_compare &cmp, const value_traits &v_traits = value_traits())
+   explicit splay_set( const key_compare &cmp, const value_traits &v_traits = value_traits())
       :  Base(cmp, v_traits)
    {}
 
    template<class Iterator>
-   inline splay_set( Iterator b, Iterator e
+   splay_set( Iterator b, Iterator e
       , const key_compare &cmp = key_compare()
       , const value_traits &v_traits = value_traits())
       :  Base(b, e, cmp, v_traits)
    {}
 
-   inline splay_set(BOOST_RV_REF(splay_set) x)
+   splay_set(BOOST_RV_REF(splay_set) x)
       :  Base(::boost::move(static_cast<Base&>(x)))
    {}
 
-   inline splay_set& operator=(BOOST_RV_REF(splay_set) x)
+   splay_set& operator=(BOOST_RV_REF(splay_set) x)
    {  return static_cast<splay_set &>(this->Base::operator=(::boost::move(static_cast<Base&>(x))));  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(const splay_set &src, Cloner cloner, Disposer disposer)
+   void clone_from(const splay_set &src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(src, cloner, disposer);  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(BOOST_RV_REF(splay_set) src, Cloner cloner, Disposer disposer)
+   void clone_from(BOOST_RV_REF(splay_set) src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(BOOST_MOVE_BASE(Base, src), cloner, disposer);  }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static splay_set &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT
+   static splay_set &container_from_end_iterator(iterator end_iterator)
    {  return static_cast<splay_set &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const splay_set &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT
+   static const splay_set &container_from_end_iterator(const_iterator end_iterator)
    {  return static_cast<const splay_set &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static splay_set &container_from_iterator(iterator it) BOOST_NOEXCEPT
+   static splay_set &container_from_iterator(iterator it)
    {  return static_cast<splay_set &>(Base::container_from_iterator(it));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const splay_set &container_from_iterator(const_iterator it) BOOST_NOEXCEPT
+   static const splay_set &container_from_iterator(const_iterator it)
    {  return static_cast<const splay_set &>(Base::container_from_iterator(it));   }
 };
 
@@ -681,61 +678,61 @@ class splay_multiset_impl
    ~splay_multiset_impl();
 
    //! @copydoc ::boost::intrusive::splaytree::begin()
-   iterator begin() BOOST_NOEXCEPT;
+   iterator begin();
 
    //! @copydoc ::boost::intrusive::splaytree::begin()const
-   const_iterator begin() const BOOST_NOEXCEPT;
+   const_iterator begin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::cbegin()const
-   const_iterator cbegin() const BOOST_NOEXCEPT;
+   const_iterator cbegin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::end()
-   iterator end() BOOST_NOEXCEPT;
+   iterator end();
 
    //! @copydoc ::boost::intrusive::splaytree::end()const
-   const_iterator end() const BOOST_NOEXCEPT;
+   const_iterator end() const;
 
    //! @copydoc ::boost::intrusive::splaytree::cend()const
-   const_iterator cend() const BOOST_NOEXCEPT;
+   const_iterator cend() const;
 
    //! @copydoc ::boost::intrusive::splaytree::rbegin()
-   reverse_iterator rbegin() BOOST_NOEXCEPT;
+   reverse_iterator rbegin();
 
    //! @copydoc ::boost::intrusive::splaytree::rbegin()const
-   const_reverse_iterator rbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator rbegin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::crbegin()const
-   const_reverse_iterator crbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator crbegin() const;
 
    //! @copydoc ::boost::intrusive::splaytree::rend()
-   reverse_iterator rend() BOOST_NOEXCEPT;
+   reverse_iterator rend();
 
    //! @copydoc ::boost::intrusive::splaytree::rend()const
-   const_reverse_iterator rend() const BOOST_NOEXCEPT;
+   const_reverse_iterator rend() const;
 
    //! @copydoc ::boost::intrusive::splaytree::crend()const
-   const_reverse_iterator crend() const BOOST_NOEXCEPT;
+   const_reverse_iterator crend() const;
 
    //! @copydoc ::boost::intrusive::splaytree::root()
-   iterator root() BOOST_NOEXCEPT;
+   iterator root();
 
    //! @copydoc ::boost::intrusive::splaytree::root()const
-   const_iterator root() const BOOST_NOEXCEPT;
+   const_iterator root() const;
 
    //! @copydoc ::boost::intrusive::splaytree::croot()const
-   const_iterator croot() const BOOST_NOEXCEPT;
+   const_iterator croot() const;
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_end_iterator(iterator)
-   static splay_multiset_impl &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT;
+   static splay_multiset_impl &container_from_end_iterator(iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_end_iterator(const_iterator)
-   static const splay_multiset_impl &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT;
+   static const splay_multiset_impl &container_from_end_iterator(const_iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_iterator(iterator)
-   static splay_multiset_impl &container_from_iterator(iterator it) BOOST_NOEXCEPT;
+   static splay_multiset_impl &container_from_iterator(iterator it);
 
    //! @copydoc ::boost::intrusive::splaytree::container_from_iterator(const_iterator)
-   static const splay_multiset_impl &container_from_iterator(const_iterator it) BOOST_NOEXCEPT;
+   static const splay_multiset_impl &container_from_iterator(const_iterator it);
 
    //! @copydoc ::boost::intrusive::splaytree::key_comp()const
    key_compare key_comp() const;
@@ -744,10 +741,10 @@ class splay_multiset_impl
    value_compare value_comp() const;
 
    //! @copydoc ::boost::intrusive::splaytree::empty()const
-   bool empty() const BOOST_NOEXCEPT;
+   bool empty() const;
 
    //! @copydoc ::boost::intrusive::splaytree::size()const
-   size_type size() const BOOST_NOEXCEPT;
+   size_type size() const;
 
    //! @copydoc ::boost::intrusive::splaytree::swap
    void swap(splay_multiset_impl& other);
@@ -782,19 +779,19 @@ class splay_multiset_impl
 
    #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
    //! @copydoc ::boost::intrusive::splaytree::insert_before
-   iterator insert_before(const_iterator pos, reference value) BOOST_NOEXCEPT;
+   iterator insert_before(const_iterator pos, reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::push_back
-   void push_back(reference value) BOOST_NOEXCEPT;
+   void push_back(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::push_front
-   void push_front(reference value) BOOST_NOEXCEPT;
+   void push_front(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::erase(const_iterator)
-   iterator erase(const_iterator i) BOOST_NOEXCEPT;
+   iterator erase(const_iterator i);
 
    //! @copydoc ::boost::intrusive::splaytree::erase(const_iterator,const_iterator)
-   iterator erase(const_iterator b, const_iterator e) BOOST_NOEXCEPT;
+   iterator erase(const_iterator b, const_iterator e);
 
    //! @copydoc ::boost::intrusive::splaytree::erase(const key_type&)
    size_type erase(const key_type &key);
@@ -805,11 +802,11 @@ class splay_multiset_impl
 
    //! @copydoc ::boost::intrusive::splaytree::erase_and_dispose(const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator i, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator i, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::erase_and_dispose(const_iterator,const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::erase_and_dispose(const key_type&, Disposer)
    template<class Disposer>
@@ -820,11 +817,11 @@ class splay_multiset_impl
    size_type erase_and_dispose(const KeyType& key, KeyTypeKeyCompare comp, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::clear
-   void clear() BOOST_NOEXCEPT;
+   void clear();
 
    //! @copydoc ::boost::intrusive::splaytree::clear_and_dispose
    template<class Disposer>
-   void clear_and_dispose(Disposer disposer) BOOST_NOEXCEPT;
+   void clear_and_dispose(Disposer disposer);
 
    //! @copydoc ::boost::intrusive::splaytree::count(const key_type&)
    size_type count(const key_type&);
@@ -910,31 +907,31 @@ class splay_multiset_impl
       (const KeyType& lower_key, const KeyType& upper_key, KeyTypeKeyCompare comp, bool left_closed, bool right_closed) const;
 
    //! @copydoc ::boost::intrusive::splaytree::s_iterator_to(reference)
-   static iterator s_iterator_to(reference value) BOOST_NOEXCEPT;
+   static iterator s_iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::s_iterator_to(const_reference)
-   static const_iterator s_iterator_to(const_reference value) BOOST_NOEXCEPT;
+   static const_iterator s_iterator_to(const_reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::iterator_to(reference)
-   iterator iterator_to(reference value) BOOST_NOEXCEPT;
+   iterator iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::iterator_to(const_reference)const
-   const_iterator iterator_to(const_reference value) const BOOST_NOEXCEPT;
+   const_iterator iterator_to(const_reference value) const;
 
    //! @copydoc ::boost::intrusive::splaytree::init_node(reference)
-   static void init_node(reference value) BOOST_NOEXCEPT;
+   static void init_node(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::unlink_leftmost_without_rebalance
-   pointer unlink_leftmost_without_rebalance() BOOST_NOEXCEPT;
+   pointer unlink_leftmost_without_rebalance();
 
    //! @copydoc ::boost::intrusive::splaytree::replace_node
-   void replace_node(iterator replace_this, reference with_this) BOOST_NOEXCEPT;
+   void replace_node(iterator replace_this, reference with_this);
 
    //! @copydoc ::boost::intrusive::splaytree::remove_node
-   void remove_node(reference value) BOOST_NOEXCEPT;
+   void remove_node(reference value);
 
    //! @copydoc ::boost::intrusive::splaytree::splay_up(iterator)
-   void splay_up(iterator i) BOOST_NOEXCEPT;
+   void splay_up(iterator i);
 
    //! @copydoc ::boost::intrusive::splaytree::splay_down(const KeyType&,KeyTypeKeyCompare)
    template<class KeyType, class KeyTypeKeyCompare>
@@ -944,10 +941,10 @@ class splay_multiset_impl
    iterator splay_down(const key_type &key);
 
    //! @copydoc ::boost::intrusive::splaytree::rebalance
-   void rebalance() BOOST_NOEXCEPT;
+   void rebalance();
 
    //! @copydoc ::boost::intrusive::splaytree::rebalance_subtree
-   iterator rebalance_subtree(iterator root) BOOST_NOEXCEPT;
+   iterator rebalance_subtree(iterator root);
 
    //! @copydoc ::boost::intrusive::splaytree::merge_equal
    template<class ...Options2>
@@ -1058,52 +1055,48 @@ class splay_multiset
    typedef typename Base::const_iterator     const_iterator;
 
    //Assert if passed value traits are compatible with the type
-   BOOST_INTRUSIVE_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
+   BOOST_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
 
-   inline splay_multiset()
+   splay_multiset()
       :  Base()
    {}
 
-   inline explicit splay_multiset( const key_compare &cmp, const value_traits &v_traits = value_traits())
+   explicit splay_multiset( const key_compare &cmp, const value_traits &v_traits = value_traits())
       :  Base(cmp, v_traits)
    {}
 
    template<class Iterator>
-   inline splay_multiset( Iterator b, Iterator e
+   splay_multiset( Iterator b, Iterator e
            , const key_compare &cmp = key_compare()
            , const value_traits &v_traits = value_traits())
       :  Base(b, e, cmp, v_traits)
    {}
 
-   inline splay_multiset(BOOST_RV_REF(splay_multiset) x)
+   splay_multiset(BOOST_RV_REF(splay_multiset) x)
       :  Base(::boost::move(static_cast<Base&>(x)))
    {}
 
-   inline splay_multiset& operator=(BOOST_RV_REF(splay_multiset) x)
+   splay_multiset& operator=(BOOST_RV_REF(splay_multiset) x)
    {  return static_cast<splay_multiset &>(this->Base::operator=(::boost::move(static_cast<Base&>(x))));  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(const splay_multiset &src, Cloner cloner, Disposer disposer)
+   void clone_from(const splay_multiset &src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(src, cloner, disposer);  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(BOOST_RV_REF(splay_multiset) src, Cloner cloner, Disposer disposer)
+   void clone_from(BOOST_RV_REF(splay_multiset) src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(BOOST_MOVE_BASE(Base, src), cloner, disposer);  }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static splay_multiset &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT
+   static splay_multiset &container_from_end_iterator(iterator end_iterator)
    {  return static_cast<splay_multiset &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const splay_multiset &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT
+   static const splay_multiset &container_from_end_iterator(const_iterator end_iterator)
    {  return static_cast<const splay_multiset &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static splay_multiset &container_from_iterator(iterator it) BOOST_NOEXCEPT
+   static splay_multiset &container_from_iterator(iterator it)
    {  return static_cast<splay_multiset &>(Base::container_from_iterator(it));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const splay_multiset &container_from_iterator(const_iterator it) BOOST_NOEXCEPT
+   static const splay_multiset &container_from_iterator(const_iterator it)
    {  return static_cast<const splay_multiset &>(Base::container_from_iterator(it));   }
 };
 

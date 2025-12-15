@@ -18,13 +18,6 @@
 #include <boost/smart_ptr/detail/yield_k.hpp>
 #include <atomic>
 
-#if defined(BOOST_SP_REPORT_IMPLEMENTATION)
-
-#include <boost/config/pragma_message.hpp>
-BOOST_PRAGMA_MESSAGE("Using std::atomic spinlock")
-
-#endif
-
 namespace boost
 {
 
@@ -39,12 +32,12 @@ public:
 
 public:
 
-    bool try_lock() noexcept
+    bool try_lock()
     {
         return !v_.test_and_set( std::memory_order_acquire );
     }
 
-    void lock() noexcept
+    void lock()
     {
         for( unsigned k = 0; !try_lock(); ++k )
         {
@@ -52,7 +45,7 @@ public:
         }
     }
 
-    void unlock() noexcept
+    void unlock()
     {
         v_ .clear( std::memory_order_release );
     }
@@ -70,12 +63,12 @@ public:
 
     public:
 
-        explicit scoped_lock( spinlock & sp ) noexcept: sp_( sp )
+        explicit scoped_lock( spinlock & sp ): sp_( sp )
         {
             sp.lock();
         }
 
-        ~scoped_lock() /*noexcept*/
+        ~scoped_lock()
         {
             sp_.unlock();
         }

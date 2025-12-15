@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::product`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -15,7 +15,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/fwd/integral_constant.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Compute the product of the numbers of a structure.
     //! @ingroup group-Foldable
     //!
@@ -66,8 +66,8 @@ namespace boost { namespace hana {
     };
 
     template <typename R = integral_constant_tag<int>>
-    BOOST_HANA_INLINE_VARIABLE constexpr product_t<R> product{};
+    constexpr product_t<R> product{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_PRODUCT_HPP

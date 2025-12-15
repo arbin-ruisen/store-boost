@@ -10,8 +10,6 @@
 
 #include <boost/gil/extension/io/png/tags.hpp>
 
-#include <boost/assert.hpp>
-
 #include <memory>
 
 namespace boost { namespace gil { namespace detail {
@@ -19,8 +17,8 @@ namespace boost { namespace gil { namespace detail {
 struct png_ptr_wrapper
 {
     png_ptr_wrapper()
-    : _struct( nullptr )
-    , _info  ( nullptr )
+    : _struct( NULL )
+    , _info  ( NULL )
     {}
 
     png_structp _struct;
@@ -48,13 +46,13 @@ protected:
     {}
 
     png_ptr_wrapper*       get()       { return _png_ptr.get(); }
-    png_ptr_wrapper const* get() const { return _png_ptr.get(); }
+    const png_ptr_wrapper* get() const { return _png_ptr.get(); }
 
-    png_struct*       get_struct()       { return get()->_struct; }
-    png_struct const* get_struct() const { return get()->_struct; }
+    png_structp       get_struct()       { return get()->_struct; }
+    const png_structp get_struct() const { return get()->_struct; }
 
-    png_info*       get_info()       { return get()->_info; }
-    png_info const* get_info() const { return get()->_info; }
+    png_infop       get_info()       { return get()->_info; }
+    const png_infop get_info() const { return get()->_info; }
 
 private:
 
@@ -62,16 +60,15 @@ private:
     {
         if( png_ptr )
         {
-            if( png_ptr->_struct && png_ptr->_info )
-            {
-                png_destroy_read_struct( &png_ptr->_struct
-                                       , &png_ptr->_info
-                                       , nullptr
-                                       );
-            }
+            assert( png_ptr->_struct && png_ptr->_info );
+
+            png_destroy_read_struct( &png_ptr->_struct
+                                   , &png_ptr->_info
+                                   , NULL
+                                   );
 
             delete png_ptr;
-            png_ptr = nullptr;
+            png_ptr = NULL;
         }
     }
 
@@ -79,15 +76,14 @@ private:
     {
         if( png_ptr )
         {
-            if( png_ptr->_struct && png_ptr->_info )
-            {
-                png_destroy_write_struct( &png_ptr->_struct
-                                        , &png_ptr->_info
-                                        );
-            }
+            assert( png_ptr->_struct && png_ptr->_info );
+
+            png_destroy_write_struct( &png_ptr->_struct
+                                    , &png_ptr->_info
+                                    );
 
             delete png_ptr;
-            png_ptr = nullptr;
+            png_ptr = NULL;
         }
     }
 

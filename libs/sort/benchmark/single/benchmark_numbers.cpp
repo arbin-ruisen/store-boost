@@ -48,13 +48,14 @@ using bsort::pdqsort;
 
 void Generator_random (void);
 void Generator_sorted (void);
-void Generator_sorted_end (uint64_t n_last);
-void Generator_sorted_middle (uint64_t n_middle);
+void Generator_sorted_end (size_t n_last);
+void Generator_sorted_middle (size_t n_last);
 void Generator_reverse_sorted (void);
-void Generator_reverse_sorted_end (uint64_t n_last);
-void Generator_reverse_sorted_middle (uint64_t n_middle);
+void Generator_reverse_sorted_end (size_t n_last);
+void Generator_reverse_sorted_middle (size_t n_last);
 
-void Test (const std::vector <uint64_t> &B);
+template<class IA, class compare>
+int Test (std::vector<IA> &B, compare comp = compare ());
 
 int main (int argc, char *argv[])
 {
@@ -128,28 +129,34 @@ int main (int argc, char *argv[])
     cout<<endl<<endl ;
     return 0;
 }
-void Generator_random (void)
+void
+Generator_random (void)
 {
-    vector <uint64_t> A;
+    vector<uint64_t> A;
     A.reserve (NELEM);
     A.clear ();
     if (fill_vector_uint64 ("input.bin", A, NELEM) != 0)
     {
         std::cout << "Error in the input file\n";
-        std::exit (EXIT_FAILURE);
+        return;
     };
-    Test (A);
-};
-void Generator_sorted (void)
+    Test<uint64_t, std::less<uint64_t>> (A);
+}
+;
+void
+Generator_sorted (void)
 {
     vector<uint64_t> A;
+
     A.reserve (NELEM);
     A.clear ();
-    for (uint64_t i = 0; i < NELEM; ++i)
+    for (size_t i = 0; i < NELEM; ++i)
         A.push_back (i);
-    Test (A);
-};
-void Generator_sorted_end (uint64_t n_last)
+    Test<uint64_t, std::less<uint64_t>> (A);
+
+}
+
+void Generator_sorted_end (size_t n_last)
 {
     vector<uint64_t> A;
     A.reserve (NELEM);
@@ -157,115 +164,112 @@ void Generator_sorted_end (uint64_t n_last)
     if (fill_vector_uint64 ("input.bin", A, NELEM + n_last) != 0)
     {
         std::cout << "Error in the input file\n";
-        std::exit (EXIT_FAILURE);
+        return;
     };
     std::sort (A.begin (), A.begin () + NELEM);
-    Test (A);
-};
-void Generator_sorted_middle (uint64_t n_middle)
-{
-    assert (n_middle > 1 && NELEM >= (n_middle -1));
-    vector <uint64_t> A, aux;
-    A.reserve (NELEM + n_middle);
-    aux.reserve (n_middle);
 
-    if (fill_vector_uint64 ("input.bin", A, NELEM + n_middle) != 0)
+    Test<uint64_t, std::less<uint64_t>> (A);
+
+}
+;
+void Generator_sorted_middle (size_t n_last)
+{
+    vector<uint64_t> A, B, C;
+    A.reserve (NELEM);
+    A.clear ();
+    if (fill_vector_uint64 ("input.bin", A, NELEM + n_last) != 0)
     {
         std::cout << "Error in the input file\n";
-        std::exit (EXIT_FAILURE);
+        return;
     };
-    for (uint64_t i = 0; i < n_middle; ++i)   aux.push_back (A [i]);
+    for (size_t i = NELEM; i < A.size (); ++i)
+        B.push_back (std::move (A[i]));
+    A.resize ( NELEM);
+    for (size_t i = 0; i < (NELEM >> 1); ++i)
+        std::swap (A[i], A[NELEM - 1 - i]);
 
-    std::sort (A.begin () + n_middle, A.end ());
-    //------------------------------------------------------------------------
-    // To insert n_middle elements, must have (n_middle - 1) intervals between
-    // them. The size of the interval is step
-    // The elements after the last element of aux don't need to be moved
-    //-------------------------------------------------------------------------
-    uint64_t step = NELEM / (n_middle - 1);
-    A [0] = aux [0];
-    uint64_t pos_read = n_middle, pos_write = 1;
+    std::sort (A.begin (), A.end ());
+    size_t step = NELEM / n_last + 1;
+    size_t pos = 0;
 
-    for (uint64_t i = 1; i < n_middle; ++i)
+    for (size_t i = 0; i < B.size (); ++i, pos += step)
     {
-        for (uint64_t k = 0 ; k < step; ++k)
-            A [pos_write ++] = A [pos_read ++];
-        A [pos_write ++] = aux [i];    
+        C.push_back (B[i]);
+        for (size_t k = 0; k < step; ++k)
+            C.push_back (A[pos + k]);
     };
-    aux.clear ();
-    aux.reserve (0);
-    Test (A);
-};
+    while (pos < A.size ())
+        C.push_back (A[pos++]);
+    A = C;
+    Test<uint64_t, std::less<uint64_t>> (A);
+}
+;
 void Generator_reverse_sorted (void)
 {
     vector<uint64_t> A;
+
     A.reserve (NELEM);
     A.clear ();
-    for (uint64_t i = NELEM; i > 0; --i)
+    for (size_t i = NELEM; i > 0; --i)
         A.push_back (i);
-    Test (A);
-};
-void Generator_reverse_sorted_end (uint64_t n_last)
+    Test<uint64_t, std::less<uint64_t>> (A);
+}
+void Generator_reverse_sorted_end (size_t n_last)
 {
-    vector <uint64_t> A;
+    vector<uint64_t> A;
     A.reserve (NELEM);
     A.clear ();
     if (fill_vector_uint64 ("input.bin", A, NELEM + n_last) != 0)
     {
         std::cout << "Error in the input file\n";
-        std::exit (EXIT_FAILURE);
+        return;
     };
     std::sort (A.begin (), A.begin () + NELEM);
-    for (uint64_t i = 0; i < (NELEM >> 1); ++i)
-        std::swap (A [i], A [NELEM - 1 - i]);
+    for (size_t i = 0; i < (NELEM >> 1); ++i)
+        std::swap (A[i], A[NELEM - 1 - i]);
 
-    Test (A);
+    Test<uint64_t, std::less<uint64_t>> (A);
 }
-void Generator_reverse_sorted_middle (uint64_t n_middle)
+void Generator_reverse_sorted_middle (size_t n_last)
 {
-    assert (n_middle > 1 && NELEM >= (n_middle -1));
-    vector <uint64_t> A, aux;
-    A.reserve (NELEM + n_middle);
-    aux.reserve (n_middle);
-
-    if (fill_vector_uint64 ("input.bin", A, NELEM + n_middle) != 0)
+    vector<uint64_t> A, B, C;
+    A.reserve (NELEM);
+    A.clear ();
+    if (fill_vector_uint64 ("input.bin", A, NELEM + n_last) != 0)
     {
         std::cout << "Error in the input file\n";
-        std::exit (EXIT_FAILURE);
+        return;
     };
-    for (uint64_t i = 0; i < n_middle; ++i)   aux.push_back (A [i]);
+    for (size_t i = NELEM; i < A.size (); ++i)
+        B.push_back (std::move (A[i]));
+    A.resize ( NELEM);
+    for (size_t i = 0; i < (NELEM >> 1); ++i)
+        std::swap (A[i], A[NELEM - 1 - i]);
 
-    std::sort (A.begin () + n_middle, A.end ());
-    uint64_t pos1 = n_middle, pos2 = A.size () - 1;
-    for (uint64_t i = 0; i < (NELEM >> 1); ++i)
-        std::swap (A [pos1 ++], A [pos2 --]);
-    //------------------------------------------------------------------------
-    // To insert n_middle elements, must have (n_middle - 1) intervals between
-    // them. The size of the interval is step
-    // The elements after the last element of aux don't need to be moved
-    //-------------------------------------------------------------------------
-    uint64_t step = NELEM / (n_middle - 1);
-    A [0] = aux [0];
-    uint64_t pos_read = n_middle, pos_write = 1;
+    std::sort (A.begin (), A.end ());
+    size_t step = NELEM / n_last + 1;
+    size_t pos = 0;
 
-    for (uint64_t i = 1; i < n_middle; ++i)
+    for (size_t i = 0; i < B.size (); ++i, pos += step)
     {
-        for (uint64_t k = 0 ; k < step; ++k)
-            A [pos_write ++] = A [pos_read ++];
-        A [pos_write ++] = aux [i];    
+        C.push_back (B[i]);
+        for (size_t k = 0; k < step; ++k)
+            C.push_back (A[pos + k]);
     };
-    aux.clear ();
-    aux.reserve (0);
-    Test (A);
+    while (pos < A.size ())
+        C.push_back (A[pos++]);
+    A = C;
+    Test<uint64_t, std::less<uint64_t>> (A);
 };
-void Test (const std::vector <uint64_t> &B)
-{   
-    //---------------------------- begin --------------------------------
-    std::less <uint64_t> comp ;
+
+
+template<class IA, class compare>
+int Test (std::vector<IA> &B,  compare comp)
+{   //---------------------------- begin --------------------------------
     double duration;
     time_point start, finish;
-    std::vector <uint64_t> A (B);
-    std::vector <double> V;
+    std::vector<IA> A (B);
+    std::vector<double> V;
 
     //--------------------------------------------------------------------
     A = B;
@@ -303,6 +307,7 @@ void Test (const std::vector <uint64_t> &B)
     duration = subtract_time (finish, start);
     V.push_back (duration);
 
+
     A = B;
     start = now ();
     spreadsort (A.begin (), A.end ());
@@ -313,10 +318,11 @@ void Test (const std::vector <uint64_t> &B)
     //-----------------------------------------------------------------------
     // printing the vector
     //-----------------------------------------------------------------------
-    std::cout<<std::setprecision (2) <<std::fixed;
-    for ( uint32_t i =0 ; i < V.size () ; ++i)
-    {   
-        std::cout<<std::right<<std::setw (5)<<V [i]<<" |";
+    std::cout<<std::setprecision(2)<<std::fixed;
+    for ( uint32_t i =0 ; i < V.size() ; ++i)
+    {   std::cout<<std::right<<std::setw(5)<<V[i]<<" |";
     };
     std::cout<<std::endl;
+    return 0;
 };
+

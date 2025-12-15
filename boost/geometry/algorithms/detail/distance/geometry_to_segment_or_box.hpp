@@ -1,10 +1,8 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2014, Oracle and/or its affiliates.
 
-// Copyright (c) 2014-2021, Oracle and/or its affiliates.
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
@@ -14,29 +12,30 @@
 
 #include <iterator>
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-
-#include <boost/geometry/algorithms/assign.hpp>
-#include <boost/geometry/algorithms/detail/closest_feature/geometry_to_range.hpp>
-#include <boost/geometry/algorithms/detail/closest_feature/point_to_range.hpp>
-#include <boost/geometry/algorithms/detail/distance/is_comparable.hpp>
-#include <boost/geometry/algorithms/detail/distance/strategy_utils.hpp>
-#include <boost/geometry/algorithms/dispatch/distance.hpp>
-#include <boost/geometry/algorithms/intersects.hpp>
-#include <boost/geometry/algorithms/num_points.hpp>
+#include <boost/range.hpp>
 
 #include <boost/geometry/core/point_type.hpp>
 #include <boost/geometry/core/tag.hpp>
 #include <boost/geometry/core/tags.hpp>
 
-#include <boost/geometry/iterators/point_iterator.hpp>
-#include <boost/geometry/iterators/segment_iterator.hpp>
-
 #include <boost/geometry/strategies/distance.hpp>
 #include <boost/geometry/strategies/tags.hpp>
 
-#include <boost/geometry/util/constexpr.hpp>
+#include <boost/geometry/algorithms/assign.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
+#include <boost/geometry/algorithms/num_points.hpp>
+
+#include <boost/geometry/iterators/point_iterator.hpp>
+#include <boost/geometry/iterators/segment_iterator.hpp>
+
+#include <boost/geometry/algorithms/dispatch/distance.hpp>
+
+#include <boost/geometry/algorithms/detail/closest_feature/geometry_to_range.hpp>
+#include <boost/geometry/algorithms/detail/closest_feature/point_to_range.hpp>
+
+#include <boost/geometry/algorithms/detail/distance/is_comparable.hpp>
+
+#include <boost/geometry/util/condition.hpp>
 
 
 namespace boost { namespace geometry
@@ -51,11 +50,11 @@ namespace detail { namespace distance
 template
 <
     typename SegmentOrBox,
-    typename Tag = tag_t<SegmentOrBox>
+    typename Tag = typename tag<SegmentOrBox>::type
 >
 struct segment_or_box_point_range_closure
     : not_implemented<SegmentOrBox>
-{};
+{};    
 
 template <typename Segment>
 struct segment_or_box_point_range_closure<Segment, segment_tag>
@@ -75,29 +74,43 @@ template
 <
     typename Geometry,
     typename SegmentOrBox,
-    typename Strategies,
-    typename Tag = tag_t<Geometry>
+    typename Strategy,
+    typename Tag = typename tag<Geometry>::type
 >
 class geometry_to_segment_or_box
 {
 private:
-    using segment_or_box_point = point_type_t<SegmentOrBox>;
-    using strategy_type = distance::strategy_t<Geometry, SegmentOrBox, Strategies>;
-    using point_to_point_range = detail::closest_feature::point_to_point_range
+    typedef typename point_type<SegmentOrBox>::type segment_or_box_point;
+
+    typedef typename strategy::distance::services::comparable_type
+       <
+           Strategy
+       >::type comparable_strategy;
+
+    typedef detail::closest_feature::point_to_point_range
         <
-            point_type_t<Geometry>,
+            typename point_type<Geometry>::type,
             std::vector<segment_or_box_point>,
-            segment_or_box_point_range_closure<SegmentOrBox>::value
-        >;
-    using geometry_to_range = detail::closest_feature::geometry_to_range;
-    using comparable_return_type = distance::creturn_t<Geometry, SegmentOrBox, Strategies>;
+            segment_or_box_point_range_closure<SegmentOrBox>::value,
+            comparable_strategy
+        > point_to_point_range;
+
+    typedef detail::closest_feature::geometry_to_range geometry_to_range;
+
+    typedef typename strategy::distance::services::return_type
+        <
+            comparable_strategy,
+            typename point_type<Geometry>::type,
+            segment_or_box_point
+        >::type comparable_return_type;
+
 
     // assign the new minimum value for an iterator of the point range
     // of a segment or a box
     template
     <
         typename SegOrBox,
-        typename SegOrBoxTag = tag_t<SegOrBox>
+        typename SegOrBoxTag = typename tag<SegOrBox>::type
     >
     struct assign_new_min_iterator
         : not_implemented<SegOrBox>
@@ -128,7 +141,7 @@ private:
     <
         typename SegOrBox,
         typename PointRange,
-        typename SegOrBoxTag = tag_t<SegOrBox>
+        typename SegOrBoxTag = typename tag<SegOrBox>::type
     >
     struct assign_segment_or_box_points
     {};
@@ -152,34 +165,45 @@ private:
         }
     };
 
+
 public:
-    typedef distance::return_t<Geometry, SegmentOrBox, Strategies> return_type;
+    typedef typename strategy::distance::services::return_type
+        <
+            Strategy,
+            typename point_type<Geometry>::type,
+            segment_or_box_point
+        >::type return_type;
 
     static inline return_type apply(Geometry const& geometry,
                                     SegmentOrBox const& segment_or_box,
-                                    Strategies const& strategies,
+                                    Strategy const& strategy,
                                     bool check_intersection = true)
     {
+        typedef geometry::point_iterator<Geometry const> point_iterator_type;
         typedef geometry::segment_iterator
             <
                 Geometry const
             > segment_iterator_type;
 
+        typedef typename boost::range_const_iterator
+            <
+                std::vector<segment_or_box_point>
+            >::type seg_or_box_const_iterator;
+
         typedef assign_new_min_iterator<SegmentOrBox> assign_new_value;
 
 
         if (check_intersection
-            && geometry::intersects(geometry, segment_or_box, strategies))
+            && geometry::intersects(geometry, segment_or_box))
         {
-            return return_type(0);
+            return 0;
         }
 
-        strategy_type const strategy = strategies.distance(geometry, segment_or_box);
-
-        auto const cstrategy = strategy::distance::services::get_comparable
-                                <
-                                    strategy_type
-                                >::apply(strategy);
+        comparable_strategy cstrategy =
+            strategy::distance::services::get_comparable
+                <
+                    Strategy
+                >::apply(strategy);
 
         // get all points of the segment or the box
         std::vector<segment_or_box_point>
@@ -187,27 +211,32 @@ public:
 
         assign_segment_or_box_points
             <
-                SegmentOrBox,
+                SegmentOrBox, 
                 std::vector<segment_or_box_point>
             >::apply(segment_or_box, seg_or_box_points);
 
         // consider all distances of the points in the geometry to the
         // segment or box
         comparable_return_type cd_min1(0);
-        auto pit_min = points_begin(geometry);
-        auto it_min1 = boost::const_begin(seg_or_box_points);
-        auto it_min2 = it_min1 + 1;
+        point_iterator_type pit_min;
+        seg_or_box_const_iterator it_min1 = boost::const_begin(seg_or_box_points);
+        seg_or_box_const_iterator it_min2 = it_min1;
+        ++it_min2;
         bool first = true;
 
-        for (auto pit = pit_min;
+        for (point_iterator_type pit = points_begin(geometry);
              pit != points_end(geometry); ++pit, first = false)
         {
             comparable_return_type cd;
-            auto it_pair = point_to_point_range::apply(*pit,
-                boost::const_begin(seg_or_box_points),
-                boost::const_end(seg_or_box_points),
-                cstrategy,
-                cd);
+            std::pair
+                <
+                    seg_or_box_const_iterator, seg_or_box_const_iterator
+                > it_pair
+                = point_to_point_range::apply(*pit,
+                                              boost::const_begin(seg_or_box_points),
+                                              boost::const_end(seg_or_box_points),
+                                              cstrategy,
+                                              cd);
 
             if (first || cd < cd_min1)
             {
@@ -222,10 +251,10 @@ public:
         // segments of the geometry
         comparable_return_type cd_min2(0);
         segment_iterator_type sit_min;
-        auto it_min = boost::const_begin(seg_or_box_points);
+        seg_or_box_const_iterator it_min;
 
         first = true;
-        for (auto it = boost::const_begin(seg_or_box_points);
+        for (seg_or_box_const_iterator it = boost::const_begin(seg_or_box_points);
              it != boost::const_end(seg_or_box_points); ++it, first = false)
         {
             comparable_return_type cd;
@@ -244,82 +273,98 @@ public:
             }
         }
 
-        if BOOST_GEOMETRY_CONSTEXPR (is_comparable<strategy_type>::value)
+        if (BOOST_GEOMETRY_CONDITION(is_comparable<Strategy>::value))
         {
             return (std::min)(cd_min1, cd_min2);
         }
-        else // else prevents unreachable code warning
+
+        if (cd_min1 < cd_min2)
         {
-            if (cd_min1 < cd_min2)
-            {
-                return strategy.apply(*pit_min, *it_min1, *it_min2);
-            }
-            else
-            {
-                return dispatch::distance
-                    <
-                        segment_or_box_point,
-                        typename std::iterator_traits
-                            <
-                                segment_iterator_type
-                            >::value_type,
-                        Strategies
-                    >::apply(*it_min, *sit_min, strategies);
-            }
+            return strategy.apply(*pit_min, *it_min1, *it_min2);
+        }
+        else
+        {
+            return dispatch::distance
+                <
+                    segment_or_box_point,
+                    typename std::iterator_traits
+                        <
+                            segment_iterator_type
+                        >::value_type,
+                    Strategy
+                >::apply(*it_min, *sit_min, strategy);
         }
     }
 
 
-    static inline return_type apply(SegmentOrBox const& segment_or_box, Geometry const& geometry,
-                                    Strategies const& strategies, bool check_intersection = true)
+    static inline return_type
+    apply(SegmentOrBox const& segment_or_box, Geometry const& geometry, 
+          Strategy const& strategy, bool check_intersection = true)
     {
-        return apply(geometry, segment_or_box, strategies, check_intersection);
+        return apply(geometry, segment_or_box, strategy, check_intersection);
     }
 };
 
 
 
-template <typename MultiPoint, typename SegmentOrBox, typename Strategies>
+template <typename MultiPoint, typename SegmentOrBox, typename Strategy>
 class geometry_to_segment_or_box
     <
-        MultiPoint, SegmentOrBox, Strategies, multi_point_tag
+        MultiPoint, SegmentOrBox, Strategy, multi_point_tag
     >
 {
 private:
     typedef detail::closest_feature::geometry_to_range base_type;
+
+    typedef typename boost::range_iterator
+        <
+            MultiPoint const
+        >::type iterator_type;
+
     typedef detail::closest_feature::geometry_to_range geometry_to_range;
-    typedef distance::strategy_t<MultiPoint, SegmentOrBox, Strategies> strategy_type;
 
 public:
-    typedef distance::return_t<MultiPoint, SegmentOrBox, Strategies> return_type;
+    typedef typename strategy::distance::services::return_type
+        <
+            Strategy,
+            typename point_type<SegmentOrBox>::type,
+            typename point_type<MultiPoint>::type
+        >::type return_type;
 
     static inline return_type apply(MultiPoint const& multipoint,
                                     SegmentOrBox const& segment_or_box,
-                                    Strategies const& strategies)
+                                    Strategy const& strategy)
     {
-        distance::creturn_t<MultiPoint, SegmentOrBox, Strategies> cd_min;
+        namespace sds = strategy::distance::services;
 
-        auto const it_min
+        typename sds::return_type
+            <
+                typename sds::comparable_type<Strategy>::type,
+                typename point_type<SegmentOrBox>::type,
+                typename point_type<MultiPoint>::type
+            >::type cd_min;
+
+        iterator_type it_min
             = geometry_to_range::apply(segment_or_box,
                                        boost::begin(multipoint),
                                        boost::end(multipoint),
-                                       strategy::distance::services::get_comparable
+                                       sds::get_comparable
                                            <
-                                               strategy_type
-                                           >::apply(strategies.distance(multipoint, segment_or_box)),
+                                               Strategy
+                                           >::apply(strategy),
                                        cd_min);
 
         return
-            is_comparable<strategy_type>::value
+            is_comparable<Strategy>::value
             ?
             cd_min
             :
             dispatch::distance
                 <
-                    point_type_t<MultiPoint>,
+                    typename point_type<MultiPoint>::type,
                     SegmentOrBox,
-                    Strategies
-                >::apply(*it_min, segment_or_box, strategies);
+                    Strategy
+                >::apply(*it_min, segment_or_box, strategy);
     }
 };
 

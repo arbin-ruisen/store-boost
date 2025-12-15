@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Joaquin M Lopez Munoz.
+/* Copyright 2016-2017 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -49,22 +49,17 @@ struct function_model<R(Args...)>
 {
   using value_type=callable_wrapper<R(Args...)>;
 
-  using type_index=std::type_info;
-
   template<typename Callable>
   using is_implementation=is_invocable_r<R,Callable&,Args...>;
 
   template<typename T>
   using is_terminal=function_model_is_terminal<T>;
 
-  template<typename T> 
-  static const std::type_info& index(){return typeid(T);}
-
   template<typename T>
-  static const std::type_info& subindex(const T&){return typeid(T);}
+  static const std::type_info& subtypeid(const T&){return typeid(T);}
 
   template<typename Signature>
-  static const std::type_info& subindex(
+  static const std::type_info& subtypeid(
     const callable_wrapper<Signature>& f)
   {
     return f.target_type();
@@ -96,11 +91,16 @@ struct function_model<R(Args...)>
   using iterator=Callable*;
   template<typename Callable>
   using const_iterator=const Callable*;
-  template<typename Allocator>
-  using segment_backend=detail::segment_backend<function_model,Allocator>;
+  using segment_backend=detail::segment_backend<function_model>;
   template<typename Callable,typename Allocator>
-  using segment_backend_implementation=
-    split_segment<function_model,Callable,Allocator>;
+  using segment_backend_implementation=split_segment<
+    function_model,
+    Callable,
+    typename std::allocator_traits<Allocator>::
+      template rebind_alloc<Callable>
+  >;
+  using segment_backend_unique_ptr=
+    typename segment_backend::segment_backend_unique_ptr;
 
   static base_iterator nonconst_iterator(const_base_iterator it)
   {
@@ -112,6 +112,12 @@ struct function_model<R(Args...)>
   static iterator<T> nonconst_iterator(const_iterator<T> it)
   {
     return const_cast<iterator<T>>(it);
+  }
+
+  template<typename Callable,typename Allocator>
+  static segment_backend_unique_ptr make(const Allocator& al)
+  {
+    return segment_backend_implementation<Callable,Allocator>::new_(al,al);
   }
 
 private:

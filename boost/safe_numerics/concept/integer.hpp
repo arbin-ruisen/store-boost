@@ -1,6 +1,11 @@
 #ifndef BOOST_NUMERIC_CONCEPT_INTEGER_HPP
 #define BOOST_NUMERIC_CONCEPT_INTEGER_HPP
 
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 //  Copyright (c) 2012 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -12,8 +17,14 @@
 namespace boost {
 namespace safe_numerics {
 
-template<class T>
-using Integer = std::integral_constant<bool, Numeric<T>() && std::numeric_limits<T>::is_integer>;
+template <class T>
+class Integer : public Numeric<T> {
+    // integer types must have the corresponding numeric trait.
+    static_assert(
+        std::numeric_limits<T>::is_integer,
+        "Fails to fulfill requirements for an integer type"
+    );
+};
 
 } // safe_numerics
 } // boost

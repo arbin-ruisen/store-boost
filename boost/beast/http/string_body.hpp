@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,17 +10,16 @@
 #ifndef BOOST_BEAST_HTTP_STRING_BODY_HPP
 #define BOOST_BEAST_HTTP_STRING_BODY_HPP
 
-#include <boost/beast/http/string_body_fwd.hpp>
-
-#include <boost/beast/core/buffer_traits.hpp>
-#include <boost/beast/core/buffers_range.hpp>
-#include <boost/beast/core/detail/clamp.hpp>
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/core/detail/type_traits.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/optional.hpp>
 #include <cstdint>
+#include <limits>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -28,23 +27,16 @@ namespace boost {
 namespace beast {
 namespace http {
 
-/** A <em>Body</em> using `std::basic_string`
+/** A @b Body using `std::basic_string`
 
     This body uses `std::basic_string` as a memory-based container
     for holding message payloads. Messages using this body type
     may be serialized and parsed.
 */
-#if BOOST_BEAST_DOXYGEN
 template<
     class CharT,
     class Traits = std::char_traits<CharT>,
     class Allocator = std::allocator<CharT>>
-#else
-template<
-    class CharT,
-    class Traits,
-    class Allocator>
-#endif
 struct basic_string_body
 {
 private:
@@ -77,10 +69,10 @@ public:
 
     /** The algorithm for parsing the body
 
-        Meets the requirements of <em>BodyReader</em>.
+        Meets the requirements of @b BodyReader.
     */
 #if BOOST_BEAST_DOXYGEN
-    using reader = __implementation_defined__;
+    using reader = implementation_defined;
 #else
     class reader
     {
@@ -100,14 +92,23 @@ public:
         {
             if(length)
             {
-                if(*length > body_.max_size())
+                if(static_cast<std::size_t>(*length) != *length)
                 {
-                    BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                    ec = error::buffer_overflow;
                     return;
                 }
-                body_.reserve(beast::detail::clamp(*length));
+                try
+                {
+                    body_.reserve(
+                        static_cast<std::size_t>(*length));
+                }
+                catch(std::exception const&)
+                {
+                    ec = error::buffer_overflow;
+                    return;
+                }
             }
-            ec = {};
+            ec.assign(0, ec.category());
         }
 
         template<class ConstBufferSequence>
@@ -115,18 +116,22 @@ public:
         put(ConstBufferSequence const& buffers,
             error_code& ec)
         {
-            auto const extra = buffer_bytes(buffers);
+            using boost::asio::buffer_size;
+            using boost::asio::buffer_copy;
+            auto const extra = buffer_size(buffers);
             auto const size = body_.size();
-            if (extra > body_.max_size() - size)
+            try
             {
-                BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                body_.resize(size + extra);
+            }
+            catch(std::exception const&)
+            {
+                ec = error::buffer_overflow;
                 return 0;
             }
-
-            body_.resize(size + extra);
-            ec = {};
+            ec.assign(0, ec.category());
             CharT* dest = &body_[size];
-            for(auto b : beast::buffers_range_ref(buffers))
+            for(auto b : beast::detail::buffers_range(buffers))
             {
                 Traits::copy(dest, static_cast<
                     CharT const*>(b.data()), b.size());
@@ -138,17 +143,17 @@ public:
         void
         finish(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
         }
     };
 #endif
 
     /** The algorithm for serializing the body
 
-        Meets the requirements of <em>BodyWriter</em>.
+        Meets the requirements of @b BodyWriter.
     */
 #if BOOST_BEAST_DOXYGEN
-    using writer = __implementation_defined__;
+    using writer = implementation_defined;
 #else
     class writer
     {
@@ -156,7 +161,7 @@ public:
 
     public:
         using const_buffers_type =
-            net::const_buffer;
+            boost::asio::const_buffer;
 
         template<bool isRequest, class Fields>
         explicit
@@ -168,13 +173,13 @@ public:
         void
         init(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
         }
 
         boost::optional<std::pair<const_buffers_type, bool>>
         get(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
             return {{const_buffers_type{
                 body_.data(), body_.size()}, false}};
         }
@@ -182,10 +187,8 @@ public:
 #endif
 };
 
-#if BOOST_BEAST_DOXYGEN
-/// A <em>Body</em> using `std::string`
+/// A @b Body using `std::string`
 using string_body = basic_string_body<char>;
-#endif
 
 } // http
 } // beast

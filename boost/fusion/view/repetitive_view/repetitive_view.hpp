@@ -18,10 +18,6 @@
 #include <boost/fusion/view/repetitive_view/detail/begin_impl.hpp>
 #include <boost/fusion/view/repetitive_view/detail/end_impl.hpp>
 
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4512) // assignment operator could not be generated.
-#endif
 
 namespace boost { namespace fusion
 {
@@ -47,12 +43,12 @@ namespace boost { namespace fusion
             : seq(in_seq) {}
 
         stored_seq_type seq;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        repetitive_view& operator= (repetitive_view const&);
     };
 
 }}
-
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 #endif

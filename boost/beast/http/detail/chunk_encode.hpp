@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,6 +10,7 @@
 #ifndef BOOST_BEAST_HTTP_DETAIL_CHUNK_ENCODE_HPP
 #define BOOST_BEAST_HTTP_DETAIL_CHUNK_ENCODE_HPP
 
+#include <boost/beast/core/type_traits.hpp>
 #include <boost/beast/http/type_traits.hpp>
 #include <boost/asio/buffer.hpp>
 #include <algorithm>
@@ -25,15 +26,15 @@ namespace detail {
 struct chunk_extensions
 {
     virtual ~chunk_extensions() = default;
-    virtual net::const_buffer str() = 0;
+    virtual boost::asio::const_buffer str() = 0;
 };
-
+    
 template<class ChunkExtensions>
 struct chunk_extensions_impl : chunk_extensions
 {
     ChunkExtensions ext_;
 
-    chunk_extensions_impl(ChunkExtensions&& ext) noexcept
+    chunk_extensions_impl(ChunkExtensions&& ext)
         : ext_(std::move(ext))
     {
     }
@@ -43,7 +44,7 @@ struct chunk_extensions_impl : chunk_extensions
     {
     }
 
-    net::const_buffer
+    boost::asio::const_buffer
     str() override
     {
         auto const s = ext_.str();
@@ -87,7 +88,7 @@ class chunk_size
 
     struct sequence
     {
-        net::const_buffer b;
+        boost::asio::const_buffer b;
         char data[1 + 2 * sizeof(std::size_t)];
 
         explicit
@@ -103,7 +104,7 @@ class chunk_size
     std::shared_ptr<sequence> sp_;
 
 public:
-    using value_type = net::const_buffer;
+    using value_type = boost::asio::const_buffer;
 
     using const_iterator = value_type const*;
 
@@ -135,37 +136,34 @@ public:
 
 /// Returns a buffer sequence holding a CRLF for chunk encoding
 inline
-net::const_buffer const&
+boost::asio::const_buffer
 chunk_crlf()
 {
-    static net::const_buffer const cb{"\r\n", 2};
-    return cb;
+    return {"\r\n", 2};
 }
 
 /// Returns a buffer sequence holding a final chunk header
 inline
-net::const_buffer const&
+boost::asio::const_buffer
 chunk_last()
 {
-    static net::const_buffer const cb{"0\r\n", 3};
-    return cb;
+    return {"0\r\n", 3};
 }
 
 //------------------------------------------------------------------------------
 
-#if 0
 template<class = void>
 struct chunk_crlf_iter_type
 {
     class value_type
     {
         char const s[2] = {'\r', '\n'};
-
+        
     public:
         value_type() = default;
 
         operator
-        net::const_buffer() const
+        boost::asio::const_buffer() const
         {
             return {s, sizeof(s)};
         }
@@ -178,19 +176,44 @@ typename chunk_crlf_iter_type<T>::value_type
 chunk_crlf_iter_type<T>::value;
 
 using chunk_crlf_iter = chunk_crlf_iter_type<void>;
-#endif
 
 //------------------------------------------------------------------------------
 
+template<class = void>
+struct chunk_size0_iter_type
+{
+    class value_type
+    {
+        char const s[3] = {'0', '\r', '\n'};
+        
+    public:
+        value_type() = default;
+
+        operator
+        boost::asio::const_buffer() const
+        {
+            return {s, sizeof(s)};
+        }
+    };
+    static value_type value;
+};
+
+template<class T>
+typename chunk_size0_iter_type<T>::value_type
+chunk_size0_iter_type<T>::value;
+
+using chunk_size0_iter = chunk_size0_iter_type<void>;
+
 struct chunk_size0
 {
-    using value_type = net::const_buffer;
+    using value_type = chunk_size0_iter::value_type;
+
     using const_iterator = value_type const*;
 
     const_iterator
     begin() const
     {
-        return &chunk_last();
+        return &chunk_size0_iter::value;
     }
 
     const_iterator

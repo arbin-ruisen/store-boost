@@ -18,19 +18,19 @@
 
 #define BOOST_REGEX_SOURCE
 
+#include <boost/config.hpp>
+#include <cstdio>
 #include <boost/regex.hpp>
 #include <boost/cregex.hpp>
-#include <cstdio>
 
-#ifndef BOOST_WORKAROUND
-#define BOOST_WORKAROUND(x, y) false
+#if defined(BOOST_NO_STDC_NAMESPACE)
+namespace std{
+   using ::sprintf;
+   using ::strcpy;
+   using ::strcmp;
+}
 #endif
 
-#ifndef BOOST_REGEX_STANDALONE
-#include <boost/core/snprintf.hpp>
-#else
-namespace boost { namespace core { using std::snprintf; } }
-#endif
 
 namespace boost{
 
@@ -66,10 +66,6 @@ const char* names[] = {
 
 typedef boost::basic_regex<char, c_regex_traits<char> > c_regex_type;
 
-#ifdef BOOST_MSVC
-#  pragma warning(push)
-#pragma warning(disable:26812)
-#endif
 BOOST_REGEX_DECL int BOOST_REGEX_CCALL regcompA(regex_tA* expression, const char* ptr, int f)
 {
 #ifndef BOOST_NO_EXCEPTIONS
@@ -87,7 +83,7 @@ BOOST_REGEX_DECL int BOOST_REGEX_CCALL regcompA(regex_tA* expression, const char
       return REG_E_MEMORY;
 #endif
    // set default flags:
-   unsigned flags = (f & REG_PERLEX) ? 0 : ((f & REG_EXTENDED) ? regex::extended : regex::basic);
+   boost::uint_fast32_t flags = (f & REG_PERLEX) ? 0 : ((f & REG_EXTENDED) ? regex::extended : regex::basic);
    expression->eflags = (f & REG_NEWLINE) ? match_not_dot_newline : match_default;
    // and translate those that are actually set:
 
@@ -144,9 +140,6 @@ BOOST_REGEX_DECL int BOOST_REGEX_CCALL regcompA(regex_tA* expression, const char
    return result;
 
 }
-#ifdef BOOST_MSVC
-#  pragma warning(pop)
-#endif
 
 BOOST_REGEX_DECL regsize_t BOOST_REGEX_CCALL regerrorA(int code, const regex_tA* e, char* buf, regsize_t buf_size)
 {
@@ -176,7 +169,11 @@ BOOST_REGEX_DECL regsize_t BOOST_REGEX_CCALL regerrorA(int code, const regex_tA*
             // We're converting an integer i to a string, and since i <= REG_E_UNKNOWN
             // a five character string is *always* large enough:
             //
-            int r = (boost::core::snprintf)(localbuf, 5, "%d", i);
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400) && !defined(_WIN32_WCE) && !defined(UNDER_CE)
+            int r = (::sprintf_s)(localbuf, 5, "%d", i);
+#else
+            int r = (std::sprintf)(localbuf, "%d", i);
+#endif
             if(r < 0)
                return 0; // sprintf failed
             if(std::strlen(localbuf) < buf_size)
@@ -184,7 +181,11 @@ BOOST_REGEX_DECL regsize_t BOOST_REGEX_CCALL regerrorA(int code, const regex_tA*
             return std::strlen(localbuf) + 1;
          }
       }
-      int r = (boost::core::snprintf)(localbuf, 5, "%d", 0);
+#if BOOST_WORKAROUND(BOOST_MSVC, >= 1400) && !defined(_WIN32_WCE) && !defined(UNDER_CE)
+      int r = (::sprintf_s)(localbuf, 5, "%d", 0);
+#else
+      int r = (std::sprintf)(localbuf, "%d", 0);
+#endif
       if(r < 0)
          return 0; // sprintf failed
       if(std::strlen(localbuf) < buf_size)
@@ -261,8 +262,8 @@ BOOST_REGEX_DECL int BOOST_REGEX_CCALL regexecA(const regex_tA* expression, cons
       std::size_t i;
       for(i = 0; (i < n) && (i < expression->re_nsub + 1); ++i)
       {
-         array[i].rm_so = m[i].matched ? (m[i].first - buf) : -1;
-         array[i].rm_eo = m[i].matched ? (m[i].second - buf) : -1;
+         array[i].rm_so = (m[i].matched == false) ? -1 : (m[i].first - buf);
+         array[i].rm_eo = (m[i].matched == false) ? -1 : (m[i].second - buf);
       }
       // and set anything else to -1:
       for(i = expression->re_nsub + 1; i < n; ++i)
@@ -288,3 +289,7 @@ BOOST_REGEX_DECL void BOOST_REGEX_CCALL regfreeA(regex_tA* expression)
 }
 
 } // namespace boost
+
+
+
+

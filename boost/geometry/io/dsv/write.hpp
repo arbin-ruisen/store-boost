@@ -5,8 +5,9 @@
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 // Copyright (c) 2014 Adam Wulkiewicz, Lodz, Poland.
 
-// This file was modified by Oracle on 2018-2020.
-// Modifications copyright (c) 2018-2020, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2018.
+// Modifications copyright (c) 2018, Oracle and/or its affiliates.
+
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
@@ -24,10 +25,9 @@
 #include <string>
 
 #include <boost/concept_check.hpp>
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/value_type.hpp>
-#include <boost/range/size.hpp>
+#include <boost/range.hpp>
+
+#include <boost/geometry/algorithms/detail/interior_iterator.hpp>
 
 #include <boost/geometry/core/exterior_ring.hpp>
 #include <boost/geometry/core/interior_rings.hpp>
@@ -36,8 +36,6 @@
 #include <boost/geometry/core/tags.hpp>
 
 #include <boost/geometry/geometries/concepts/check.hpp>
-
-#include <boost/geometry/util/condition.hpp>
 
 namespace boost { namespace geometry
 {
@@ -55,7 +53,6 @@ struct dsv_settings
     std::string list_open;
     std::string list_close;
     std::string list_separator;
-    bool close_rings{false};
 
     dsv_settings(std::string const& sep
             , std::string const& open
@@ -64,7 +61,6 @@ struct dsv_settings
             , std::string const& lopen
             , std::string const& lclose
             , std::string const& lsep
-            , bool cr = false
             )
         : coordinate_separator(sep)
         , point_open(open)
@@ -73,7 +69,6 @@ struct dsv_settings
         , list_open(lopen)
         , list_close(lclose)
         , list_separator(lsep)
-        , close_rings(cr)
     {}
 };
 
@@ -166,7 +161,7 @@ struct dsv_point
 \brief Stream ranges as DSV
 \note policy is used to stream prefix/postfix, enabling derived classes to override this
 */
-template <typename Range, bool Areal>
+template <typename Range>
 struct dsv_range
 {
     template <typename Char, typename Traits>
@@ -174,33 +169,26 @@ struct dsv_range
             Range const& range,
             dsv_settings const& settings)
     {
+        typedef typename boost::range_iterator<Range const>::type iterator_type;
+
         bool first = true;
 
         os << settings.list_open;
 
-        auto stream_point = [&os, &settings](std::string const& sep, auto const& point)
+        for (iterator_type it = boost::begin(range);
+            it != boost::end(range);
+            ++it)
         {
-            os << sep << settings.point_open;
+            os << (first ? "" : settings.point_separator)
+                << settings.point_open;
+
             stream_coordinate
                 <
                     point_type, 0, dimension<point_type>::type::value
-                >::apply(os, point, settings);
+                >::apply(os, *it, settings);
             os << settings.point_close;
-        };
 
-        for (auto it = boost::begin(range); it != boost::end(range); ++it)
-        {
-            stream_point(first ? "" : settings.point_separator, *it);
             first = false;
-        }
-
-        if (BOOST_GEOMETRY_CONDITION(Areal))
-        {
-            if (settings.close_rings && boost::size(range) > 0)
-            {
-                // Close it explicitly
-                stream_point(settings.point_separator, *boost::begin(range));
-            }
         }
 
         os << settings.list_close;
@@ -223,17 +211,19 @@ struct dsv_poly
                 Polygon const& poly,
                 dsv_settings const& settings)
     {
-        using ring_t = ring_type_t<Polygon>;
+        typedef typename ring_type<Polygon>::type ring;
 
         os << settings.list_open;
 
-        dsv_range<ring_t, true>::apply(os, exterior_ring(poly), settings);
+        dsv_range<ring>::apply(os, exterior_ring(poly), settings);
 
-        auto const& rings = interior_rings(poly);
-        for (auto it = boost::begin(rings); it != boost::end(rings); ++it)
+        typename interior_return_type<Polygon const>::type
+            rings = interior_rings(poly);
+        for (typename detail::interior_iterator<Polygon const>::type
+                it = boost::begin(rings); it != boost::end(rings); ++it)
         {
             os << settings.list_separator;
-            dsv_range<ring_t, true>::apply(os, *it, settings);
+            dsv_range<ring>::apply(os, *it, settings);
         }
         os << settings.list_close;
     }
@@ -242,7 +232,7 @@ struct dsv_poly
 template <typename Geometry, std::size_t Index>
 struct dsv_per_index
 {
-    using type = point_type_t<Geometry>;
+    typedef typename point_type<Geometry>::type point_type;
 
     template <typename Char, typename Traits>
     static inline void apply(std::basic_ostream<Char, Traits>& os,
@@ -261,7 +251,7 @@ struct dsv_per_index
 template <typename Geometry>
 struct dsv_indexed
 {
-    using type = point_type_t<Geometry>;
+    typedef typename point_type<Geometry>::type point_type;
 
     template <typename Char, typename Traits>
     static inline void apply(std::basic_ostream<Char, Traits>& os,
@@ -293,7 +283,7 @@ struct dsv<point_tag, Point>
 
 template <typename Linestring>
 struct dsv<linestring_tag, Linestring>
-    : detail::dsv::dsv_range<Linestring, false>
+    : detail::dsv::dsv_range<Linestring>
 {};
 
 template <typename Box>
@@ -308,7 +298,7 @@ struct dsv<segment_tag, Segment>
 
 template <typename Ring>
 struct dsv<ring_tag, Ring>
-    : detail::dsv::dsv_range<Ring, true>
+    : detail::dsv::dsv_range<Ring>
 {};
 
 template <typename Polygon>
@@ -342,11 +332,11 @@ public:
     {
         dispatch::dsv
             <
-                tag_cast_t
+                typename tag_cast
                     <
-                        tag_t<Geometry>,
+                        typename tag<Geometry>::type,
                         multi_tag
-                    >,
+                    >::type,
                 Geometry
             >::apply(os, m.m_geometry, m.m_settings);
         os.flush();
@@ -364,9 +354,18 @@ struct dsv_multi
 {
     typedef dispatch::dsv
                 <
-                    typename single_tag_of<tag_t<MultiGeometry>>::type,
+                    typename single_tag_of
+                        <
+                            typename tag<MultiGeometry>::type
+                        >::type,
                     typename boost::range_value<MultiGeometry>::type
                 > dispatch_one;
+
+    typedef typename boost::range_iterator
+        <
+            MultiGeometry const
+        >::type iterator;
+
 
     template <typename Char, typename Traits>
     static inline void apply(std::basic_ostream<Char, Traits>& os,
@@ -376,7 +375,9 @@ struct dsv_multi
         os << settings.list_open;
 
         bool first = true;
-        for(auto it = boost::begin(multi); it != boost::end(multi); ++it, first = false)
+        for(iterator it = boost::begin(multi);
+            it != boost::end(multi);
+            ++it, first = false)
         {
             os << (first ? "" : settings.list_separator);
             dispatch_one::apply(os, *it, settings);
@@ -420,7 +421,6 @@ inline detail::dsv::dsv_manipulator<Geometry> dsv(Geometry const& geometry
     , std::string const& list_open = "("
     , std::string const& list_close = ")"
     , std::string const& list_separator = ", "
-    , bool close_rings = false
     )
 {
     concepts::check<Geometry const>();
@@ -428,7 +428,7 @@ inline detail::dsv::dsv_manipulator<Geometry> dsv(Geometry const& geometry
     return detail::dsv::dsv_manipulator<Geometry>(geometry,
         detail::dsv::dsv_settings(coordinate_separator,
             point_open, point_close, point_separator,
-            list_open, list_close, list_separator, close_rings));
+            list_open, list_close, list_separator));
 }
 
 }} // namespace boost::geometry

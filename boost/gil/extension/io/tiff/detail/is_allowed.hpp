@@ -8,112 +8,69 @@
 #ifndef BOOST_GIL_EXTENSION_IO_TIFF_DETAIL_IS_ALLOWED_HPP
 #define BOOST_GIL_EXTENSION_IO_TIFF_DETAIL_IS_ALLOWED_HPP
 
-#include <boost/gil/extension/io/tiff/tags.hpp>
-#include <boost/gil/extension/toolbox/metafunctions/is_bit_aligned.hpp>
-#include <boost/gil/detail/mp11.hpp>
 #include <boost/gil/io/base.hpp>
 
-#include <type_traits>
+#include <boost/mpl/for_each.hpp>
 
 namespace boost { namespace gil { namespace detail {
 
-using channel_sizes_t = std::vector<tiff_bits_per_sample::type>;
+typedef std::vector< tiff_bits_per_sample::type > channel_sizes_t;
 
-template <typename View, typename Channel, typename Enable = void>
-struct Format_Type {};
+template< typename View, typename Channel, typename Enable = void > struct Format_Type {};
 
 // is_bit_aligned< View >
-template <typename View, typename Channel>
-struct Format_Type
-<
-    View,
-    Channel,
-    typename std::enable_if
-    <
-        is_bit_aligned
-        <
-            typename get_pixel_type<View>::type
-        >::value
-    >::type
->
+template< typename View, typename Channel > struct Format_Type< View
+                                                              , Channel
+                                                              , typename boost::enable_if< typename is_bit_aligned< typename get_pixel_type< View >::type >::type >::type
+                                                              >
 {
     static const int value = SAMPLEFORMAT_UINT;
 };
 
 // is_not_bit_aligned< View > && is_unsigned< Channel >
-template <typename View, typename Channel>
-struct Format_Type
-<
-    View,
-    Channel,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            mp11::mp_not
-            <
-                typename is_bit_aligned<typename get_pixel_type<View>::type>::type
-            >,
-            std::is_unsigned<Channel>
-        >::value
-    >::type
->
+template< typename View, typename Channel > struct Format_Type< View
+                                                              , Channel
+                                                              , typename boost::enable_if< mpl::and_< mpl::not_< typename is_bit_aligned< typename get_pixel_type< View >::type >::type >
+                                                                                                    , is_unsigned< Channel >
+                                                                                                    >
+                                                                                         >::type
+                                                              >
 {
     static const int value = SAMPLEFORMAT_UINT;
 };
 
 // is_not_bit_aligned< View > && is_signed< Channel >
-template <typename View, typename Channel>
-struct Format_Type
-<
-    View,
-    Channel,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            mp11::mp_not
-            <
-                typename is_bit_aligned<typename get_pixel_type<View>::type>::type
-            >,
-            std::is_signed<Channel>
-        >::value
-    >::type
->
+template< typename View, typename Channel > struct Format_Type< View
+                                                              , Channel
+                                                              , typename boost::enable_if< mpl::and_< mpl::not_< typename is_bit_aligned< typename get_pixel_type< View >::type >::type >
+                                                                                                    , is_signed< Channel >
+                                                                                                    >
+                                                                                         >::type
+                                                              >
 {
     static const int value = SAMPLEFORMAT_INT;
 };
 
 // is_not_bit_aligned< View > && is_floating_point< Channel >
-template <typename View, typename Channel>
-struct Format_Type
-<
-    View,
-    Channel,
-    typename std::enable_if
-    <
-        mp11::mp_and
-        <
-            mp11::mp_not
-            <
-                typename is_bit_aligned<typename get_pixel_type<View>::type>::type
-            >,
-            is_floating_point<Channel>
-        >::value
-    >::type
->
+template< typename View, typename Channel > struct Format_Type< View
+                                                              , Channel
+                                                              , typename boost::enable_if< mpl::and_< mpl::not_< typename is_bit_aligned< typename get_pixel_type< View >::type >::type >
+                                                                                                    , is_floating_point< Channel >
+                                                                                                    >
+                                                                                         >::type
+                                                              >
 {
     static const int value = SAMPLEFORMAT_IEEEFP;
 };
 
 //template< typename Channel >
-//int format_value( std::true_type ) // is_bit_aligned
+//int format_value( mpl::true_ ) // is_bit_aligned
 //{
 //    return SAMPLEFORMAT_UINT;
 //}
 //
 //template< typename Channel >
-//int format_value( std::false_type ) // is_bit_aligned
+//int format_value( mpl::false_ ) // is_bit_aligned
 //{
 //    if( is_unsigned< Channel >::value )
 //    {
@@ -137,12 +94,13 @@ struct Format_Type
 // a pixel_t as template parameter whereas the other is using reference_t.
 template< typename View >
 bool compare_channel_sizes( const channel_sizes_t& channel_sizes // in bits
-                          , std::false_type                      // is_bit_aligned
-                          , std::true_type                       // is_homogeneous
+                          , mpl::false_                          // is_bit_aligned
+                          , mpl::true_                           // is_homogeneous
                           )
 {
-    using pixel_t = typename View::value_type;
-    using channel_t = typename channel_traits<typename element_type<pixel_t>::type>::value_type;
+    typedef typename View::value_type pixel_t;
+    typedef typename channel_traits<
+                typename element_type< pixel_t >::type >::value_type channel_t;
 
     unsigned int s = detail::unsigned_integral_num_bits< channel_t >::value;
 
@@ -152,14 +110,17 @@ bool compare_channel_sizes( const channel_sizes_t& channel_sizes // in bits
 
 template< typename View >
 bool compare_channel_sizes( const channel_sizes_t& channel_sizes // in bits
-                          , std::true_type                       // is_bit_aligned
-                          , std::true_type                       // is_homogeneous
+                          , mpl::true_                           // is_bit_aligned
+                          , mpl::true_                           // is_homogeneous
                           )
 {
-    using ref_t = typename View::reference;
-    using channel_t = typename channel_traits<typename element_type<ref_t>::type>::value_type;
+    typedef typename View::reference ref_t;
+
+    typedef typename channel_traits< typename element_type< ref_t >::type >::value_type channel_t;
+    channel_t c;
 
     unsigned int s = detail::unsigned_integral_num_bits< channel_t >::value;
+
     return ( s == channel_sizes[0] );
 }
 
@@ -187,41 +148,42 @@ template< typename T >
 struct channel_sizes_type {};
 
 template< typename B, typename C, typename L, bool M >
-struct channel_sizes_type< bit_aligned_pixel_reference< B, C, L, M > > { using type = C; };
+struct channel_sizes_type< bit_aligned_pixel_reference< B, C, L, M > > { typedef C type; };
 
 template< typename B, typename C, typename L, bool M >
-struct channel_sizes_type< const bit_aligned_pixel_reference< B, C, L, M > > { using type = C; };
+struct channel_sizes_type< const bit_aligned_pixel_reference< B, C, L, M > > { typedef C type; };
 
 template< typename View >
 bool compare_channel_sizes( channel_sizes_t& channel_sizes // in bits
-                          , std::true_type                 // is_bit_aligned
-                          , std::false_type                // is_homogeneous
+                          , mpl::true_                     // is_bit_aligned
+                          , mpl::false_                    // is_homogeneous
                           )
 {
     // loop through all channels and compare
 
-    using ref_t = typename View::reference;
-    using cs_t = typename channel_sizes_type<ref_t>::type;
+    typedef typename View::reference ref_t;
+    typedef typename channel_sizes_type< ref_t >::type cs_t;
 
     compare_channel_sizes_fn fn( &channel_sizes.front() );
-    mp11::mp_for_each<cs_t>(fn);
+    mpl::for_each< cs_t >( fn );
 
     return fn._b;
 }
 
 template< typename View >
 bool is_allowed( const image_read_info< tiff_tag >& info
-               , std::true_type // is read_and_no_convert
+               , mpl::true_ // is read_and_no_convert
                )
 {
     channel_sizes_t channel_sizes( info._samples_per_pixel
                                  , info._bits_per_sample
                                  );
 
-    using pixel_t = typename get_pixel_type<View>::type;
-    using channel_t = typename channel_traits<typename element_type<pixel_t>::type>::value_type;
+    typedef typename get_pixel_type< View >::type pixel_t;
+    typedef typename channel_traits<
+                typename element_type< pixel_t >::type >::value_type channel_t;
 
-    using num_channel_t = typename num_channels<pixel_t>::value_type;
+    typedef typename num_channels< pixel_t >::value_type num_channel_t;
 
     const num_channel_t dst_samples_per_pixel = num_channels< pixel_t >::value;
 
@@ -240,7 +202,7 @@ bool is_allowed( const image_read_info< tiff_tag >& info
 
 template< typename View >
 bool is_allowed( const image_read_info< tiff_tag >& /* info */
-               , std::false_type // is read_and_no_convert
+               , mpl::false_ // is read_and_no_convert
                )
 {
     return true;

@@ -13,11 +13,11 @@
 
 #include <boost/assert.hpp>
 #include <boost/config.hpp>
-#include <boost/context/detail/config.hpp>
 
 #include <boost/context/fiber.hpp>
 
 #include <boost/coroutine2/detail/config.hpp>
+#include <boost/coroutine2/detail/forced_unwind.hpp>
 #include <boost/coroutine2/detail/wrap.hpp>
 
 #ifdef BOOST_HAS_ABI_HEADERS
@@ -59,10 +59,6 @@ push_coroutine< T >::control_block::control_block( context::preallocated palloc,
                        fn( synthesized);
                    } catch ( boost::context::detail::forced_unwind const&) {
                        throw;
-#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
-                   } catch ( abi::__forced_unwind const&) {
-                       throw;
-#endif
                    } catch (...) {
                        // store other exceptions in exception-pointer
                        except = std::current_exception();
@@ -90,10 +86,6 @@ push_coroutine< T >::control_block::control_block( context::preallocated palloc,
                   fn( synthesized);
               } catch ( boost::context::detail::forced_unwind const&) {
                   throw;
-#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
-              } catch ( abi::__forced_unwind const&) {
-                  throw;
-#endif
               } catch (...) {
                   // store other exceptions in exception-pointer
                   except = std::current_exception();
@@ -190,10 +182,6 @@ push_coroutine< T & >::control_block::control_block( context::preallocated pallo
                        fn( synthesized);
                    } catch ( boost::context::detail::forced_unwind const&) {
                        throw;
-#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
-                   } catch ( abi::__forced_unwind const&) {
-                       throw;
-#endif
                    } catch (...) {
                        // store other exceptions in exception-pointer
                        except = std::current_exception();
@@ -221,10 +209,6 @@ push_coroutine< T & >::control_block::control_block( context::preallocated pallo
                   fn( synthesized);
               } catch ( boost::context::detail::forced_unwind const&) {
                   throw;
-#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
-              } catch ( abi::__forced_unwind const&) {
-                  throw;
-#endif
               } catch (...) {
                   // store other exceptions in exception-pointer
                   except = std::current_exception();
@@ -308,10 +292,6 @@ push_coroutine< void >::control_block::control_block( context::preallocated pall
                        fn( synthesized);
                    } catch ( boost::context::detail::forced_unwind const&) {
                        throw;
-#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
-                   } catch ( abi::__forced_unwind const&) {
-                       throw;
-#endif
                    } catch (...) {
                        // store other exceptions in exception-pointer
                        except = std::current_exception();
@@ -339,10 +319,6 @@ push_coroutine< void >::control_block::control_block( context::preallocated pall
                   fn( synthesized);
               } catch ( boost::context::detail::forced_unwind const&) {
                   throw;
-#if defined( BOOST_CONTEXT_HAS_CXXABI_H )
-              } catch ( abi::__forced_unwind const&) {
-                  throw;
-#endif
               } catch (...) {
                   // store other exceptions in exception-pointer
                   except = std::current_exception();

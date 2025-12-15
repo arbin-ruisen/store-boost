@@ -22,8 +22,8 @@ public:
 
     tiff_no_log()
     {
-        TIFFSetErrorHandler  ( nullptr );
-        TIFFSetWarningHandler( nullptr );
+        TIFFSetErrorHandler  ( NULL );
+        TIFFSetWarningHandler( NULL );
     }
 };
 

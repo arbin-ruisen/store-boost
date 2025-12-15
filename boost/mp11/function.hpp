@@ -1,12 +1,12 @@
 #ifndef BOOST_MP11_FUNCTION_HPP_INCLUDED
 #define BOOST_MP11_FUNCTION_HPP_INCLUDED
 
-// Copyright 2015-2019 Peter Dimov.
+//  Copyright 2015-2017 Peter Dimov.
 //
-// Distributed under the Boost Software License, Version 1.0.
+//  Distributed under the Boost Software License, Version 1.0.
 //
-// See accompanying file LICENSE_1_0.txt or copy at
-// http://www.boost.org/LICENSE_1_0.txt
+//  See accompanying file LICENSE_1_0.txt or copy at
+//  http://www.boost.org/LICENSE_1_0.txt
 
 #include <boost/mp11/integral.hpp>
 #include <boost/mp11/utility.hpp>
@@ -80,14 +80,17 @@ template<class... T> using mp_and = typename detail::mp_and_impl<mp_list<T...>>:
 #endif
 
 // mp_all<T...>
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86355
-#if BOOST_MP11_WORKAROUND( BOOST_MP11_MSVC, < 1920 ) || BOOST_MP11_WORKAROUND( BOOST_MP11_GCC, != 0 )
+#if BOOST_MP11_WORKAROUND( BOOST_MP11_MSVC, < 1920 ) || BOOST_MP11_WORKAROUND( BOOST_MP11_GCC, < 80200 )
 
 template<class... T> using mp_all = mp_bool< mp_count_if< mp_list<T...>, mp_not >::value == 0 >;
 
+#elif defined( BOOST_MP11_HAS_FOLD_EXPRESSIONS )
+
+template<class... T> using mp_all = mp_bool<(static_cast<bool>(T::value) && ...)>;
+
 #else
 
-template<class... T> using mp_all = mp_bool< mp_count< mp_list<mp_to_bool<T>...>, mp_false >::value == 0 >;
+template<class... T> using mp_all = mp_and<mp_to_bool<T>...>;
 
 #endif
 
@@ -122,14 +125,13 @@ template<class T1, class... T> struct mp_or_impl<T1, T...>
 } // namespace detail
 
 // mp_any<T...>
-// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86356
-#if BOOST_MP11_WORKAROUND( BOOST_MP11_MSVC, < 1920 ) || BOOST_MP11_WORKAROUND( BOOST_MP11_GCC, != 0 )
+#if defined( BOOST_MP11_HAS_FOLD_EXPRESSIONS ) && !BOOST_MP11_WORKAROUND( BOOST_MP11_GCC, < 80200 )
 
-template<class... T> using mp_any = mp_bool< mp_count_if< mp_list<T...>, mp_to_bool >::value != 0 >;
+template<class... T> using mp_any = mp_bool<(static_cast<bool>(T::value) || ...)>;
 
 #else
 
-template<class... T> using mp_any = mp_bool< mp_count< mp_list<mp_to_bool<T>...>, mp_true >::value != 0 >;
+template<class... T> using mp_any = mp_bool< mp_count_if< mp_list<T...>, mp_to_bool >::value != 0 >;
 
 #endif
 
@@ -146,69 +148,15 @@ template<> struct mp_same_impl<>
 
 template<class T1, class... T> struct mp_same_impl<T1, T...>
 {
-    using type = mp_bool< mp_count<mp_list<T...>, T1>::value == sizeof...(T) >;
+    using type = mp_all<std::is_same<T1, T>...>;
 };
 
 } // namespace detail
 
 template<class... T> using mp_same = typename detail::mp_same_impl<T...>::type;
 
-// mp_similar<T...>
-namespace detail
-{
-
-template<class... T> struct mp_similar_impl;
-
-template<> struct mp_similar_impl<>
-{
-    using type = mp_true;
-};
-
-template<class T> struct mp_similar_impl<T>
-{
-    using type = mp_true;
-};
-
-template<class T> struct mp_similar_impl<T, T>
-{
-    using type = mp_true;
-};
-
-template<class T1, class T2> struct mp_similar_impl<T1, T2>
-{
-    using type = mp_false;
-};
-
-template<template<class...> class L, class... T1, class... T2> struct mp_similar_impl<L<T1...>, L<T2...>>
-{
-    using type = mp_true;
-};
-
-template<template<class...> class L, class... T> struct mp_similar_impl<L<T...>, L<T...>>
-{
-    using type = mp_true;
-};
-
-template<class T1, class T2, class T3, class... T> struct mp_similar_impl<T1, T2, T3, T...>
-{
-    using type = mp_all< typename mp_similar_impl<T1, T2>::type, typename mp_similar_impl<T1, T3>::type, typename mp_similar_impl<T1, T>::type... >;
-};
-
-} // namespace detail
-
-template<class... T> using mp_similar = typename detail::mp_similar_impl<T...>::type;
-
-#if BOOST_MP11_GCC
-# pragma GCC diagnostic push
-# pragma GCC diagnostic ignored "-Wsign-compare"
-#endif
-
 // mp_less<T1, T2>
 template<class T1, class T2> using mp_less = mp_bool<(T1::value < 0 && T2::value >= 0) || ((T1::value < T2::value) && !(T1::value >= 0 && T2::value < 0))>;
-
-#if BOOST_MP11_GCC
-# pragma GCC diagnostic pop
-#endif
 
 // mp_min<T...>
 template<class T1, class... T> using mp_min = mp_min_element<mp_list<T1, T...>, mp_less>;

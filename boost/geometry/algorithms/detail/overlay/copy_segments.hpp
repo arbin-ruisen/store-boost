@@ -1,11 +1,10 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
 // Copyright (c) 2007-2014 Barend Gehrels, Amsterdam, the Netherlands.
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
 
-// This file was modified by Oracle on 2014-2024.
-// Modifications copyright (c) 2014-2024 Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// This file was modified by Oracle on 2014, 2017.
+// Modifications copyright (c) 2014-2017 Oracle and/or its affiliates.
+
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -17,33 +16,29 @@
 #define BOOST_GEOMETRY_ALGORITHMS_DETAIL_OVERLAY_COPY_SEGMENTS_HPP
 
 
-#include <array>
-#include <type_traits>
 #include <vector>
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/size.hpp>
-
-#include <boost/geometry/algorithms/detail/assign_box_corners.hpp>
-#include <boost/geometry/algorithms/detail/signed_size_type.hpp>
-#include <boost/geometry/algorithms/detail/overlay/append_no_duplicates.hpp>
-#include <boost/geometry/algorithms/detail/overlay/append_no_dups_or_spikes.hpp>
-#include <boost/geometry/algorithms/not_implemented.hpp>
+#include <boost/array.hpp>
+#include <boost/mpl/assert.hpp>
+#include <boost/range.hpp>
+#include <boost/type_traits/integral_constant.hpp>
 
 #include <boost/geometry/core/assert.hpp>
 #include <boost/geometry/core/exterior_ring.hpp>
 #include <boost/geometry/core/interior_rings.hpp>
 #include <boost/geometry/core/ring_type.hpp>
 #include <boost/geometry/core/tags.hpp>
-
+#include <boost/geometry/algorithms/not_implemented.hpp>
 #include <boost/geometry/geometries/concepts/check.hpp>
-
 #include <boost/geometry/iterators/ever_circling_iterator.hpp>
+#include <boost/geometry/views/closeable_view.hpp>
+#include <boost/geometry/views/reversible_view.hpp>
+
+#include <boost/geometry/algorithms/detail/overlay/append_no_duplicates.hpp>
+#include <boost/geometry/algorithms/detail/overlay/append_no_dups_or_spikes.hpp>
+#include <boost/geometry/algorithms/detail/signed_size_type.hpp>
 
 #include <boost/geometry/util/range.hpp>
-
-#include <boost/geometry/views/detail/closed_clockwise_view.hpp>
 
 
 namespace boost { namespace geometry
@@ -62,26 +57,35 @@ struct copy_segments_ring
     <
         typename Ring,
         typename SegmentIdentifier,
-        typename Strategy,
+        typename SideStrategy,
+        typename RobustPolicy,
         typename RangeOut
     >
     static inline void apply(Ring const& ring,
             SegmentIdentifier const& seg_id,
             signed_size_type to_index,
-            Strategy const& strategy,
+            SideStrategy const& strategy,
+            RobustPolicy const& robust_policy,
             RangeOut& current_output)
     {
-        using view_type = detail::closed_clockwise_view
-            <
-                Ring const,
-                closure<Ring>::value,
-                Reverse ? counterclockwise : clockwise
-            >;
+        typedef typename closeable_view
+        <
+            Ring const,
+            closure<Ring>::value
+        >::type cview_type;
 
-        using iterator = typename boost::range_iterator<view_type const>::type;
-        using ec_iterator = geometry::ever_circling_iterator<iterator>;
+        typedef typename reversible_view
+        <
+            cview_type const,
+            Reverse ? iterate_reverse : iterate_forward
+        >::type rview_type;
 
-        view_type view(ring);
+        typedef typename boost::range_iterator<rview_type const>::type iterator;
+        typedef geometry::ever_circling_iterator<iterator> ec_iterator;
+
+
+        cview_type cview(ring);
+        rview_type view(cview);
 
         // The problem: sometimes we want to from "3" to "2"
         // -> end = "3" -> end == begin
@@ -107,7 +111,7 @@ struct copy_segments_ring
 
         for (signed_size_type i = 0; i < count; ++i, ++it)
         {
-            detail::overlay::append_no_dups_or_spikes(current_output, *it, strategy);
+            detail::overlay::append_no_dups_or_spikes(current_output, *it, strategy, robust_policy);
         }
     }
 };
@@ -117,24 +121,27 @@ class copy_segments_linestring
 {
 private:
     // remove spikes
-    template <typename RangeOut, typename Point, typename Strategy>
+    template <typename RangeOut, typename Point, typename SideStrategy, typename RobustPolicy>
     static inline void append_to_output(RangeOut& current_output,
                                         Point const& point,
-                                        Strategy const& strategy,
-                                        std::true_type const&)
+                                        SideStrategy const& strategy,
+                                        RobustPolicy const& robust_policy,
+                                        boost::true_type const&)
     {
         detail::overlay::append_no_dups_or_spikes(current_output, point,
-                                                  strategy);
+                                                  strategy,
+                                                  robust_policy);
     }
 
     // keep spikes
-    template <typename RangeOut, typename Point, typename Strategy>
+    template <typename RangeOut, typename Point, typename SideStrategy, typename RobustPolicy>
     static inline void append_to_output(RangeOut& current_output,
                                         Point const& point,
-                                        Strategy const& strategy,
-                                        std::false_type const&)
+                                        SideStrategy const&,
+                                        RobustPolicy const&,
+                                        boost::false_type const&)
     {
-        detail::overlay::append_no_duplicates(current_output, point, strategy);
+        detail::overlay::append_no_duplicates(current_output, point);
     }
 
 public:
@@ -143,12 +150,14 @@ public:
         typename LineString,
         typename SegmentIdentifier,
         typename SideStrategy,
+        typename RobustPolicy,
         typename RangeOut
     >
     static inline void apply(LineString const& ls,
             SegmentIdentifier const& seg_id,
             signed_size_type to_index,
             SideStrategy const& strategy,
+            RobustPolicy const& robust_policy,
             RangeOut& current_output)
     {
         signed_size_type const from_index = seg_id.segment_index + 1;
@@ -162,11 +171,14 @@ public:
         }
 
         signed_size_type const count = to_index - from_index + 1;
-        auto it = boost::begin(ls) + from_index;
+
+        typename boost::range_iterator<LineString const>::type
+            it = boost::begin(ls) + from_index;
+
         for (signed_size_type i = 0; i < count; ++i, ++it)
         {
-            append_to_output(current_output, *it, strategy,
-                             std::integral_constant<bool, RemoveSpikes>());
+            append_to_output(current_output, *it, strategy, robust_policy,
+                             boost::integral_constant<bool, RemoveSpikes>());
         }
     }
 };
@@ -179,12 +191,14 @@ struct copy_segments_polygon
         typename Polygon,
         typename SegmentIdentifier,
         typename SideStrategy,
+        typename RobustPolicy,
         typename RangeOut
     >
     static inline void apply(Polygon const& polygon,
             SegmentIdentifier const& seg_id,
             signed_size_type to_index,
             SideStrategy const& strategy,
+            RobustPolicy const& robust_policy,
             RangeOut& current_output)
     {
         // Call ring-version with the right ring
@@ -195,6 +209,7 @@ struct copy_segments_polygon
                     : range::at(geometry::interior_rings(polygon), seg_id.ring_index),
                 seg_id, to_index,
                 strategy,
+                robust_policy,
                 current_output
             );
     }
@@ -209,12 +224,14 @@ struct copy_segments_box
         typename Box,
         typename SegmentIdentifier,
         typename SideStrategy,
+        typename RobustPolicy,
         typename RangeOut
     >
     static inline void apply(Box const& box,
             SegmentIdentifier const& seg_id,
             signed_size_type to_index,
             SideStrategy const& strategy,
+            RobustPolicy const& robust_policy,
             RangeOut& current_output)
     {
         signed_size_type index = seg_id.segment_index + 1;
@@ -225,7 +242,7 @@ struct copy_segments_box
             : 5 - index + to_index + 1;
 
         // Create array of points, the fifth one closes it
-        std::array<point_type_t<Box>, 5> bp;
+        boost::array<typename point_type<Box>::type, 5> bp;
         assign_box_corners_oriented<Reverse>(box, bp);
         bp[4] = bp[0];
 
@@ -234,7 +251,7 @@ struct copy_segments_box
         for (signed_size_type i = 0; i < count; i++, index++)
         {
             detail::overlay::append_no_dups_or_spikes(current_output,
-                bp[index % 5], strategy);
+                bp[index % 5], strategy, robust_policy);
 
         }
     }
@@ -249,12 +266,14 @@ struct copy_segments_multi
         typename MultiGeometry,
         typename SegmentIdentifier,
         typename SideStrategy,
+        typename RobustPolicy,
         typename RangeOut
     >
     static inline void apply(MultiGeometry const& multi_geometry,
             SegmentIdentifier const& seg_id,
             signed_size_type to_index,
             SideStrategy const& strategy,
+            RobustPolicy const& robust_policy,
             RangeOut& current_output)
     {
 
@@ -268,6 +287,7 @@ struct copy_segments_multi
         Policy::apply(range::at(multi_geometry, seg_id.multi_index),
                       seg_id, to_index,
                       strategy,
+                      robust_policy,
                       current_output);
     }
 };
@@ -337,21 +357,23 @@ template
     typename Geometry,
     typename SegmentIdentifier,
     typename SideStrategy,
+    typename RobustPolicy,
     typename RangeOut
 >
 inline void copy_segments(Geometry const& geometry,
             SegmentIdentifier const& seg_id,
             signed_size_type to_index,
             SideStrategy const& strategy,
+            RobustPolicy const& robust_policy,
             RangeOut& range_out)
 {
     concepts::check<Geometry const>();
 
     dispatch::copy_segments
         <
-            tag_t<Geometry>,
+            typename tag<Geometry>::type,
             Reverse
-        >::apply(geometry, seg_id, to_index, strategy, range_out);
+        >::apply(geometry, seg_id, to_index, strategy, robust_policy, range_out);
 }
 
 

@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::is_subset`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -16,7 +16,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/functional/infix.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Returns whether a structure contains a subset of the keys of
     //! another structure.
     //! @ingroup group-Searchable
@@ -72,8 +72,8 @@ namespace boost { namespace hana {
         constexpr auto operator()(Xs&& xs, Ys&& ys) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr auto is_subset = hana::infix(is_subset_t{});
+    constexpr auto is_subset = hana::infix(is_subset_t{});
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_IS_SUBSET_HPP

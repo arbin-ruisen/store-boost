@@ -31,7 +31,7 @@
 #include <boost/numeric/odeint/stepper/velocity_verlet.hpp>
 #include <boost/numeric/odeint/algebra/fusion_algebra.hpp>
 
-#include <array>
+#include <boost/array.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <boost/units/systems/si/length.hpp>
@@ -101,7 +101,7 @@ void init_state( Q &q , P &p )
     p[0] = 2.0 ; p[1] = -1.0;
 }
 
-typedef std::array< double , 2 > array_type;
+typedef boost::array< double , 2 > array_type;
 typedef std::vector< double > vector_type;
 
 typedef velocity_verlet< array_type > array_stepper;

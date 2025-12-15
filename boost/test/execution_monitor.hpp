@@ -76,7 +76,7 @@
       !(defined(__UCLIBC__) || defined(__nios2__) || defined(__microblaze__))
   //! Indicates that floating point exception handling is supported for the
   //! non SEH version of it, for the GLIBC extensions only
-  // see discussions on the related topic: https://svn.boost.org/trac/boost/ticket/11756
+  // see dicussions on the related topic: https://svn.boost.org/trac/boost/ticket/11756
   #define BOOST_TEST_FPE_SUPPORT_WITH_GLIBC_EXTENSIONS__
   #endif
 #endif
@@ -111,8 +111,7 @@ namespace boost {
 ///
 /// @section DesignRationale Design Rationale
 ///
-/// The Execution Monitor design assumes that it can be used when no (or almost no) memory available. Also the Execution Monitor
-/// is intended to be portable to as many platforms as possible.
+/// The Execution Monitor design assumes that it can be used when no (or almost no) memory available. Also the Execution Monitor is intended to be portable to as many platforms as possible.
 ///
 /// @section UserGuide User's guide
 /// The Execution Monitor is designed to solve the problem of executing potentially dangerous function that may result in any number of error conditions,
@@ -310,7 +309,7 @@ private:
 /// This class is used to uniformly detect and report an occurrence of several types of signals and exceptions, reducing various
 /// errors to a uniform execution_exception that is returned to a caller.
 ///
-/// The execution_monitor behavior can be customized through a set of public parameters (properties) associated with the execution_monitor instance.
+/// The executiom_monitor behavior can be customized through a set of public parameters (properties) associated with the execution_monitor instance.
 /// All parameters are implemented as public unit_test::readwrite_property data members of the class execution_monitor.
 // ************************************************************************** //
 
@@ -338,9 +337,9 @@ public:
 
     ///  Specifies the seconds that elapse before a timer_error occurs.
     ///
-    /// The @em p_timeout property is an integer timeout (in microseconds) for monitored function execution. Use this parameter to monitor code with possible deadlocks
-    /// or infinite loops. This feature is only available for some operating systems (not yet Microsoft Windows).
-    unit_test::readwrite_property<unsigned long int>  p_timeout;
+    /// The @em p_timeout property is an integer timeout (in seconds) for monitored function execution. Use this parameter to monitor code with possible deadlocks
+    /// or indefinite loops. This feature is only available for some operating systems (not yet Microsoft Windows).
+    unit_test::readwrite_property<unsigned>  p_timeout;
 
     ///  Should monitor use alternative stack for the signal catching.
     ///
@@ -372,7 +371,7 @@ public:
 
     /// @brief Execution monitor entry point for functions returning void
     ///
-    /// This method is semantically identical to execution_monitor::execute, but doesn't produce any result code.
+    /// This method is semantically identical to execution_monitor::execute, but des't produce any result code.
     /// @param[in] F  Function to monitor
     /// @see execute
     void         vexecute( boost::function<void ()> const& F );
@@ -442,7 +441,7 @@ public:
     : translator_holder_base( next, tag ), m_translator( tr ) {}
 
     // translator holder interface
-    int operator()( boost::function<int ()> const& F ) BOOST_OVERRIDE
+    virtual int operator()( boost::function<int ()> const& F )
     {
         BOOST_TEST_I_TRY {
             return m_next ? (*m_next)( F ) : F();
@@ -453,7 +452,7 @@ public:
         }
     }
 #ifndef BOOST_NO_RTTI
-    translator_holder_base_ptr erase( translator_holder_base_ptr this_, std::type_info const& ti ) BOOST_OVERRIDE
+    virtual translator_holder_base_ptr erase( translator_holder_base_ptr this_, std::type_info const& ti )
     {
         return ti == typeid(ExceptionType) ? m_next : this_;
     }
@@ -479,7 +478,7 @@ execution_monitor::register_exception_translator( ExceptionTranslator const& tr,
 /// @brief This is a trivial default constructible class. Use it to report graceful abortion of a monitored function execution.
 // ************************************************************************** //
 
-struct BOOST_SYMBOL_VISIBLE execution_aborted {};
+struct execution_aborted {};
 
 // ************************************************************************** //
 // **************                  system_error                ************** //

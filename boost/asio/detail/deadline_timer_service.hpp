@@ -2,7 +2,7 @@
 // detail/deadline_timer_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,11 +17,8 @@
 
 #include <boost/asio/detail/config.hpp>
 #include <cstddef>
-#include <boost/asio/associated_cancellation_slot.hpp>
-#include <boost/asio/cancellation_type.hpp>
-#include <boost/asio/config.hpp>
 #include <boost/asio/error.hpp>
-#include <boost/asio/execution_context.hpp>
+#include <boost/asio/io_context.hpp>
 #include <boost/asio/detail/bind_handler.hpp>
 #include <boost/asio/detail/fenced_block.hpp>
 #include <boost/asio/detail/memory.hpp>
@@ -29,6 +26,7 @@
 #include <boost/asio/detail/socket_ops.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/asio/detail/timer_queue.hpp>
+#include <boost/asio/detail/timer_queue_ptime.hpp>
 #include <boost/asio/detail/timer_scheduler.hpp>
 #include <boost/asio/detail/wait_handler.hpp>
 #include <boost/asio/detail/wait_op.hpp>
@@ -44,19 +42,16 @@ namespace boost {
 namespace asio {
 namespace detail {
 
-template <typename TimeTraits>
+template <typename Time_Traits>
 class deadline_timer_service
-  : public execution_context_service_base<deadline_timer_service<TimeTraits>>
+  : public service_base<deadline_timer_service<Time_Traits> >
 {
 public:
   // The time type.
-  typedef typename TimeTraits::time_type time_type;
+  typedef typename Time_Traits::time_type time_type;
 
   // The duration type.
-  typedef typename TimeTraits::duration_type duration_type;
-
-  // The allocator type.
-  typedef execution_context::allocator<void> allocator_type;
+  typedef typename Time_Traits::duration_type duration_type;
 
   // The implementation type of the timer. This type is dependent on the
   // underlying implementation of the timer service.
@@ -65,16 +60,13 @@ public:
   {
     time_type expiry;
     bool might_have_pending_waits;
-    typename timer_queue<TimeTraits, allocator_type>::per_timer_data timer_data;
+    typename timer_queue<Time_Traits>::per_timer_data timer_data;
   };
 
   // Constructor.
-  deadline_timer_service(execution_context& context)
-    : execution_context_service_base<
-        deadline_timer_service<TimeTraits>>(context),
-      timer_queue_(allocator_type(context),
-          config(context).get("timer", "heap_reserve", 0U)),
-      scheduler_(boost::asio::use_service<timer_scheduler>(context))
+  deadline_timer_service(boost::asio::io_context& io_context)
+    : service_base<deadline_timer_service<Time_Traits> >(io_context),
+      scheduler_(boost::asio::use_service<timer_scheduler>(io_context))
   {
     scheduler_.init_task();
     scheduler_.add_timer_queue(timer_queue_);
@@ -105,15 +97,11 @@ public:
     cancel(impl, ec);
   }
 
-  // Move-construct a new timer implementation.
+  // Move-construct a new serial port implementation.
   void move_construct(implementation_type& impl,
       implementation_type& other_impl)
   {
-    if (other_impl.might_have_pending_waits)
-    {
-      scheduler_.move_timer(timer_queue_,
-          impl.timer_data, other_impl.timer_data);
-    }
+    scheduler_.move_timer(timer_queue_, impl.timer_data, other_impl.timer_data);
 
     impl.expiry = other_impl.expiry;
     other_impl.expiry = time_type();
@@ -122,7 +110,7 @@ public:
     other_impl.might_have_pending_waits = false;
   }
 
-  // Move-assign from another timer implementation.
+  // Move-assign from another serial port implementation.
   void move_assign(implementation_type& impl,
       deadline_timer_service& other_service,
       implementation_type& other_impl)
@@ -139,21 +127,6 @@ public:
 
     impl.might_have_pending_waits = other_impl.might_have_pending_waits;
     other_impl.might_have_pending_waits = false;
-  }
-
-  // Move-construct a new timer implementation.
-  void converting_move_construct(implementation_type& impl,
-      deadline_timer_service&, implementation_type& other_impl)
-  {
-    move_construct(impl, other_impl);
-  }
-
-  // Move-assign from another timer implementation.
-  void converting_move_assign(implementation_type& impl,
-      deadline_timer_service& other_service,
-      implementation_type& other_impl)
-  {
-    move_assign(impl, other_service, other_impl);
   }
 
   // Cancel any asynchronous wait operations associated with the timer.
@@ -210,7 +183,7 @@ public:
   // Get the expiry time for the timer relative to now.
   duration_type expires_from_now(const implementation_type& impl) const
   {
-    return TimeTraits::subtract(this->expiry(impl), TimeTraits::now());
+    return Time_Traits::subtract(this->expiry(impl), Time_Traits::now());
   }
 
   // Set the expiry time for the timer as an absolute time.
@@ -228,7 +201,7 @@ public:
       const duration_type& expiry_time, boost::system::error_code& ec)
   {
     return expires_at(impl,
-        TimeTraits::add(TimeTraits::now(), expiry_time), ec);
+        Time_Traits::add(Time_Traits::now(), expiry_time), ec);
   }
 
   // Set the expiry time for the timer relative to now.
@@ -236,42 +209,31 @@ public:
       const duration_type& expiry_time, boost::system::error_code& ec)
   {
     return expires_at(impl,
-        TimeTraits::add(TimeTraits::now(), expiry_time), ec);
+        Time_Traits::add(Time_Traits::now(), expiry_time), ec);
   }
 
   // Perform a blocking wait on the timer.
   void wait(implementation_type& impl, boost::system::error_code& ec)
   {
-    time_type now = TimeTraits::now();
+    time_type now = Time_Traits::now();
     ec = boost::system::error_code();
-    while (TimeTraits::less_than(now, impl.expiry) && !ec)
+    while (Time_Traits::less_than(now, impl.expiry) && !ec)
     {
-      this->do_wait(TimeTraits::to_posix_duration(
-            TimeTraits::subtract(impl.expiry, now)), ec);
-      now = TimeTraits::now();
+      this->do_wait(Time_Traits::to_posix_duration(
+            Time_Traits::subtract(impl.expiry, now)), ec);
+      now = Time_Traits::now();
     }
   }
 
   // Start an asynchronous wait on the timer.
-  template <typename Handler, typename IoExecutor>
-  void async_wait(implementation_type& impl,
-      Handler& handler, const IoExecutor& io_ex)
+  template <typename Handler>
+  void async_wait(implementation_type& impl, Handler& handler)
   {
-    associated_cancellation_slot_t<Handler> slot
-      = boost::asio::get_associated_cancellation_slot(handler);
-
     // Allocate and construct an operation to wrap the handler.
-    typedef wait_handler<Handler, IoExecutor> op;
+    typedef wait_handler<Handler> op;
     typename op::ptr p = { boost::asio::detail::addressof(handler),
       op::ptr::allocate(handler), 0 };
-    p.p = new (p.v) op(handler, io_ex);
-
-    // Optionally register for per-operation cancellation.
-    if (slot.is_connected())
-    {
-      p.p->cancellation_key_ =
-        &slot.template emplace<op_cancellation>(this, &impl.timer_data);
-    }
+    p.p = new (p.v) op(handler);
 
     impl.might_have_pending_waits = true;
 
@@ -302,37 +264,8 @@ private:
 #endif // defined(BOOST_ASIO_WINDOWS_RUNTIME)
   }
 
-  // Helper class used to implement per-operation cancellation.
-  class op_cancellation
-  {
-  public:
-    op_cancellation(deadline_timer_service* s,
-        typename timer_queue<TimeTraits, allocator_type>::per_timer_data* p)
-      : service_(s),
-        timer_data_(p)
-    {
-    }
-
-    void operator()(cancellation_type_t type)
-    {
-      if (!!(type &
-            (cancellation_type::terminal
-              | cancellation_type::partial
-              | cancellation_type::total)))
-      {
-        service_->scheduler_.cancel_timer_by_key(
-            service_->timer_queue_, timer_data_, this);
-      }
-    }
-
-  private:
-    deadline_timer_service* service_;
-    typename timer_queue<TimeTraits, allocator_type>::per_timer_data*
-      timer_data_;
-  };
-
   // The queue of timers.
-  timer_queue<TimeTraits, allocator_type> timer_queue_;
+  timer_queue<Time_Traits> timer_queue_;
 
   // The object that schedules and executes timers. Usually a reactor.
   timer_scheduler& scheduler_;

@@ -25,7 +25,8 @@
 #include <vector>
 #include <cmath>
 
-#include <array>
+#include <boost/array.hpp>
+#include <boost/bind.hpp>
 #include <boost/utility.hpp>
 #include <boost/type_traits/integral_constant.hpp>
 

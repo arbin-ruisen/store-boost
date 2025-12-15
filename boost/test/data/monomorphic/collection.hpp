@@ -41,7 +41,7 @@ class collection {
 public:
     typedef typename col_type::value_type sample;
 
-    static const int arity = 1;
+    enum { arity = 1 };
 
     typedef typename col_type::const_iterator iterator;
 

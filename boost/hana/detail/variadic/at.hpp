@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::detail::variadic::at`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -16,7 +16,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana { namespace detail { namespace variadic {
+BOOST_HANA_NAMESPACE_BEGIN namespace detail { namespace variadic {
     template <std::size_t n, typename = std::make_index_sequence<n>>
     struct at_type;
 
@@ -34,7 +34,7 @@ namespace boost { namespace hana { namespace detail { namespace variadic {
     };
 
     template <std::size_t n>
-    BOOST_HANA_INLINE_VARIABLE constexpr at_type<n> at{};
-}} }} // end namespace boost::hana
+    constexpr at_type<n> at{};
+}} BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DETAIL_VARIADIC_AT_HPP

@@ -1,5 +1,5 @@
 // Copyright 2014 Renato Tegon Forti, Antony Polukhin.
-// Copyright Antony Polukhin, 2015-2025.
+// Copyright 2015 Antony Polukhin.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -8,14 +8,11 @@
 #ifndef BOOST_DLL_ALIAS_HPP
 #define BOOST_DLL_ALIAS_HPP
 
-#include <boost/dll/config.hpp>
+#include <boost/config.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/predef/compiler.h>
 #include <boost/predef/os.h>
 #include <boost/dll/detail/aggressive_ptr_cast.hpp>
-
-#if BOOST_COMP_GNUC // MSVC does not have <stdint.h> and defines it in some other header, MinGW requires that header.
-#include <stdint.h> // intptr_t
-#endif
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 # pragma once
@@ -39,14 +36,14 @@ namespace boost { namespace dll {
 #define BOOST_DLL_FORCE_NO_WEAK_EXPORTS
 #endif
 
-#if defined(_MSC_VER) // MSVC, Clang-cl, and ICC on Windows
+#if BOOST_COMP_MSVC || (BOOST_COMP_INTEL && BOOST_OS_WINDOWS)
 
 #define BOOST_DLL_SELECTANY __declspec(selectany)
 
 #define BOOST_DLL_SECTION(SectionName, Permissions)                                             \
-    static_assert(                                                                              \
+    BOOST_STATIC_ASSERT_MSG(                                                                    \
         sizeof(#SectionName) < 10,                                                              \
-        "Some platforms require section names to be at most 8 bytes"                            \
+        "Some platforms require section names to be at most 8 bytest"                           \
     );                                                                                          \
     __pragma(section(#SectionName, Permissions)) __declspec(allocate(#SectionName))             \
     /**/
@@ -83,18 +80,18 @@ namespace boost { namespace dll {
 * \param Permissions Can be "read" or "write" (without quotes!).
 */
 #define BOOST_DLL_SECTION(SectionName, Permissions)                                             \
-    static_assert(                                                                              \
+    BOOST_STATIC_ASSERT_MSG(                                                                    \
         sizeof(#SectionName) < 10,                                                              \
-        "Some platforms require section names to be at most 8 bytes"                            \
+        "Some platforms require section names to be at most 8 bytest"                           \
     );                                                                                          \
     __attribute__ ((section (#SectionName)))                                                    \
     /**/
 #else // #if !BOOST_OS_MACOS && !BOOST_OS_IOS
 
 #define BOOST_DLL_SECTION(SectionName, Permissions)                                             \
-    static_assert(                                                                              \
+    BOOST_STATIC_ASSERT_MSG(                                                                    \
         sizeof(#SectionName) < 10,                                                              \
-        "Some platforms require section names to be at most 8 bytes"                            \
+        "Some platforms require section names to be at most 8 bytest"                           \
     );                                                                                          \
     __attribute__ ((section ( "__DATA," #SectionName)))                                         \
     /**/
@@ -180,33 +177,11 @@ namespace boost { namespace dll {
     namespace _autoaliases {                                                                    \
         extern "C" BOOST_SYMBOL_EXPORT const void *FunctionOrVar;                               \
     } /* namespace _autoaliases */                                                              \
-/**/
-#elif BOOST_OS_CYGWIN
-#define BOOST_DLL_ALIAS_SECTIONED(FunctionOrVar, AliasName, SectionName)                        \
-    namespace _autoaliases {                                                                    \
-        extern "C" BOOST_SYMBOL_EXPORT const void *AliasName;                                   \
-        BOOST_DLL_SECTION(SectionName, read)                                                    \
-        const void * AliasName = reinterpret_cast<const void*>(reinterpret_cast<intptr_t>(      \
-            &FunctionOrVar                                                                      \
-        ));                                                                                     \
-    } /* namespace _autoaliases */                                                              \
-/**/
-
-#define BOOST_DLL_AUTO_ALIAS(FunctionOrVar)                                                     \
-    namespace _autoaliases {                                                                    \
-        const void * dummy_ ## FunctionOrVar                                                    \
-            = reinterpret_cast<const void*>(reinterpret_cast<intptr_t>(                         \
-                &FunctionOrVar                                                                  \
-            ));                                                                                 \
-        extern "C" BOOST_SYMBOL_EXPORT const void *FunctionOrVar;                               \
-        BOOST_DLL_SECTION(boostdll, read)                                                       \
-        const void * FunctionOrVar = dummy_ ## FunctionOrVar;                                   \
-    } /* namespace _autoaliases */                                                              \
-/**/
-#else
+    /**/
+#else    
 // Note: we can not use `aggressive_ptr_cast` here, because in that case GCC applies
 // different permissions to the section and it causes Segmentation fault.
-// Note: we can not use `std::addressof()` here, because in that case GCC 
+// Note: we can not use `boost::addressof()` here, because in that case GCC 
 // may optimize away the FunctionOrVar instance and we'll get a pointer to unexisting symbol.
 /*!
 * \brief Same as \forcedmacrolink{BOOST_DLL_ALIAS} but puts alias name into the user specified section.

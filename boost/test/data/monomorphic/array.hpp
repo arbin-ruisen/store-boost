@@ -35,7 +35,7 @@ class array {
 public:
     typedef T sample;
 
-    static const int arity = 1;
+    enum { arity = 1 };
 
     typedef T const* iterator;
 

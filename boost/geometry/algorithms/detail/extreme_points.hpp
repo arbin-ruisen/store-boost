@@ -5,8 +5,8 @@
 // Copyright (c) 2009-2013 Mateusz Loskot, London, UK.
 // Copyright (c) 2013-2017 Adam Wulkiewicz, Lodz, Poland.
 
-// This file was modified by Oracle on 2017-2021.
-// Modifications copyright (c) 2017-2021 Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017.
+// Modifications copyright (c) 2017 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -20,23 +20,19 @@
 
 #include <cstddef>
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/size.hpp>
-#include <boost/range/value_type.hpp>
+#include <boost/range.hpp>
 
-#include <boost/geometry/algorithms/detail/assign_box_corners.hpp>
-
-#include <boost/geometry/arithmetic/arithmetic.hpp>
+#include <boost/geometry/algorithms/detail/interior_iterator.hpp>
 
 #include <boost/geometry/core/cs.hpp>
-#include <boost/geometry/core/point_order.hpp>
 #include <boost/geometry/core/point_type.hpp>
 #include <boost/geometry/core/ring_type.hpp>
 #include <boost/geometry/core/tags.hpp>
 
 #include <boost/geometry/geometries/concepts/check.hpp>
 #include <boost/geometry/iterators/ever_circling_iterator.hpp>
+
+#include <boost/geometry/algorithms/detail/assign_box_corners.hpp>
 
 #include <boost/geometry/strategies/side.hpp>
 
@@ -122,8 +118,9 @@ template<typename Ring, std::size_t Dimension>
 struct extreme_points_on_ring
 {
 
-    using coordinate_type = geometry::coordinate_type_t<Ring>;
-    using point_type = geometry::point_type_t<Ring>;
+    typedef typename geometry::coordinate_type<Ring>::type coordinate_type;
+    typedef typename boost::range_iterator<Ring const>::type range_iterator;
+    typedef typename geometry::point_type<Ring>::type point_type;
 
     template <typename CirclingIterator, typename Points>
     static inline bool extend(CirclingIterator& it,
@@ -286,7 +283,8 @@ struct extreme_points_on_ring
     template <typename Iterator, typename SideStrategy>
     static inline bool right_turn(Ring const& ring, Iterator it, SideStrategy const& strategy)
     {
-        auto const index = std::distance(boost::begin(ring), it);
+        typename std::iterator_traits<Iterator>::difference_type const index
+            = std::distance(boost::begin(ring), it);
         geometry::ever_circling_range_iterator<Ring const> left(ring);
         geometry::ever_circling_range_iterator<Ring const> right(ring);
         left += index;
@@ -323,9 +321,9 @@ struct extreme_points_on_ring
 
         // Get all maxima, usually one. In case of self-tangencies, or self-crossings,
         // the max might be is not valid. A valid max should make a right turn
-        auto max_it = boost::begin(ring);
+        range_iterator max_it = boost::begin(ring);
         compare<Dimension> smaller;
-        for (auto it = max_it + 1; it != boost::end(ring); ++it)
+        for (range_iterator it = max_it + 1; it != boost::end(ring); ++it)
         {
             if (smaller(*max_it, *it) && right_turn(ring, it, strategy))
             {
@@ -338,7 +336,8 @@ struct extreme_points_on_ring
             return false;
         }
 
-        auto const index = std::distance(boost::begin(ring), max_it);
+        typename std::iterator_traits<range_iterator>::difference_type const
+            index = std::distance(boost::begin(ring), max_it);
 //std::cout << "Extreme point lies at " << index << " having " << geometry::wkt(*max_it) << std::endl;
 
         geometry::ever_circling_range_iterator<Ring const> left(ring);
@@ -393,7 +392,7 @@ template
 <
     typename Geometry,
     std::size_t Dimension,
-    typename GeometryTag = tag_t<Geometry>
+    typename GeometryTag = typename tag<Geometry>::type
 >
 struct extreme_points
 {};
@@ -412,10 +411,11 @@ struct extreme_points<Polygon, Dimension, polygon_tag>
     static inline bool apply(Polygon const& polygon, Extremes& extremes, Intruders& intruders,
                              SideStrategy const& strategy)
     {
-        using ring_implementation = detail::extreme_points::extreme_points_on_ring
+        typedef typename geometry::ring_type<Polygon>::type ring_type;
+        typedef detail::extreme_points::extreme_points_on_ring
             <
-                geometry::ring_type_t<Polygon>, Dimension
-            >;
+                ring_type, Dimension
+            > ring_implementation;
 
         if (! ring_implementation::apply(geometry::exterior_ring(polygon),
                                          extremes, intruders, strategy))
@@ -424,8 +424,10 @@ struct extreme_points<Polygon, Dimension, polygon_tag>
         }
 
         // For a polygon, its interior rings can contain intruders
-        auto const& rings = interior_rings(polygon);
-        for (auto it = boost::begin(rings); it != boost::end(rings); ++it)
+        typename interior_return_type<Polygon const>::type
+            rings = interior_rings(polygon);
+        for (typename detail::interior_iterator<Polygon const>::type
+                it = boost::begin(rings); it != boost::end(rings); ++it)
         {
             ring_implementation::get_intruders(*it, extremes,  intruders, strategy);
         }
@@ -545,10 +547,10 @@ inline bool extreme_points(Geometry const& geometry,
                            Extremes& extremes,
                            Intruders& intruders)
 {
-    using strategy_type = typename strategy::side::services::default_strategy
+    typedef typename strategy::side::services::default_strategy
             <
-                cs_tag_t<Geometry>
-            >::type;
+                typename cs_tag<Geometry>::type
+            >::type strategy_type;
 
     return geometry::extreme_points<Edge>(geometry,extremes, intruders, strategy_type());
 }

@@ -3,7 +3,6 @@
 // Copyright (c) 2018 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -12,15 +11,11 @@
 #ifndef BOOST_GEOMETRY_FORMULAS_QUARTER_MERIDIAN_HPP
 #define BOOST_GEOMETRY_FORMULAS_QUARTER_MERIDIAN_HPP
 
-#include <boost/geometry/algorithms/not_implemented.hpp>
-
 #include <boost/geometry/core/radius.hpp>
 #include <boost/geometry/core/tag.hpp>
 #include <boost/geometry/core/tags.hpp>
 
-#include <boost/geometry/formulas/flattening.hpp>
-
-#include <boost/geometry/util/math.hpp>
+#include <boost/geometry/algorithms/not_implemented.hpp>
 
 namespace boost { namespace geometry
 {
@@ -29,7 +24,7 @@ namespace boost { namespace geometry
 namespace formula_dispatch
 {
 
-template <typename ResultType, typename Geometry, typename Tag = tag_t<Geometry>>
+template <typename ResultType, typename Geometry, typename Tag = typename tag<Geometry>::type>
 struct quarter_meridian
     : not_implemented<Tag>
 {};

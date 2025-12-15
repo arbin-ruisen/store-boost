@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::apply`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -13,7 +13,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/config.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @ingroup group-functional
     //! Invokes a Callable with the given arguments.
     //!
@@ -35,7 +35,7 @@ namespace boost { namespace hana {
     //! @include example/functional/apply.cpp
     //!
     //! [1]: http://en.cppreference.com/w/cpp/utility/functional/invoke
-    //! [2]: http://en.cppreference.com/w/cpp/named_req/Callable
+    //! [2]: http://en.cppreference.com/w/cpp/concept/Callable
 #ifdef BOOST_HANA_DOXYGEN_INVOKED
     constexpr auto apply = [](auto&& f, auto&& ...x) -> decltype(auto) {
         return forwarded(f)(forwarded(x)...);
@@ -78,8 +78,8 @@ namespace boost { namespace hana {
         }
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr apply_t apply{};
+    constexpr apply_t apply{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FUNCTIONAL_APPLY_HPP

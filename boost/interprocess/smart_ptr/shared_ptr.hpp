@@ -37,6 +37,7 @@
 #include <boost/interprocess/detail/type_traits.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/smart_ptr/deleter.hpp>
+#include <boost/static_assert.hpp>
 #include <boost/intrusive/pointer_traits.hpp>
 
 #include <iosfwd> // for std::basic_ostream
@@ -55,7 +56,7 @@ namespace ipcdetail{
 template<class T, class VoidAllocator, class Deleter>
 inline void sp_enable_shared_from_this
   (shared_count<T, VoidAllocator, Deleter> const & pn
-  ,enable_shared_from_this<T, VoidAllocator, Deleter> const*pe
+  ,enable_shared_from_this<T, VoidAllocator, Deleter> *pe
   ,T *ptr)
 
 {
@@ -102,20 +103,18 @@ class shared_ptr
 
    typedef T                                                   element_type;
    typedef T                                                   value_type;
-   typedef typename boost::container::
-      allocator_traits<VoidAllocator>::pointer                 void_ptr;
    typedef typename boost::intrusive::
-      pointer_traits<void_ptr>::template
+      pointer_traits<typename VoidAllocator::pointer>::template
          rebind_pointer<T>::type                               pointer;
    typedef typename ipcdetail::add_reference
                      <value_type>::type                        reference;
    typedef typename ipcdetail::add_reference
                      <const value_type>::type                  const_reference;
    typedef typename boost::intrusive::
-      pointer_traits<void_ptr>::template
+      pointer_traits<typename VoidAllocator::pointer>::template
          rebind_pointer<const Deleter>::type                               const_deleter_pointer;
    typedef typename boost::intrusive::
-      pointer_traits<void_ptr>::template
+      pointer_traits<typename VoidAllocator::pointer>::template
          rebind_pointer<const VoidAllocator>::type                         const_allocator_pointer;
 
    BOOST_COPYABLE_AND_MOVABLE(shared_ptr)
@@ -139,7 +138,7 @@ class shared_ptr
          pointer_traits<pointer>::template
             rebind_pointer<T>::type                         ParameterPointer;
 
-      BOOST_INTERPROCESS_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
+      BOOST_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
                           (ipcdetail::is_pointer<pointer>::value));
       ipcdetail::sp_enable_shared_from_this<T, VoidAllocator, Deleter>( m_pn, ipcdetail::to_raw_pointer(p), ipcdetail::to_raw_pointer(p) );
    }
@@ -244,7 +243,7 @@ class shared_ptr
       typedef typename boost::intrusive::
          pointer_traits<Pointer>::template
             rebind_pointer<T>::type                         ParameterPointer;
-      BOOST_INTERPROCESS_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
+      BOOST_STATIC_ASSERT((ipcdetail::is_same<pointer, ParameterPointer>::value) ||
                           (ipcdetail::is_pointer<Pointer>::value));
       this_type(p, a, d).swap(*this);
    }
@@ -396,16 +395,16 @@ template<class T, class ManagedMemory>
 inline typename managed_shared_ptr<T, ManagedMemory>::type
    make_managed_shared_ptr(T *constructed_object, ManagedMemory &managed_memory, const std::nothrow_t &)
 {
-   BOOST_INTERPROCESS_TRY{
+   try{
       return typename managed_shared_ptr<T, ManagedMemory>::type
       ( constructed_object
       , managed_memory.template get_allocator<void>()
       , managed_memory.template get_deleter<T>()
       );
    }
-   BOOST_INTERPROCESS_CATCH(...){
+   catch(...){
       return typename managed_shared_ptr<T, ManagedMemory>::type();
-   } BOOST_INTERPROCESS_CATCH_END
+   }
 }
 
 

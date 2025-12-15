@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -11,11 +11,11 @@
 #define BOOST_BEAST_DETAIL_OSTREAM_HPP
 
 #include <boost/beast/core/buffers_prefix.hpp>
-#include <boost/beast/core/buffers_range.hpp>
-#include <boost/throw_exception.hpp>
+#include <boost/beast/core/read_size.hpp>
+#include <boost/beast/core/detail/type_traits.hpp>
 #include <boost/asio/buffer.hpp>
 #include <memory>
-#include <ostream>
+#include <iosfwd>
 #include <streambuf>
 #include <type_traits>
 #include <utility>
@@ -23,6 +23,37 @@
 namespace boost {
 namespace beast {
 namespace detail {
+
+template<class Buffers>
+class buffers_helper
+{
+    Buffers b_;
+
+public:
+    explicit
+    buffers_helper(Buffers const& b)
+        : b_(b)
+    {
+    }
+
+    template<class B>
+    friend
+    std::ostream&
+    operator<<(std::ostream& os,
+        buffers_helper<B> const& v);
+};
+
+template<class Buffers>
+std::ostream&
+operator<<(std::ostream& os,
+    buffers_helper<Buffers> const& v)
+{
+    for(auto b : buffers_range(v.b_))
+        os.write(static_cast<char const*>(b.data()), b.size());
+    return os;
+}
+
+//------------------------------------------------------------------------------
 
 struct basic_streambuf_movable_helper :
     std::basic_streambuf<char, std::char_traits<char>>
@@ -34,15 +65,15 @@ struct basic_streambuf_movable_helper :
 using basic_streambuf_movable =
     std::is_move_constructible<basic_streambuf_movable_helper>;
 
+//------------------------------------------------------------------------------
+
 template<class DynamicBuffer,
     class CharT, class Traits, bool isMovable>
 class ostream_buffer;
 
-//------------------------------------------------------------------------------
-
 template<class DynamicBuffer, class CharT, class Traits>
 class ostream_buffer
-        <DynamicBuffer, CharT, Traits, true> final
+        <DynamicBuffer, CharT, Traits, true>
     : public std::basic_streambuf<CharT, Traits>
 {
     using int_type = typename
@@ -51,7 +82,9 @@ class ostream_buffer
     using traits_type = typename
         std::basic_streambuf<CharT, Traits>::traits_type;
 
-    DynamicBuffer& b_;
+    static std::size_t constexpr max_size = 512;
+
+    DynamicBuffer& buf_;
 
 public:
     ostream_buffer(ostream_buffer&&) = default;
@@ -63,49 +96,55 @@ public:
     }
 
     explicit
-    ostream_buffer(DynamicBuffer& b)
-        : b_(b)
+    ostream_buffer(DynamicBuffer& buf)
+        : buf_(buf)
     {
-        b_.prepare(0);
+        prepare();
     }
 
     int_type
     overflow(int_type ch) override
     {
-        BOOST_ASSERT(! Traits::eq_int_type(
-            ch, Traits::eof()));
-        sync();
-
-        static std::size_t constexpr max_size = 65536;
-        auto const max_prepare = std::min<std::size_t>(
-            std::max<std::size_t>(
-                512, b_.capacity() - b_.size()),
-            std::min<std::size_t>(
-                max_size, b_.max_size() - b_.size()));
-        if(max_prepare == 0)
-            return Traits::eof();
-        auto const bs = b_.prepare(max_prepare);
-        auto const b = buffers_front(bs);
-        auto const p = static_cast<CharT*>(b.data());
-        this->setp(p, p + b.size() / sizeof(CharT));
-
-        BOOST_ASSERT(b_.capacity() > b_.size());
-        return this->sputc(
-            Traits::to_char_type(ch));
+        if(! Traits::eq_int_type(ch, Traits::eof()))
+        {
+            Traits::assign(*this->pptr(),
+                static_cast<CharT>(ch));
+            flush(1);
+            prepare();
+            return ch;
+        }
+        flush();
+        return traits_type::eof();
     }
 
     int
     sync() override
     {
-        b_.commit(
-            (this->pptr() - this->pbase()) *
-            sizeof(CharT));
-        this->setp(nullptr, nullptr);
+        flush();
+        prepare();
         return 0;
     }
-};
 
-//------------------------------------------------------------------------------
+private:
+    void
+    prepare()
+    {
+        auto bs = buf_.prepare(
+            read_size_or_throw(buf_, max_size));
+        auto const b = buffers_front(bs);
+        auto const p = static_cast<CharT*>(b.data());
+        this->setp(p,
+            p + b.size() / sizeof(CharT) - 1);
+    }
+
+    void
+    flush(int extra = 0)
+    {
+        buf_.commit(
+            (this->pptr() - this->pbase() + extra) *
+                sizeof(CharT));
+    }
+};
 
 // This nonsense is all to work around a glitch in libstdc++
 // where std::basic_streambuf copy constructor is private:
@@ -122,7 +161,9 @@ class ostream_buffer
     using traits_type = typename
         std::basic_streambuf<CharT, Traits>::traits_type;
 
-    DynamicBuffer& b_;
+    static std::size_t constexpr max_size = 512;
+
+    DynamicBuffer& buf_;
 
 public:
     ostream_buffer(ostream_buffer&&) = delete;
@@ -134,44 +175,53 @@ public:
     }
 
     explicit
-    ostream_buffer(DynamicBuffer& b)
-        : b_(b)
+    ostream_buffer(DynamicBuffer& buf)
+        : buf_(buf)
     {
+        prepare();
     }
 
     int_type
     overflow(int_type ch) override
     {
-        BOOST_ASSERT(! Traits::eq_int_type(
-            ch, Traits::eof()));
-        sync();
-
-        static std::size_t constexpr max_size = 65536;
-        auto const max_prepare = std::min<std::size_t>(
-            std::max<std::size_t>(
-                512, b_.capacity() - b_.size()),
-            std::min<std::size_t>(
-                max_size, b_.max_size() - b_.size()));
-        if(max_prepare == 0)
-            return Traits::eof();
-        auto const bs = b_.prepare(max_prepare);
-        auto const b = buffers_front(bs);
-        auto const p = static_cast<CharT*>(b.data());
-        this->setp(p, p + b.size() / sizeof(CharT));
-
-        BOOST_ASSERT(b_.capacity() > b_.size());
-        return this->sputc(
-            Traits::to_char_type(ch));
+        if(! Traits::eq_int_type(ch, Traits::eof()))
+        {
+            Traits::assign(*this->pptr(),
+                static_cast<CharT>(ch));
+            flush(1);
+            prepare();
+            return ch;
+        }
+        flush();
+        return traits_type::eof();
     }
 
     int
     sync() override
     {
-        b_.commit(
-            (this->pptr() - this->pbase()) *
-            sizeof(CharT));
-        this->setp(nullptr, nullptr);
+        flush();
+        prepare();
         return 0;
+    }
+
+private:
+    void
+    prepare()
+    {
+        auto bs = buf_.prepare(
+            read_size_or_throw(buf_, max_size));
+        auto const b = buffers_front(bs);
+        auto const p = static_cast<CharT*>(b.data());
+        this->setp(p,
+            p + b.size() / sizeof(CharT) - 1);
+    }
+
+    void
+    flush(int extra = 0)
+    {
+        buf_.commit(
+            (this->pptr() - this->pbase() + extra) *
+                sizeof(CharT));
     }
 };
 
@@ -191,22 +241,24 @@ class ostream_helper<
 
 public:
     explicit
-    ostream_helper(DynamicBuffer& b);
+    ostream_helper(DynamicBuffer& buf);
 
     ostream_helper(ostream_helper&& other);
 };
 
 template<class DynamicBuffer, class CharT, class Traits>
 ostream_helper<DynamicBuffer, CharT, Traits, true>::
-ostream_helper(DynamicBuffer& b)
-    : std::basic_ostream<CharT, Traits>(&this->osb_)
-    , osb_(b)
+ostream_helper(DynamicBuffer& buf)
+    : std::basic_ostream<CharT, Traits>(
+        &this->osb_)
+    , osb_(buf)
 {
 }
 
 template<class DynamicBuffer, class CharT, class Traits>
 ostream_helper<DynamicBuffer, CharT, Traits, true>::
-ostream_helper(ostream_helper&& other)
+ostream_helper(
+        ostream_helper&& other)
     : std::basic_ostream<CharT, Traits>(&osb_)
     , osb_(std::move(other.osb_))
 {
@@ -240,13 +292,12 @@ class ostream_helper<
 {
 public:
     explicit
-    ostream_helper(DynamicBuffer& b)
+    ostream_helper(DynamicBuffer& buf)
         : ostream_helper_base<ostream_buffer<
             DynamicBuffer, CharT, Traits, false>>(
                 new ostream_buffer<DynamicBuffer,
-                    CharT, Traits, false>(b))
-        , std::basic_ostream<CharT, Traits>(
-            this->member.get())
+                    CharT, Traits, false>(buf))
+        , std::basic_ostream<CharT, Traits>(this->member.get())
     {
     }
 
@@ -254,8 +305,7 @@ public:
         : ostream_helper_base<ostream_buffer<
             DynamicBuffer, CharT, Traits, false>>(
                 std::move(other))
-        , std::basic_ostream<CharT, Traits>(
-            this->member.get())
+        , std::basic_ostream<CharT, Traits>(this->member.get())
     {
     }
 };

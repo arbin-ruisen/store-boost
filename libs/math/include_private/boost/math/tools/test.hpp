@@ -1,5 +1,4 @@
 //  (C) Copyright John Maddock 2006.
-//  (C) Copyright Matt Borland 2024.
 //  Use, modification and distribution are subject to the
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -35,11 +34,11 @@ public:
    void add(const T& point){ stat.add(point); }
    // accessors:
    unsigned worst()const{ return worst_case; }
-   T min BOOST_MATH_PREVENT_MACRO_SUBSTITUTION()const{ return (stat.min)(); }
-   T max BOOST_MATH_PREVENT_MACRO_SUBSTITUTION()const{ return (stat.max)(); }
+   T min BOOST_PREVENT_MACRO_SUBSTITUTION()const{ return (stat.min)(); }
+   T max BOOST_PREVENT_MACRO_SUBSTITUTION()const{ return (stat.max)(); }
    T total()const{ return stat.total(); }
    T mean()const{ return stat.mean(); }
-   std::uintmax_t count()const{ return stat.count(); }
+   boost::uintmax_t count()const{ return stat.count(); }
    T variance()const{ return stat.variance(); }
    T variance1()const{ return stat.variance1(); }
    T rms()const{ return stat.rms(); }
@@ -68,20 +67,17 @@ T relative_error(T a, T b)
 
 
 template <class T>
-void set_output_precision(T, std::ostream& os)
+void set_output_precision(T)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(push)
 #pragma warning(disable:4127)
 #endif
    if(std::numeric_limits<T>::digits10)
    {
-      os << std::setprecision(std::numeric_limits<T>::digits10 + 2);
+      std::cout << std::setprecision(std::numeric_limits<T>::digits10 + 2);
    }
-   else
-      os << std::setprecision(22); // and hope for the best!
-
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(pop)
 #endif
 }
@@ -89,21 +85,18 @@ void set_output_precision(T, std::ostream& os)
 template <class Seq>
 void print_row(const Seq& row, std::ostream& os = std::cout)
 {
-   try {
-      set_output_precision(row[0], os);
-      for (unsigned i = 0; i < row.size(); ++i)
-      {
-         if (i)
-            os << ", ";
-         os << row[i];
-      }
-      os << std::endl;
+   set_output_precision(row[0]);
+   for(unsigned i = 0; i < row.size(); ++i)
+   {
+      if(i)
+         os << ", ";
+      os << row[i];
    }
-   catch (const std::exception&) {}
+   os << std::endl;
 }
 
 //
-// Function test accepts an matrix of input values (probably a 2D std::array)
+// Function test accepts an matrix of input values (probably a 2D boost::array)
 // and calls two functors for each row in the array - one calculates a value
 // to test, and one extracts the expected value from the array (or possibly
 // calculates it at high precision).  The two functors are usually simple lambda
@@ -134,7 +127,7 @@ test_result<typename calculate_result_type<A>::value_type> test(const A& a, F1 t
       }
       catch(const std::overflow_error&)
       {
-         point = std::numeric_limits<value_type>::has_infinity ?
+         point = std::numeric_limits<value_type>::has_infinity ? 
             std::numeric_limits<value_type>::infinity()
             : tools::max_value<value_type>();
       }
@@ -167,7 +160,7 @@ test_result<typename calculate_result_type<A>::value_type> test(const A& a, F1 t
          print_row(row, std::cerr);
          BOOST_ERROR("Unexpected non-finite result");
       }
-      if(err > 0.5f)
+      if(err > 0.5)
       {
          std::cerr << "CAUTION: Gross error found at entry " << i << ".\n";
          std::cerr << "Found: " << point << " Expected " << expected << " Error: " << err << std::endl;
@@ -206,13 +199,12 @@ test_result<Real> test_hetero(const A& a, F1 test_func, F2 expect_func)
       }
       catch(const std::overflow_error&)
       {
-         point = std::numeric_limits<value_type>::has_infinity ?
+         point = std::numeric_limits<value_type>::has_infinity ? 
             std::numeric_limits<value_type>::infinity()
             : tools::max_value<value_type>();
       }
       catch(const std::exception& e)
       {
-         std::cerr << "Unexpected exception at entry: " << i << "\n";
          std::cerr << e.what() << std::endl;
          print_row(row, std::cerr);
          BOOST_ERROR("Unexpected exception.");
@@ -240,7 +232,7 @@ test_result<Real> test_hetero(const A& a, F1 test_func, F2 expect_func)
          print_row(row, std::cerr);
          BOOST_ERROR("Unexpected non-finite result");
       }
-      if(err > 0.5f)
+      if(err > 0.5)
       {
          std::cerr << "CAUTION: Gross error found at entry " << i << ".\n";
          std::cerr << "Found: " << point << " Expected " << expected << " Error: " << err << std::endl;
@@ -254,16 +246,15 @@ test_result<Real> test_hetero(const A& a, F1 test_func, F2 expect_func)
    return result;
 }
 
-#ifndef BOOST_MATH_NO_EXCEPTIONS
 template <class Val, class Exception>
-void test_check_throw(Val, Exception)
+void test_check_throw(Val v, Exception e)
 {
    BOOST_CHECK(errno);
    errno = 0;
 }
 
 template <class Val>
-void test_check_throw(Val val, std::domain_error const*)
+void test_check_throw(Val val, std::domain_error const* e)
 {
    BOOST_CHECK(errno == EDOM);
    errno = 0;
@@ -274,7 +265,7 @@ void test_check_throw(Val val, std::domain_error const*)
 }
 
 template <class Val>
-void test_check_throw(Val v, std::overflow_error const*)
+void test_check_throw(Val v, std::overflow_error const* e)
 {
    BOOST_CHECK(errno == ERANGE);
    errno = 0;
@@ -282,7 +273,7 @@ void test_check_throw(Val v, std::overflow_error const*)
 }
 
 template <class Val>
-void test_check_throw(Val v, boost::math::rounding_error const*)
+void test_check_throw(Val v, boost::math::rounding_error const* e)
 {
    BOOST_CHECK(errno == ERANGE);
    errno = 0;
@@ -295,7 +286,6 @@ void test_check_throw(Val v, boost::math::rounding_error const*)
       BOOST_CHECK((v == boost::math::tools::max_value<Val>()) || (v == -boost::math::tools::max_value<Val>()));
    }
 }
-#endif
 
 } // namespace tools
 } // namespace math
@@ -306,10 +296,8 @@ void test_check_throw(Val v, boost::math::rounding_error const*)
   // exception-free testing support, ideally we'd only define this in our tests,
   // but to keep things simple we really need it somewhere that's always included:
   //
-#if defined(BOOST_MATH_NO_EXCEPTIONS) && defined(BOOST_MATH_HAS_GPU_SUPPORT)
-#  define BOOST_MATH_CHECK_THROW(x, y)
-#elif defined(BOOST_MATH_NO_EXCEPTIONS) 
-#  define BOOST_MATH_CHECK_THROW(x, ExceptionType) boost::math::tools::test_check_throw(x, static_cast<ExceptionType const*>(nullptr));
+#ifdef BOOST_NO_EXCEPTIONS
+#  define BOOST_MATH_CHECK_THROW(x, ExceptionType) boost::math::tools::test_check_throw(x, static_cast<ExceptionType const*>(0));
 #else
 #  define BOOST_MATH_CHECK_THROW(x, y) BOOST_CHECK_THROW(x, y)
 #endif

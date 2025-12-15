@@ -17,6 +17,7 @@
 #include <boost/intrusive/treap.hpp>
 #include <boost/intrusive/detail/mpl.hpp>
 #include <boost/move/utility_core.hpp>
+#include <boost/static_assert.hpp>
 
 #if defined(BOOST_HAS_PRAGMA_ONCE)
 #  pragma once
@@ -26,7 +27,7 @@ namespace boost {
 namespace intrusive {
 
 #if !defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
-template<class ValueTraits, class VoidOrKeyOfValue, class VoidOrKeyComp, class VoidOrPrioOfValue, class VoidOrPrioComp, class SizeType, bool ConstantTimeSize, typename HeaderHolder>
+template<class ValueTraits, class VoidOrKeyOfValue, class VoidOrKeyComp, class VoidOrPrioComp, class SizeType, bool ConstantTimeSize, typename HeaderHolder>
 class treap_multiset_impl;
 #endif
 
@@ -40,20 +41,20 @@ class treap_multiset_impl;
 //! The container supports the following options:
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<>,
-//! \c compare<>, \c priority<> and \c priority_of_value<>
+//! \c compare<> and \c priority_compare<>
 #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
-template<class ValueTraits, class VoidOrKeyOfValue, class VoidOrKeyComp, class VoidOrPrioOfValue, class VoidOrPrioComp, class SizeType, bool ConstantTimeSize, typename HeaderHolder>
+template<class ValueTraits, class VoidOrKeyOfValue, class VoidOrKeyComp, class VoidOrPrioComp, class SizeType, bool ConstantTimeSize, typename HeaderHolder>
 #endif
 class treap_set_impl
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
-   : public treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder>
+   : public treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder>
 #endif
 {
    /// @cond
    public:
-   typedef treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> tree_type;
+   typedef treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> tree_type;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(treap_set_impl)
 
    typedef tree_type implementation_defined;
@@ -72,7 +73,6 @@ class treap_set_impl
    typedef typename implementation_defined::size_type                size_type;
    typedef typename implementation_defined::value_compare            value_compare;
    typedef typename implementation_defined::key_compare              key_compare;
-   typedef typename implementation_defined::priority_type            priority_type;
    typedef typename implementation_defined::priority_compare         priority_compare;
    typedef typename implementation_defined::iterator                 iterator;
    typedef typename implementation_defined::const_iterator           const_iterator;
@@ -125,61 +125,61 @@ class treap_set_impl
    ~treap_set_impl();
 
    //! @copydoc ::boost::intrusive::treap::begin()
-   iterator begin() BOOST_NOEXCEPT;
+   iterator begin();
 
    //! @copydoc ::boost::intrusive::treap::begin()const
-   const_iterator begin() const BOOST_NOEXCEPT;
+   const_iterator begin() const;
 
    //! @copydoc ::boost::intrusive::treap::cbegin()const
-   const_iterator cbegin() const BOOST_NOEXCEPT;
+   const_iterator cbegin() const;
 
    //! @copydoc ::boost::intrusive::treap::end()
-   iterator end() BOOST_NOEXCEPT;
+   iterator end();
 
    //! @copydoc ::boost::intrusive::treap::end()const
-   const_iterator end() const BOOST_NOEXCEPT;
+   const_iterator end() const;
 
    //! @copydoc ::boost::intrusive::treap::cend()const
-   const_iterator cend() const BOOST_NOEXCEPT;
+   const_iterator cend() const;
 
    //! @copydoc ::boost::intrusive::treap::rbegin()
-   reverse_iterator rbegin() BOOST_NOEXCEPT;
+   reverse_iterator rbegin();
 
    //! @copydoc ::boost::intrusive::treap::rbegin()const
-   const_reverse_iterator rbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator rbegin() const;
 
    //! @copydoc ::boost::intrusive::treap::crbegin()const
-   const_reverse_iterator crbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator crbegin() const;
 
    //! @copydoc ::boost::intrusive::treap::rend()
-   reverse_iterator rend() BOOST_NOEXCEPT;
+   reverse_iterator rend();
 
    //! @copydoc ::boost::intrusive::treap::rend()const
-   const_reverse_iterator rend() const BOOST_NOEXCEPT;
+   const_reverse_iterator rend() const;
 
    //! @copydoc ::boost::intrusive::treap::crend()const
-   const_reverse_iterator crend() const BOOST_NOEXCEPT;
+   const_reverse_iterator crend() const;
 
    //! @copydoc ::boost::intrusive::treap::root()
-   iterator root() BOOST_NOEXCEPT;
+   iterator root();
 
    //! @copydoc ::boost::intrusive::treap::root()const
-   const_iterator root() const BOOST_NOEXCEPT;
+   const_iterator root() const;
 
    //! @copydoc ::boost::intrusive::treap::croot()const
-   const_iterator croot() const BOOST_NOEXCEPT;
+   const_iterator croot() const;
 
    //! @copydoc ::boost::intrusive::treap::container_from_end_iterator(iterator)
-   static treap_set_impl &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT;
+   static treap_set_impl &container_from_end_iterator(iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::treap::container_from_end_iterator(const_iterator)
-   static const treap_set_impl &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT;
+   static const treap_set_impl &container_from_end_iterator(const_iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::treap::container_from_iterator(iterator)
-   static treap_set_impl &container_from_iterator(iterator it) BOOST_NOEXCEPT;
+   static treap_set_impl &container_from_iterator(iterator it);
 
    //! @copydoc ::boost::intrusive::treap::container_from_iterator(const_iterator)
-   static const treap_set_impl &container_from_iterator(const_iterator it) BOOST_NOEXCEPT;
+   static const treap_set_impl &container_from_iterator(const_iterator it);
 
    //! @copydoc ::boost::intrusive::treap::key_comp()const
    key_compare key_comp() const;
@@ -188,10 +188,10 @@ class treap_set_impl
    value_compare value_comp() const;
 
    //! @copydoc ::boost::intrusive::treap::empty()const
-   bool empty() const BOOST_NOEXCEPT;
+   bool empty() const;
 
    //! @copydoc ::boost::intrusive::treap::size()const
-   size_type size() const BOOST_NOEXCEPT;
+   size_type size() const;
 
    //! @copydoc ::boost::intrusive::treap::swap
    void swap(treap_set_impl& other);
@@ -214,22 +214,22 @@ class treap_set_impl
    #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 
    //! @copydoc ::boost::intrusive::treap::top()
-   inline iterator top() BOOST_NOEXCEPT;
+   iterator top();
 
    //! @copydoc ::boost::intrusive::treap::top()const
-   inline const_iterator top() const BOOST_NOEXCEPT;
+   const_iterator top() const;
 
    //! @copydoc ::boost::intrusive::treap::ctop()const
-   inline const_iterator ctop() const BOOST_NOEXCEPT;
+   const_iterator ctop() const;
 
    //! @copydoc ::boost::intrusive::treap::rtop()
-   inline reverse_iterator rtop() BOOST_NOEXCEPT;
+   reverse_iterator rtop();
 
    //! @copydoc ::boost::intrusive::treap::rtop()const
-   inline const_reverse_iterator rtop() const BOOST_NOEXCEPT;
+   const_reverse_iterator rtop() const;
 
    //! @copydoc ::boost::intrusive::treap::crtop()const
-   inline const_reverse_iterator crtop() const BOOST_NOEXCEPT;
+   const_reverse_iterator crtop() const;
 
    //! @copydoc ::boost::intrusive::treap::crtop() const
    priority_compare priority_comp() const;
@@ -243,30 +243,29 @@ class treap_set_impl
    iterator insert(const_iterator hint, reference value)
    {  return tree_type::insert_unique(hint, value);  }
 
-   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const key_type&,const priority_type &,insert_commit_data&)
-   std::pair<iterator, bool> insert_check( const key_type &key, const priority_type &prio, insert_commit_data &commit_data)
-   {  return tree_type::insert_unique_check(key, prio, commit_data); }
+   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const key_type&,insert_commit_data&)
+   std::pair<iterator, bool> insert_check( const key_type &key, insert_commit_data &commit_data)
+   {  return tree_type::insert_unique_check(key, commit_data); }
 
-   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const_iterator,const key_type&,const priority_type &,insert_commit_data&)
+   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const_iterator,const key_type&,insert_commit_data&)
    std::pair<iterator, bool> insert_check
-      ( const_iterator hint, const key_type &key, const priority_type &prio, insert_commit_data &commit_data)
-   {  return tree_type::insert_unique_check(hint, key, prio, commit_data); }
+      ( const_iterator hint, const key_type &key, insert_commit_data &commit_data)
+   {  return tree_type::insert_unique_check(hint, key, commit_data); }
 
-   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const KeyType&,KeyTypeKeyCompare,PrioValuePrioCompare,insert_commit_data&)
-   template<class KeyType, class KeyTypeKeyCompare, class PrioType, class PrioValuePrioCompare>
+   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const KeyType&,KeyTypeKeyCompare,KeyValuePrioCompare,insert_commit_data&)
+   template<class KeyType, class KeyTypeKeyCompare, class KeyValuePrioCompare>
    std::pair<iterator, bool> insert_check
-      ( const KeyType &key, KeyTypeKeyCompare comp, const PrioType &prio, PrioValuePrioCompare pcomp
+      ( const KeyType &key, KeyTypeKeyCompare comp, KeyValuePrioCompare key_value_pcomp
       , insert_commit_data &commit_data)
-   {  return tree_type::insert_unique_check(key, comp, prio, pcomp, commit_data); }
+   {  return tree_type::insert_unique_check(key, comp, key_value_pcomp, commit_data); }
 
-   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const_iterator,const KeyType&,KeyTypeKeyCompare,PrioValuePrioCompare,insert_commit_data&)
-   template<class KeyType, class KeyTypeKeyCompare, class PrioType, class PrioValuePrioCompare>
+   //! @copydoc ::boost::intrusive::treap::insert_unique_check(const_iterator,const KeyType&,KeyTypeKeyCompare,KeyValuePrioCompare,insert_commit_data&)
+   template<class KeyType, class KeyTypeKeyCompare, class KeyValuePrioCompare>
    std::pair<iterator, bool> insert_check
-      ( const_iterator hint
-      , const KeyType &key, KeyTypeKeyCompare comp
-      , const PrioType &prio, PrioValuePrioCompare pcomp
+      ( const_iterator hint, const KeyType &key
+      , KeyTypeKeyCompare comp, KeyValuePrioCompare key_value_pcomp
       , insert_commit_data &commit_data)
-   {  return tree_type::insert_unique_check(hint, key, comp, prio, pcomp, commit_data); }
+   {  return tree_type::insert_unique_check(hint, key, comp, key_value_pcomp, commit_data); }
 
    //! @copydoc ::boost::intrusive::treap::insert_unique(Iterator,Iterator)
    template<class Iterator>
@@ -274,24 +273,24 @@ class treap_set_impl
    {  tree_type::insert_unique(b, e);  }
 
    //! @copydoc ::boost::intrusive::treap::insert_unique_commit
-   iterator insert_commit(reference value, const insert_commit_data &commit_data) BOOST_NOEXCEPT
+   iterator insert_commit(reference value, const insert_commit_data &commit_data)
    {  return tree_type::insert_unique_commit(value, commit_data);  }
 
    #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
    //! @copydoc ::boost::intrusive::treap::insert_before
-   iterator insert_before(const_iterator pos, reference value) BOOST_NOEXCEPT;
+   iterator insert_before(const_iterator pos, reference value);
 
    //! @copydoc ::boost::intrusive::treap::push_back
-   void push_back(reference value) BOOST_NOEXCEPT;
+   void push_back(reference value);
 
    //! @copydoc ::boost::intrusive::treap::push_front
-   void push_front(reference value) BOOST_NOEXCEPT;
+   void push_front(reference value);
 
    //! @copydoc ::boost::intrusive::treap::erase(const_iterator)
-   iterator erase(const_iterator i) BOOST_NOEXCEPT;
+   iterator erase(const_iterator i);
 
    //! @copydoc ::boost::intrusive::treap::erase(const_iterator,const_iterator)
-   iterator erase(const_iterator b, const_iterator e) BOOST_NOEXCEPT;
+   iterator erase(const_iterator b, const_iterator e);
 
    //! @copydoc ::boost::intrusive::treap::erase(const key_type &)
    size_type erase(const key_type &key);
@@ -302,11 +301,11 @@ class treap_set_impl
 
    //! @copydoc ::boost::intrusive::treap::erase_and_dispose(const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator i, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator i, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::erase_and_dispose(const_iterator,const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::erase_and_dispose(const key_type &, Disposer)
    template<class Disposer>
@@ -317,11 +316,11 @@ class treap_set_impl
    size_type erase_and_dispose(const KeyType& key, KeyTypeKeyCompare comp, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::clear
-   void clear() BOOST_NOEXCEPT;
+   void clear();
 
    //! @copydoc ::boost::intrusive::treap::clear_and_dispose
    template<class Disposer>
-   void clear_and_dispose(Disposer disposer) BOOST_NOEXCEPT;
+   void clear_and_dispose(Disposer disposer);
 
    #endif   //   #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
 
@@ -421,28 +420,28 @@ class treap_set_impl
          (const KeyType& lower_key, const KeyType& upper_key, KeyTypeKeyCompare comp, bool left_closed, bool right_closed) const;
 
    //! @copydoc ::boost::intrusive::treap::s_iterator_to(reference)
-   static iterator s_iterator_to(reference value) BOOST_NOEXCEPT;
+   static iterator s_iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::treap::s_iterator_to(const_reference)
-   static const_iterator s_iterator_to(const_reference value) BOOST_NOEXCEPT;
+   static const_iterator s_iterator_to(const_reference value);
 
    //! @copydoc ::boost::intrusive::treap::iterator_to(reference)
-   iterator iterator_to(reference value) BOOST_NOEXCEPT;
+   iterator iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::treap::iterator_to(const_reference)const
-   const_iterator iterator_to(const_reference value) const BOOST_NOEXCEPT;
+   const_iterator iterator_to(const_reference value) const;
 
    //! @copydoc ::boost::intrusive::treap::init_node(reference)
-   static void init_node(reference value) BOOST_NOEXCEPT;
+   static void init_node(reference value);
 
    //! @copydoc ::boost::intrusive::treap::unlink_leftmost_without_rebalance
-   pointer unlink_leftmost_without_rebalance() BOOST_NOEXCEPT;
+   pointer unlink_leftmost_without_rebalance();
 
    //! @copydoc ::boost::intrusive::treap::replace_node
-   void replace_node(iterator replace_this, reference with_this) BOOST_NOEXCEPT;
+   void replace_node(iterator replace_this, reference with_this);
 
    //! @copydoc ::boost::intrusive::treap::remove_node
-   void remove_node(reference value) BOOST_NOEXCEPT;
+   void remove_node(reference value);
 
 
    //! @copydoc ::boost::intrusive::treap::merge_unique
@@ -456,11 +455,11 @@ class treap_set_impl
    #else
 
    template<class Compare2>
-   void merge(treap_set_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
+   void merge(treap_set_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
    {  return tree_type::merge_unique(source);  }
 
    template<class Compare2>
-   void merge(treap_multiset_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
+   void merge(treap_multiset_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
    {  return tree_type::merge_unique(source);  }
 
    #endif   //#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
@@ -474,15 +473,14 @@ template<class T, class ...Options>
 #else
 template<class T, class O1 = void, class O2 = void
                 , class O3 = void, class O4 = void
-                , class O5 = void, class O6 = void
-                , class O7 = void>
+                , class O5 = void, class O6 = void>
 #endif
 struct make_treap_set
 {
    typedef typename pack_options
       < treap_defaults,
       #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-      O1, O2, O3, O4, O5, O6, O7
+      O1, O2, O3, O4, O5, O6
       #else
       Options...
       #endif
@@ -495,7 +493,6 @@ struct make_treap_set
          < value_traits
          , typename packed_options::key_of_value
          , typename packed_options::compare
-         , typename packed_options::priority_of_value
          , typename packed_options::priority
          , typename packed_options::size_type
          , packed_options::constant_time_size
@@ -508,14 +505,14 @@ struct make_treap_set
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
 
 #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-template<class T, class O1, class O2, class O3, class O4, class O5, class O6, class O7>
+template<class T, class O1, class O2, class O3, class O4, class O5, class O6>
 #else
 template<class T, class ...Options>
 #endif
 class treap_set
    :  public make_treap_set<T,
       #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-      O1, O2, O3, O4, O5, O6, O7
+      O1, O2, O3, O4, O5, O6
       #else
       Options...
       #endif
@@ -524,7 +521,7 @@ class treap_set
    typedef typename make_treap_set
       <T,
       #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-      O1, O2, O3, O4, O5, O6, O7
+      O1, O2, O3, O4, O5, O6
       #else
       Options...
       #endif
@@ -539,55 +536,51 @@ class treap_set
    typedef typename Base::const_iterator     const_iterator;
 
    //Assert if passed value traits are compatible with the type
-   BOOST_INTRUSIVE_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
+   BOOST_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
 
-   inline treap_set()
+   treap_set()
       :  Base()
    {}
 
-   inline explicit treap_set( const key_compare &cmp
+   explicit treap_set( const key_compare &cmp
                      , const priority_compare &pcmp = priority_compare()
                      , const value_traits &v_traits = value_traits())
       :  Base(cmp, pcmp, v_traits)
    {}
 
    template<class Iterator>
-   inline treap_set( Iterator b, Iterator e
+   treap_set( Iterator b, Iterator e
       , const key_compare &cmp = key_compare()
       , const priority_compare &pcmp = priority_compare()
       , const value_traits &v_traits = value_traits())
       :  Base(b, e, cmp, pcmp, v_traits)
    {}
 
-   inline treap_set(BOOST_RV_REF(treap_set) x)
+   treap_set(BOOST_RV_REF(treap_set) x)
       :  Base(BOOST_MOVE_BASE(Base, x))
    {}
 
-   inline treap_set& operator=(BOOST_RV_REF(treap_set) x)
+   treap_set& operator=(BOOST_RV_REF(treap_set) x)
    {  return static_cast<treap_set &>(this->Base::operator=(BOOST_MOVE_BASE(Base, x)));  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(const treap_set &src, Cloner cloner, Disposer disposer)
+   void clone_from(const treap_set &src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(src, cloner, disposer);  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(BOOST_RV_REF(treap_set) src, Cloner cloner, Disposer disposer)
+   void clone_from(BOOST_RV_REF(treap_set) src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(BOOST_MOVE_BASE(Base, src), cloner, disposer);  }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static treap_set &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT
+   static treap_set &container_from_end_iterator(iterator end_iterator)
    {  return static_cast<treap_set &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const treap_set &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT
+   static const treap_set &container_from_end_iterator(const_iterator end_iterator)
    {  return static_cast<const treap_set &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static treap_set &container_from_iterator(iterator it) BOOST_NOEXCEPT
+   static treap_set &container_from_iterator(iterator it)
    {  return static_cast<treap_set &>(Base::container_from_iterator(it));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const treap_set &container_from_iterator(const_iterator it) BOOST_NOEXCEPT
+   static const treap_set &container_from_iterator(const_iterator it)
    {  return static_cast<const treap_set &>(Base::container_from_iterator(it));   }
 };
 
@@ -603,19 +596,19 @@ class treap_set
 //! The container supports the following options:
 //! \c base_hook<>/member_hook<>/value_traits<>,
 //! \c constant_time_size<>, \c size_type<>,
-//! \c compare<>, \c priority<> and \c priority_of_value<>
+//! \c compare<> and \c priority_compare<>
 #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 template<class T, class ...Options>
 #else
-template<class ValueTraits, class VoidOrKeyOfValue, class VoidOrKeyComp, class VoidOrPrioOfValue, class VoidOrPrioComp, class SizeType, bool ConstantTimeSize, typename HeaderHolder>
+template<class ValueTraits, class VoidOrKeyOfValue, class VoidOrKeyComp, class VoidOrPrioComp, class SizeType, bool ConstantTimeSize, typename HeaderHolder>
 #endif
 class treap_multiset_impl
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
-   : public treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder>
+   : public treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder>
 #endif
 {
    /// @cond
-   typedef treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> tree_type;
+   typedef treap_impl<ValueTraits, VoidOrKeyOfValue, VoidOrKeyComp, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> tree_type;
    BOOST_MOVABLE_BUT_NOT_COPYABLE(treap_multiset_impl)
 
    typedef tree_type implementation_defined;
@@ -634,7 +627,6 @@ class treap_multiset_impl
    typedef typename implementation_defined::size_type                size_type;
    typedef typename implementation_defined::value_compare            value_compare;
    typedef typename implementation_defined::key_compare              key_compare;
-   typedef typename implementation_defined::priority_type            priority_type;
    typedef typename implementation_defined::priority_compare         priority_compare;
    typedef typename implementation_defined::iterator                 iterator;
    typedef typename implementation_defined::const_iterator           const_iterator;
@@ -688,61 +680,61 @@ class treap_multiset_impl
    ~treap_multiset_impl();
 
    //! @copydoc ::boost::intrusive::treap::begin()
-   iterator begin() BOOST_NOEXCEPT;
+   iterator begin();
 
    //! @copydoc ::boost::intrusive::treap::begin()const
-   const_iterator begin() const BOOST_NOEXCEPT;
+   const_iterator begin() const;
 
    //! @copydoc ::boost::intrusive::treap::cbegin()const
-   const_iterator cbegin() const BOOST_NOEXCEPT;
+   const_iterator cbegin() const;
 
    //! @copydoc ::boost::intrusive::treap::end()
-   iterator end() BOOST_NOEXCEPT;
+   iterator end();
 
    //! @copydoc ::boost::intrusive::treap::end()const
-   const_iterator end() const BOOST_NOEXCEPT;
+   const_iterator end() const;
 
    //! @copydoc ::boost::intrusive::treap::cend()const
-   const_iterator cend() const BOOST_NOEXCEPT;
+   const_iterator cend() const;
 
    //! @copydoc ::boost::intrusive::treap::rbegin()
-   reverse_iterator rbegin() BOOST_NOEXCEPT;
+   reverse_iterator rbegin();
 
    //! @copydoc ::boost::intrusive::treap::rbegin()const
-   const_reverse_iterator rbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator rbegin() const;
 
    //! @copydoc ::boost::intrusive::treap::crbegin()const
-   const_reverse_iterator crbegin() const BOOST_NOEXCEPT;
+   const_reverse_iterator crbegin() const;
 
    //! @copydoc ::boost::intrusive::treap::rend()
-   reverse_iterator rend() BOOST_NOEXCEPT;
+   reverse_iterator rend();
 
    //! @copydoc ::boost::intrusive::treap::rend()const
-   const_reverse_iterator rend() const BOOST_NOEXCEPT;
+   const_reverse_iterator rend() const;
 
    //! @copydoc ::boost::intrusive::treap::crend()const
-   const_reverse_iterator crend() const BOOST_NOEXCEPT;
+   const_reverse_iterator crend() const;
 
    //! @copydoc ::boost::intrusive::treap::root()
-   iterator root() BOOST_NOEXCEPT;
+   iterator root();
 
    //! @copydoc ::boost::intrusive::treap::root()const
-   const_iterator root() const BOOST_NOEXCEPT;
+   const_iterator root() const;
 
    //! @copydoc ::boost::intrusive::treap::croot()const
-   const_iterator croot() const BOOST_NOEXCEPT;
+   const_iterator croot() const;
 
    //! @copydoc ::boost::intrusive::treap::container_from_end_iterator(iterator)
-   static treap_multiset_impl &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT;
+   static treap_multiset_impl &container_from_end_iterator(iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::treap::container_from_end_iterator(const_iterator)
-   static const treap_multiset_impl &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT;
+   static const treap_multiset_impl &container_from_end_iterator(const_iterator end_iterator);
 
    //! @copydoc ::boost::intrusive::treap::container_from_iterator(iterator)
-   static treap_multiset_impl &container_from_iterator(iterator it) BOOST_NOEXCEPT;
+   static treap_multiset_impl &container_from_iterator(iterator it);
 
    //! @copydoc ::boost::intrusive::treap::container_from_iterator(const_iterator)
-   static const treap_multiset_impl &container_from_iterator(const_iterator it) BOOST_NOEXCEPT;
+   static const treap_multiset_impl &container_from_iterator(const_iterator it);
 
    //! @copydoc ::boost::intrusive::treap::key_comp()const
    key_compare key_comp() const;
@@ -751,10 +743,10 @@ class treap_multiset_impl
    value_compare value_comp() const;
 
    //! @copydoc ::boost::intrusive::treap::empty()const
-   bool empty() const BOOST_NOEXCEPT;
+   bool empty() const;
 
    //! @copydoc ::boost::intrusive::treap::size()const
-   size_type size() const BOOST_NOEXCEPT;
+   size_type size() const;
 
    //! @copydoc ::boost::intrusive::treap::swap
    void swap(treap_multiset_impl& other);
@@ -777,22 +769,22 @@ class treap_multiset_impl
    #if defined(BOOST_INTRUSIVE_DOXYGEN_INVOKED)
 
    //! @copydoc ::boost::intrusive::treap::top()
-   inline iterator top() BOOST_NOEXCEPT;
+   iterator top();
 
    //! @copydoc ::boost::intrusive::treap::top()const
-   inline const_iterator top() const BOOST_NOEXCEPT;
+   const_iterator top() const;
 
    //! @copydoc ::boost::intrusive::treap::ctop()const
-   inline const_iterator ctop() const BOOST_NOEXCEPT;
+   const_iterator ctop() const;
 
    //! @copydoc ::boost::intrusive::treap::rtop()
-   inline reverse_iterator rtop() BOOST_NOEXCEPT;
+   reverse_iterator rtop();
 
    //! @copydoc ::boost::intrusive::treap::rtop()const
-   inline const_reverse_iterator rtop() const BOOST_NOEXCEPT;
+   const_reverse_iterator rtop() const;
 
    //! @copydoc ::boost::intrusive::treap::crtop()const
-   inline const_reverse_iterator crtop() const BOOST_NOEXCEPT;
+   const_reverse_iterator crtop() const;
 
    //! @copydoc ::boost::intrusive::treap::crtop() const
    priority_compare priority_comp() const;
@@ -813,19 +805,19 @@ class treap_multiset_impl
 
    #ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
    //! @copydoc ::boost::intrusive::treap::insert_before
-   iterator insert_before(const_iterator pos, reference value) BOOST_NOEXCEPT;
+   iterator insert_before(const_iterator pos, reference value);
 
    //! @copydoc ::boost::intrusive::treap::push_back
-   void push_back(reference value) BOOST_NOEXCEPT;
+   void push_back(reference value);
 
    //! @copydoc ::boost::intrusive::treap::push_front
-   void push_front(reference value) BOOST_NOEXCEPT;
+   void push_front(reference value);
 
    //! @copydoc ::boost::intrusive::treap::erase(const_iterator)
-   iterator erase(const_iterator i) BOOST_NOEXCEPT;
+   iterator erase(const_iterator i);
 
    //! @copydoc ::boost::intrusive::treap::erase(const_iterator,const_iterator)
-   iterator erase(const_iterator b, const_iterator e) BOOST_NOEXCEPT;
+   iterator erase(const_iterator b, const_iterator e);
 
    //! @copydoc ::boost::intrusive::treap::erase(const key_type &)
    size_type erase(const key_type &key);
@@ -836,11 +828,11 @@ class treap_multiset_impl
 
    //! @copydoc ::boost::intrusive::treap::erase_and_dispose(const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator i, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator i, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::erase_and_dispose(const_iterator,const_iterator,Disposer)
    template<class Disposer>
-   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer) BOOST_NOEXCEPT;
+   iterator erase_and_dispose(const_iterator b, const_iterator e, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::erase_and_dispose(const key_type &, Disposer)
    template<class Disposer>
@@ -851,11 +843,11 @@ class treap_multiset_impl
    size_type erase_and_dispose(const KeyType& key, KeyTypeKeyCompare comp, Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::clear
-   void clear() BOOST_NOEXCEPT;
+   void clear();
 
    //! @copydoc ::boost::intrusive::treap::clear_and_dispose
    template<class Disposer>
-   void clear_and_dispose(Disposer disposer) BOOST_NOEXCEPT;
+   void clear_and_dispose(Disposer disposer);
 
    //! @copydoc ::boost::intrusive::treap::count(const key_type &)const
    size_type count(const key_type &key) const;
@@ -941,28 +933,28 @@ class treap_multiset_impl
          (const KeyType& lower_key, const KeyType& upper_key, KeyTypeKeyCompare comp, bool left_closed, bool right_closed) const;
 
    //! @copydoc ::boost::intrusive::treap::s_iterator_to(reference)
-   static iterator s_iterator_to(reference value) BOOST_NOEXCEPT;
+   static iterator s_iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::treap::s_iterator_to(const_reference)
-   static const_iterator s_iterator_to(const_reference value) BOOST_NOEXCEPT;
+   static const_iterator s_iterator_to(const_reference value);
 
    //! @copydoc ::boost::intrusive::treap::iterator_to(reference)
-   iterator iterator_to(reference value) BOOST_NOEXCEPT;
+   iterator iterator_to(reference value);
 
    //! @copydoc ::boost::intrusive::treap::iterator_to(const_reference)const
-   const_iterator iterator_to(const_reference value) const BOOST_NOEXCEPT;
+   const_iterator iterator_to(const_reference value) const;
 
    //! @copydoc ::boost::intrusive::treap::init_node(reference)
-   static void init_node(reference value) BOOST_NOEXCEPT;
+   static void init_node(reference value);
 
    //! @copydoc ::boost::intrusive::treap::unlink_leftmost_without_rebalance
-   pointer unlink_leftmost_without_rebalance() BOOST_NOEXCEPT;
+   pointer unlink_leftmost_without_rebalance();
 
    //! @copydoc ::boost::intrusive::treap::replace_node
-   void replace_node(iterator replace_this, reference with_this) BOOST_NOEXCEPT;
+   void replace_node(iterator replace_this, reference with_this);
 
    //! @copydoc ::boost::intrusive::treap::remove_node
-   void remove_node(reference value) BOOST_NOEXCEPT;
+   void remove_node(reference value);
 
    //! @copydoc ::boost::intrusive::treap::merge_unique
    template<class ...Options2>
@@ -975,11 +967,11 @@ class treap_multiset_impl
    #else
 
    template<class Compare2>
-   void merge(treap_multiset_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
+   void merge(treap_multiset_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
    {  return tree_type::merge_equal(source);  }
 
    template<class Compare2>
-   void merge(treap_set_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioOfValue, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
+   void merge(treap_set_impl<ValueTraits, VoidOrKeyOfValue, Compare2, VoidOrPrioComp, SizeType, ConstantTimeSize, HeaderHolder> &source)
    {  return tree_type::merge_equal(source);  }
 
    #endif   //#ifdef BOOST_INTRUSIVE_DOXYGEN_INVOKED
@@ -993,15 +985,14 @@ template<class T, class ...Options>
 #else
 template<class T, class O1 = void, class O2 = void
                 , class O3 = void, class O4 = void
-                , class O5 = void, class O6 = void
-                , class O7 = void>
+                , class O5 = void, class O6 = void>
 #endif
 struct make_treap_multiset
 {
    typedef typename pack_options
       < treap_defaults,
       #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-      O1, O2, O3, O4, O5, O6, O7
+      O1, O2, O3, O4, O5, O6
       #else
       Options...
       #endif
@@ -1014,7 +1005,6 @@ struct make_treap_multiset
          < value_traits
          , typename packed_options::key_of_value
          , typename packed_options::compare
-         , typename packed_options::priority_of_value
          , typename packed_options::priority
          , typename packed_options::size_type
          , packed_options::constant_time_size
@@ -1027,14 +1017,14 @@ struct make_treap_multiset
 #ifndef BOOST_INTRUSIVE_DOXYGEN_INVOKED
 
 #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-template<class T, class O1, class O2, class O3, class O4, class O5, class O6, class O7>
+template<class T, class O1, class O2, class O3, class O4, class O5, class O6>
 #else
 template<class T, class ...Options>
 #endif
 class treap_multiset
    :  public make_treap_multiset<T,
       #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-      O1, O2, O3, O4, O5, O6, O7
+      O1, O2, O3, O4, O5, O6
       #else
       Options...
       #endif
@@ -1043,7 +1033,7 @@ class treap_multiset
    typedef typename make_treap_multiset
       <T,
       #if !defined(BOOST_INTRUSIVE_VARIADIC_TEMPLATES)
-      O1, O2, O3, O4, O5, O6, O7
+      O1, O2, O3, O4, O5, O6
       #else
       Options...
       #endif
@@ -1058,55 +1048,51 @@ class treap_multiset
    typedef typename Base::const_iterator     const_iterator;
 
    //Assert if passed value traits are compatible with the type
-   BOOST_INTRUSIVE_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
+   BOOST_STATIC_ASSERT((detail::is_same<typename value_traits::value_type, T>::value));
 
-   inline treap_multiset()
+   treap_multiset()
       :  Base()
    {}
 
-   inline explicit treap_multiset( const key_compare &cmp
+   explicit treap_multiset( const key_compare &cmp
                           , const priority_compare &pcmp = priority_compare()
                           , const value_traits &v_traits = value_traits())
       :  Base(cmp, pcmp, v_traits)
    {}
 
    template<class Iterator>
-   inline treap_multiset( Iterator b, Iterator e
+   treap_multiset( Iterator b, Iterator e
       , const key_compare &cmp = key_compare()
       , const priority_compare &pcmp = priority_compare()
       , const value_traits &v_traits = value_traits())
       :  Base(b, e, cmp, pcmp, v_traits)
    {}
 
-   inline treap_multiset(BOOST_RV_REF(treap_multiset) x)
+   treap_multiset(BOOST_RV_REF(treap_multiset) x)
       :  Base(BOOST_MOVE_BASE(Base, x))
    {}
 
-   inline treap_multiset& operator=(BOOST_RV_REF(treap_multiset) x)
+   treap_multiset& operator=(BOOST_RV_REF(treap_multiset) x)
    {  return static_cast<treap_multiset &>(this->Base::operator=(BOOST_MOVE_BASE(Base, x)));  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(const treap_multiset &src, Cloner cloner, Disposer disposer)
+   void clone_from(const treap_multiset &src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(src, cloner, disposer);  }
 
    template <class Cloner, class Disposer>
-   inline void clone_from(BOOST_RV_REF(treap_multiset) src, Cloner cloner, Disposer disposer)
+   void clone_from(BOOST_RV_REF(treap_multiset) src, Cloner cloner, Disposer disposer)
    {  Base::clone_from(BOOST_MOVE_BASE(Base, src), cloner, disposer);  }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static treap_multiset &container_from_end_iterator(iterator end_iterator) BOOST_NOEXCEPT
+   static treap_multiset &container_from_end_iterator(iterator end_iterator)
    {  return static_cast<treap_multiset &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const treap_multiset &container_from_end_iterator(const_iterator end_iterator) BOOST_NOEXCEPT
+   static const treap_multiset &container_from_end_iterator(const_iterator end_iterator)
    {  return static_cast<const treap_multiset &>(Base::container_from_end_iterator(end_iterator));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static treap_multiset &container_from_iterator(iterator it) BOOST_NOEXCEPT
+   static treap_multiset &container_from_iterator(iterator it)
    {  return static_cast<treap_multiset &>(Base::container_from_iterator(it));   }
 
-   BOOST_INTRUSIVE_NO_DANGLING
-   inline static const treap_multiset &container_from_iterator(const_iterator it) BOOST_NOEXCEPT
+   static const treap_multiset &container_from_iterator(const_iterator it)
    {  return static_cast<const treap_multiset &>(Base::container_from_iterator(it));   }
 };
 

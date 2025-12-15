@@ -2,7 +2,7 @@
 // detail/impl/reactive_descriptor_service.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,8 +19,7 @@
 
 #if !defined(BOOST_ASIO_WINDOWS) \
   && !defined(BOOST_ASIO_WINDOWS_RUNTIME) \
-  && !defined(__CYGWIN__) \
-  && !defined(BOOST_ASIO_HAS_IO_URING_AS_DEFAULT)
+  && !defined(__CYGWIN__)
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/detail/reactive_descriptor_service.hpp>
@@ -32,9 +31,9 @@ namespace asio {
 namespace detail {
 
 reactive_descriptor_service::reactive_descriptor_service(
-    execution_context& context)
-  : execution_context_service_base<reactive_descriptor_service>(context),
-    reactor_(boost::asio::use_service<reactor>(context))
+    boost::asio::io_context& io_context)
+  : service_base<reactive_descriptor_service>(io_context),
+    reactor_(boost::asio::use_service<reactor>(io_context))
 {
   reactor_.init_task();
 }
@@ -48,13 +47,11 @@ void reactive_descriptor_service::construct(
 {
   impl.descriptor_ = -1;
   impl.state_ = 0;
-  impl.reactor_data_ = reactor::per_descriptor_data();
 }
 
 void reactive_descriptor_service::move_construct(
     reactive_descriptor_service::implementation_type& impl,
     reactive_descriptor_service::implementation_type& other_impl)
-  noexcept
 {
   impl.descriptor_ = other_impl.descriptor_;
   other_impl.descriptor_ = -1;
@@ -108,7 +105,6 @@ boost::system::error_code reactive_descriptor_service::assign(
   if (is_open(impl))
   {
     ec = boost::asio::error::already_open;
-    BOOST_ASIO_ERROR_LOCATION(ec);
     return ec;
   }
 
@@ -117,7 +113,6 @@ boost::system::error_code reactive_descriptor_service::assign(
   {
     ec = boost::system::error_code(err,
         boost::asio::error::get_system_category());
-    BOOST_ASIO_ERROR_LOCATION(ec);
     return ec;
   }
 
@@ -156,7 +151,6 @@ boost::system::error_code reactive_descriptor_service::close(
   // We'll just have to assume that other OSes follow the same behaviour.)
   construct(impl);
 
-  BOOST_ASIO_ERROR_LOCATION(ec);
   return ec;
 }
 
@@ -186,7 +180,6 @@ boost::system::error_code reactive_descriptor_service::cancel(
   if (!is_open(impl))
   {
     ec = boost::asio::error::bad_descriptor;
-    BOOST_ASIO_ERROR_LOCATION(ec);
     return ec;
   }
 
@@ -198,26 +191,24 @@ boost::system::error_code reactive_descriptor_service::cancel(
   return ec;
 }
 
-void reactive_descriptor_service::do_start_op(implementation_type& impl,
+void reactive_descriptor_service::start_op(
+    reactive_descriptor_service::implementation_type& impl,
     int op_type, reactor_op* op, bool is_continuation,
-    bool allow_speculative, bool noop, bool needs_non_blocking,
-    void (*on_immediate)(operation* op, bool, const void*),
-    const void* immediate_arg)
+    bool is_non_blocking, bool noop)
 {
   if (!noop)
   {
-    if ((impl.state_ & descriptor_ops::non_blocking)
-        || !needs_non_blocking
-        || descriptor_ops::set_internal_non_blocking(
+    if ((impl.state_ & descriptor_ops::non_blocking) ||
+        descriptor_ops::set_internal_non_blocking(
           impl.descriptor_, impl.state_, true, op->ec_))
     {
-      reactor_.start_op(op_type, impl.descriptor_, impl.reactor_data_, op,
-          is_continuation, allow_speculative, on_immediate, immediate_arg);
+      reactor_.start_op(op_type, impl.descriptor_,
+          impl.reactor_data_, op, is_continuation, is_non_blocking);
       return;
     }
   }
 
-  on_immediate(op, is_continuation, immediate_arg);
+  reactor_.post_immediate_completion(op, is_continuation);
 }
 
 } // namespace detail
@@ -229,6 +220,5 @@ void reactive_descriptor_service::do_start_op(implementation_type& impl,
 #endif // !defined(BOOST_ASIO_WINDOWS)
        //   && !defined(BOOST_ASIO_WINDOWS_RUNTIME)
        //   && !defined(__CYGWIN__)
-       //   && !defined(BOOST_ASIO_HAS_IO_URING_AS_DEFAULT)
 
 #endif // BOOST_ASIO_DETAIL_IMPL_REACTIVE_DESCRIPTOR_SERVICE_IPP

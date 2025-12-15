@@ -8,14 +8,14 @@
  */
 
 #include <boost/numeric/interval.hpp>
-#include <boost/core/lightweight_test.hpp>
+#include <boost/test/minimal.hpp>
 #include "bugs.hpp"
 
-int main(int, char *[]) {
+int test_main(int, char *[]) {
   boost::numeric::interval<double> i(0.0, 0.0);
   boost::numeric::interval<double> i2 = 60.0 - i;
-# ifdef BOOST_BORLANDC
+# ifdef __BORLANDC__
   ::detail::ignore_warnings();
 # endif
-  return boost::report_errors();
+  return 0;
 }

@@ -2,8 +2,8 @@
 @file
 Defines `boost::hana::tuple`.
 
-Copyright Louis Dionne 2013-2022
-Copyright Jason Rice 2017
+@copyright Louis Dionne 2013-2017
+@copyright Jason Rice 2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -40,7 +40,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     namespace detail {
         template <typename Xs, typename Ys, std::size_t ...n>
         constexpr void assign(Xs& xs, Ys&& ys, std::index_sequence<n...>) {
@@ -75,11 +75,7 @@ namespace boost { namespace hana {
     // tuple
     //////////////////////////////////////////////////////////////////////////
     template <>
-#ifdef BOOST_HANA_WORKAROUND_MSVC_EMPTYBASE
-    struct __declspec(empty_bases) tuple<> final
-#else
     struct tuple<> final
-#endif
         : detail::operators::adl<tuple<>>
         , detail::iterable_operators<tuple<>>
     {
@@ -88,11 +84,7 @@ namespace boost { namespace hana {
     };
 
     template <typename ...Xn>
-#ifdef BOOST_HANA_WORKAROUND_MSVC_EMPTYBASE
-    struct __declspec(empty_bases) tuple final
-#else
     struct tuple final
-#endif
         : detail::operators::adl<tuple<Xn...>>
         , detail::iterable_operators<tuple<Xn...>>
     {
@@ -264,7 +256,7 @@ namespace boost { namespace hana {
         static constexpr auto apply(Xs&& xs, N const&) {
             constexpr std::size_t len = decltype(hana::length(xs))::value;
             return helper<N::value>(static_cast<Xs&&>(xs), std::make_index_sequence<
-                (N::value < len) ? len - N::value : 0
+                N::value < len ? len - N::value : 0
             >{});
         }
     };
@@ -315,6 +307,6 @@ namespace boost { namespace hana {
         tuple<typename detail::decay<Xs>::type...> apply(Xs&& ...xs)
         { return {static_cast<Xs&&>(xs)...}; }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_TUPLE_HPP

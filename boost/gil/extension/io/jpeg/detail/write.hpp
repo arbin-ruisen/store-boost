@@ -14,7 +14,6 @@
 
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/device.hpp>
-#include <boost/gil/io/detail/dynamic.hpp>
 
 #include <vector>
 
@@ -53,7 +52,9 @@ class writer< Device
 {
 public:
 
-    using backend_t = writer_backend<Device, jpeg_tag>;
+    typedef writer_backend< Device
+                          , jpeg_tag
+                          > backend_t;
 
 public:
 
@@ -87,7 +88,7 @@ private:
         //       the setjmp.
         if( setjmp( this->_mark )) { this->raise_error(); }
 
-        using channel_t = typename channel_type<typename View::value_type>::type;
+        typedef typename channel_type< typename View::value_type >::type channel_t;
 
         this->get()->image_width      = JDIMENSION( view.width()  );
         this->get()->image_height     = JDIMENSION( view.height() );
@@ -132,8 +133,6 @@ private:
                                 , 1
                                 );
         }
-
-        jpeg_finish_compress ( this->get() );
     }
 };
 
@@ -148,7 +147,9 @@ class dynamic_image_writer< Device
                    , jpeg_tag
                    >
 {
-    using parent_t = writer<Device, jpeg_tag>;
+    typedef writer< Device
+                  , jpeg_tag
+                  > parent_t;
 
 public:
 
@@ -160,14 +161,14 @@ public:
               )
     {}
 
-    template< typename ...Views >
-    void apply( const any_image_view< Views... >& views )
+    template< typename Views >
+    void apply( const any_image_view< Views >& views )
     {
         detail::dynamic_io_fnobj< detail::jpeg_write_is_supported
                                 , parent_t
                                 > op( this );
 
-        variant2::visit( op, views );
+        apply_operation( views, op );
     }
 };
 

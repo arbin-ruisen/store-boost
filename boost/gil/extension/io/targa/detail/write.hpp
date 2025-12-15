@@ -13,7 +13,6 @@
 
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/device.hpp>
-#include <boost/gil/io/detail/dynamic.hpp>
 
 #include <vector>
 
@@ -27,8 +26,8 @@ namespace boost { namespace gil {
 namespace detail {
 
 template < int N > struct get_targa_view_type {};
-template <> struct get_targa_view_type< 3 > { using type = bgr8_view_t; };
-template <> struct get_targa_view_type< 4 > { using type = bgra8_view_t; };
+template <> struct get_targa_view_type< 3 > { typedef bgr8_view_t type; };
+template <> struct get_targa_view_type< 4 > { typedef bgra8_view_t type; };
 
 struct targa_write_is_supported
 {
@@ -54,7 +53,7 @@ class writer< Device
                            >
 {
 private:
-    using backend_t = writer_backend<Device, targa_tag>;
+     typedef writer_backend< Device, targa_tag > backend_t;
 
 public:
 
@@ -151,7 +150,9 @@ class dynamic_image_writer< Device
                    , targa_tag
                    >
 {
-    using parent_t = writer<Device, targa_tag>;
+    typedef writer< Device
+                  , targa_tag
+                  > parent_t;
 
 public:
 
@@ -163,14 +164,14 @@ public:
               )
     {}
 
-    template< typename ...Views >
-    void apply( const any_image_view< Views... >& views )
+    template< typename Views >
+    void apply( const any_image_view< Views >& views )
     {
         detail::dynamic_io_fnobj< detail::targa_write_is_supported
                                 , parent_t
                                 > op( this );
 
-        variant2::visit( op, views );
+        apply_operation( views, op );
     }
 };
 

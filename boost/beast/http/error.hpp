@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -23,7 +23,7 @@ enum class error
     /** The end of the stream was reached.
 
         This error is returned when attempting to read HTTP data,
-        and the stream returns the error `net::error::eof`
+        and the stream returns the error `boost::asio::error::eof`
         before any octets corresponding to a new HTTP message have
         been received.
     */
@@ -41,7 +41,7 @@ enum class error
 
         This error is returned during parsing when additional
         octets are needed. The caller should append more data
-        to the existing buffer and retry the parse operation.
+        to the existing buffer and retry the parse operaetion.
     */
     need_more,
 
@@ -51,7 +51,7 @@ enum class error
         octets into a message container which has the
         @ref empty_body body type.
 
-        @see empty_body
+        @see @ref empty_body
     */
     unexpected_body,
 
@@ -144,42 +144,13 @@ enum class error
     bad_chunk_extension,
 
     /// An obs-fold exceeded an internal limit.
-    bad_obs_fold,
-
-    /// The response contains multiple and conflicting Content-Length.
-    multiple_content_length,
-
-    /** The parser is stale.
-
-        This happens when attempting to re-use a parser that has
-        already completed parsing a message. Programs must construct
-        a new parser for each message. This can be easily done by
-        storing the parser in an boost or std::optional container.
-    */
-    stale_parser,
-
-    /** The message body is shorter than expected.
-
-        This error is returned by @ref file_body when an unexpected
-        unexpected end-of-file condition is encountered while trying
-        to read from the file.
-    */
-    short_read,
-
-    /// Header field name exceeds @ref basic_fields::max_name_size.
-    header_field_name_too_large,
-
-    /// Header field value exceeds @ref basic_fields::max_value_size.
-    header_field_value_too_large
+    bad_obs_fold
 };
 
 } // http
 } // beast
 } // boost
 
-#include <boost/beast/http/impl/error.hpp>
-#ifdef BOOST_BEAST_HEADER_ONLY
 #include <boost/beast/http/impl/error.ipp>
-#endif
 
 #endif

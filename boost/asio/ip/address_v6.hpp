@@ -2,7 +2,7 @@
 // ip/address_v6.hpp
 // ~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -16,10 +16,8 @@
 #endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
 
 #include <boost/asio/detail/config.hpp>
-#include <functional>
 #include <string>
 #include <boost/asio/detail/array.hpp>
-#include <boost/asio/detail/cstdint.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/asio/detail/string_view.hpp>
 #include <boost/asio/detail/winsock_init.hpp>
@@ -37,9 +35,6 @@ namespace asio {
 namespace ip {
 
 template <typename> class basic_address_iterator;
-
-/// Type used for storing IPv6 scope IDs.
-typedef uint_least32_t scope_id_type;
 
 /// Implements IP version 6 style addresses.
 /**
@@ -65,44 +60,33 @@ public:
 #endif
 
   /// Default constructor.
-  /**
-   * Initialises the @c address_v6 object such that:
-   * @li <tt>to_bytes()</tt> yields <tt>{0, 0, ..., 0}</tt>; and
-   * @li <tt>scope_id() == 0</tt>.
-   */
-  BOOST_ASIO_DECL address_v6() noexcept;
+  BOOST_ASIO_DECL address_v6();
 
   /// Construct an address from raw bytes and scope ID.
-  /**
-   * Initialises the @c address_v6 object such that:
-   * @li <tt>to_bytes() == bytes</tt>; and
-   * @li <tt>this->scope_id() == scope_id</tt>.
-   *
-   * @throws out_of_range Thrown if any element in @c bytes is not in the range
-   * <tt>0 - 0xFF</tt>. Note that no range checking is required for platforms
-   * where <tt>std::numeric_limits<unsigned char>::max()</tt> is <tt>0xFF</tt>.
-   */
   BOOST_ASIO_DECL explicit address_v6(const bytes_type& bytes,
-      scope_id_type scope_id = 0);
+      unsigned long scope_id = 0);
 
   /// Copy constructor.
-  BOOST_ASIO_DECL address_v6(const address_v6& other) noexcept;
+  BOOST_ASIO_DECL address_v6(const address_v6& other);
 
+#if defined(BOOST_ASIO_HAS_MOVE)
   /// Move constructor.
-  BOOST_ASIO_DECL address_v6(address_v6&& other) noexcept;
+  BOOST_ASIO_DECL address_v6(address_v6&& other);
+#endif // defined(BOOST_ASIO_HAS_MOVE)
 
   /// Assign from another address.
-  BOOST_ASIO_DECL address_v6& operator=(
-      const address_v6& other) noexcept;
+  BOOST_ASIO_DECL address_v6& operator=(const address_v6& other);
 
+#if defined(BOOST_ASIO_HAS_MOVE)
   /// Move-assign from another address.
-  BOOST_ASIO_DECL address_v6& operator=(address_v6&& other) noexcept;
+  BOOST_ASIO_DECL address_v6& operator=(address_v6&& other);
+#endif // defined(BOOST_ASIO_HAS_MOVE)
 
   /// The scope ID of the address.
   /**
    * Returns the scope ID associated with the IPv6 address.
    */
-  scope_id_type scope_id() const noexcept
+  unsigned long scope_id() const
   {
     return scope_id_;
   }
@@ -110,115 +94,132 @@ public:
   /// The scope ID of the address.
   /**
    * Modifies the scope ID associated with the IPv6 address.
-   *
-   * @param id The new scope ID.
    */
-  void scope_id(scope_id_type id) noexcept
+  void scope_id(unsigned long id)
   {
     scope_id_ = id;
   }
 
   /// Get the address in bytes, in network byte order.
-  BOOST_ASIO_DECL bytes_type to_bytes() const noexcept;
+  BOOST_ASIO_DECL bytes_type to_bytes() const;
 
   /// Get the address as a string.
   BOOST_ASIO_DECL std::string to_string() const;
 
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use other overload.) Get the address as a string.
+  BOOST_ASIO_DECL std::string to_string(boost::system::error_code& ec) const;
+
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(const char* str);
+
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(
+      const char* str, boost::system::error_code& ec);
+
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(const std::string& str);
+
+  /// (Deprecated: Use make_address_v6().) Create an IPv6 address from an IP
+  /// address string.
+  static address_v6 from_string(
+      const std::string& str, boost::system::error_code& ec);
+
+  /// (Deprecated: Use make_address_v4().) Converts an IPv4-mapped or
+  /// IPv4-compatible address to an IPv4 address.
+  BOOST_ASIO_DECL address_v4 to_v4() const;
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
+
   /// Determine whether the address is a loopback address.
-  /**
-   * This function tests whether the address is the loopback address
-   * <tt>::1</tt>.
-   */
-  BOOST_ASIO_DECL bool is_loopback() const noexcept;
+  BOOST_ASIO_DECL bool is_loopback() const;
 
   /// Determine whether the address is unspecified.
-  /**
-   * This function tests whether the address is the loopback address
-   * <tt>::</tt>.
-   */
-  BOOST_ASIO_DECL bool is_unspecified() const noexcept;
+  BOOST_ASIO_DECL bool is_unspecified() const;
 
   /// Determine whether the address is link local.
-  BOOST_ASIO_DECL bool is_link_local() const noexcept;
+  BOOST_ASIO_DECL bool is_link_local() const;
 
   /// Determine whether the address is site local.
-  BOOST_ASIO_DECL bool is_site_local() const noexcept;
+  BOOST_ASIO_DECL bool is_site_local() const;
 
   /// Determine whether the address is a mapped IPv4 address.
-  BOOST_ASIO_DECL bool is_v4_mapped() const noexcept;
+  BOOST_ASIO_DECL bool is_v4_mapped() const;
+
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: No replacement.) Determine whether the address is an
+  /// IPv4-compatible address.
+  BOOST_ASIO_DECL bool is_v4_compatible() const;
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
   /// Determine whether the address is a multicast address.
-  BOOST_ASIO_DECL bool is_multicast() const noexcept;
+  BOOST_ASIO_DECL bool is_multicast() const;
 
   /// Determine whether the address is a global multicast address.
-  BOOST_ASIO_DECL bool is_multicast_global() const noexcept;
+  BOOST_ASIO_DECL bool is_multicast_global() const;
 
   /// Determine whether the address is a link-local multicast address.
-  BOOST_ASIO_DECL bool is_multicast_link_local() const noexcept;
+  BOOST_ASIO_DECL bool is_multicast_link_local() const;
 
   /// Determine whether the address is a node-local multicast address.
-  BOOST_ASIO_DECL bool is_multicast_node_local() const noexcept;
+  BOOST_ASIO_DECL bool is_multicast_node_local() const;
 
   /// Determine whether the address is a org-local multicast address.
-  BOOST_ASIO_DECL bool is_multicast_org_local() const noexcept;
+  BOOST_ASIO_DECL bool is_multicast_org_local() const;
 
   /// Determine whether the address is a site-local multicast address.
-  BOOST_ASIO_DECL bool is_multicast_site_local() const noexcept;
+  BOOST_ASIO_DECL bool is_multicast_site_local() const;
 
   /// Compare two addresses for equality.
-  BOOST_ASIO_DECL friend bool operator==(const address_v6& a1,
-      const address_v6& a2) noexcept;
+  BOOST_ASIO_DECL friend bool operator==(
+      const address_v6& a1, const address_v6& a2);
 
   /// Compare two addresses for inequality.
-  friend bool operator!=(const address_v6& a1,
-      const address_v6& a2) noexcept
+  friend bool operator!=(const address_v6& a1, const address_v6& a2)
   {
     return !(a1 == a2);
   }
 
   /// Compare addresses for ordering.
-  BOOST_ASIO_DECL friend bool operator<(const address_v6& a1,
-      const address_v6& a2) noexcept;
+  BOOST_ASIO_DECL friend bool operator<(
+      const address_v6& a1, const address_v6& a2);
 
   /// Compare addresses for ordering.
-  friend bool operator>(const address_v6& a1,
-      const address_v6& a2) noexcept
+  friend bool operator>(const address_v6& a1, const address_v6& a2)
   {
     return a2 < a1;
   }
 
   /// Compare addresses for ordering.
-  friend bool operator<=(const address_v6& a1,
-      const address_v6& a2) noexcept
+  friend bool operator<=(const address_v6& a1, const address_v6& a2)
   {
     return !(a2 < a1);
   }
 
   /// Compare addresses for ordering.
-  friend bool operator>=(const address_v6& a1,
-      const address_v6& a2) noexcept
+  friend bool operator>=(const address_v6& a1, const address_v6& a2)
   {
     return !(a1 < a2);
   }
 
   /// Obtain an address object that represents any address.
-  /**
-   * This functions returns an address that represents the "any" address
-   * <tt>::</tt>.
-   *
-   * @returns A default-constructed @c address_v6 object.
-   */
-  static address_v6 any() noexcept
+  static address_v6 any()
   {
     return address_v6();
   }
 
   /// Obtain an address object that represents the loopback address.
-  /**
-   * This function returns an address that represents the well-known loopback
-   * address <tt>::1</tt>.
-   */
-  BOOST_ASIO_DECL static address_v6 loopback() noexcept;
+  BOOST_ASIO_DECL static address_v6 loopback();
+
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use make_address_v6().) Create an IPv4-mapped IPv6 address.
+  BOOST_ASIO_DECL static address_v6 v4_mapped(const address_v4& addr);
+
+  /// (Deprecated: No replacement.) Create an IPv4-compatible IPv6 address.
+  BOOST_ASIO_DECL static address_v6 v4_compatible(const address_v4& addr);
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
 private:
   friend class basic_address_iterator<address_v6>;
@@ -227,7 +228,7 @@ private:
   boost::asio::detail::in6_addr_type addr_;
 
   // The scope ID associated with the address.
-  scope_id_type scope_id_;
+  unsigned long scope_id_;
 };
 
 /// Create an IPv6 address from raw bytes and scope ID.
@@ -235,7 +236,7 @@ private:
  * @relates address_v6
  */
 inline address_v6 make_address_v6(const address_v6::bytes_type& bytes,
-    scope_id_type scope_id = 0)
+    unsigned long scope_id = 0)
 {
   return address_v6(bytes, scope_id);
 }
@@ -250,8 +251,8 @@ BOOST_ASIO_DECL address_v6 make_address_v6(const char* str);
 /**
  * @relates address_v6
  */
-BOOST_ASIO_DECL address_v6 make_address_v6(const char* str,
-    boost::system::error_code& ec) noexcept;
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    const char* str, boost::system::error_code& ec);
 
 /// Createan IPv6 address from an IP address string.
 /**
@@ -263,8 +264,8 @@ BOOST_ASIO_DECL address_v6 make_address_v6(const std::string& str);
 /**
  * @relates address_v6
  */
-BOOST_ASIO_DECL address_v6 make_address_v6(const std::string& str,
-    boost::system::error_code& ec) noexcept;
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    const std::string& str, boost::system::error_code& ec);
 
 #if defined(BOOST_ASIO_HAS_STRING_VIEW) \
   || defined(GENERATING_DOCUMENTATION)
@@ -279,8 +280,8 @@ BOOST_ASIO_DECL address_v6 make_address_v6(string_view str);
 /**
  * @relates address_v6
  */
-BOOST_ASIO_DECL address_v6 make_address_v6(string_view str,
-    boost::system::error_code& ec) noexcept;
+BOOST_ASIO_DECL address_v6 make_address_v6(
+    string_view str, boost::system::error_code& ec);
 
 #endif // defined(BOOST_ASIO_HAS_STRING_VIEW)
        //  || defined(GENERATING_DOCUMENTATION)
@@ -326,37 +327,6 @@ std::basic_ostream<Elem, Traits>& operator<<(
 } // namespace ip
 } // namespace asio
 } // namespace boost
-
-namespace std {
-
-template <>
-struct hash<boost::asio::ip::address_v6>
-{
-  std::size_t operator()(const boost::asio::ip::address_v6& addr)
-    const noexcept
-  {
-    const boost::asio::ip::address_v6::bytes_type bytes = addr.to_bytes();
-    std::size_t result = static_cast<std::size_t>(addr.scope_id());
-    combine_4_bytes(result, &bytes[0]);
-    combine_4_bytes(result, &bytes[4]);
-    combine_4_bytes(result, &bytes[8]);
-    combine_4_bytes(result, &bytes[12]);
-    return result;
-  }
-
-private:
-  static void combine_4_bytes(std::size_t& seed, const unsigned char* bytes)
-  {
-    const std::size_t bytes_hash =
-      (static_cast<std::size_t>(bytes[0]) << 24) |
-      (static_cast<std::size_t>(bytes[1]) << 16) |
-      (static_cast<std::size_t>(bytes[2]) << 8) |
-      (static_cast<std::size_t>(bytes[3]));
-    seed ^= bytes_hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-  }
-};
-
-} // namespace std
 
 #include <boost/asio/detail/pop_options.hpp>
 

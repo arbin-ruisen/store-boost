@@ -1,28 +1,28 @@
 ///////////////////////////////////////////////////////////////
 //  Copyright 2012 John Maddock. Distributed under the Boost
 //  Software License, Version 1.0. (See accompanying file
-//  LICENSE_1_0.txt or copy at https://www.boost.org/LICENSE_1_0.txt
+//  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_
 
-#ifndef BOOST_MP_EXTRACT_EXPONENT_TYPE_HPP
-#define BOOST_MP_EXTRACT_EXPONENT_TYPE_HPP
+#ifndef BOOST_MATH_EXTRACT_EXPONENT_HPP
+#define BOOST_MATH_EXTRACT_EXPONENT_HPP
 
 #include <boost/multiprecision/number.hpp>
 
-namespace boost {
-namespace multiprecision {
-namespace backends {
+namespace boost{
+namespace multiprecision{
+namespace backends{
 
 template <class Backend, int cat>
 struct extract_exponent_type
 {
-   using type = int;
+   typedef int type;
 };
 template <class Backend>
 struct extract_exponent_type<Backend, number_kind_floating_point>
 {
-   using type = typename Backend::exponent_type;
+   typedef typename Backend::exponent_type type;
 };
 
-}}} // namespace boost::multiprecision::backends
+}}} // namespaces
 
 #endif

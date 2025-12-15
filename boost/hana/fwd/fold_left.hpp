@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::fold_left`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Left-fold of a structure using a binary operation and an optional
     //! initial reduction state.
     //! @ingroup group-Foldable
@@ -81,8 +81,8 @@ namespace boost { namespace hana {
         constexpr decltype(auto) operator()(Xs&& xs, F&& f) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr fold_left_t fold_left{};
+    constexpr fold_left_t fold_left{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_FOLD_LEFT_HPP

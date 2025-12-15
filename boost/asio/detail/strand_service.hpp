@@ -2,7 +2,7 @@
 // detail/strand_service.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -20,6 +20,7 @@
 #include <boost/asio/detail/mutex.hpp>
 #include <boost/asio/detail/op_queue.hpp>
 #include <boost/asio/detail/operation.hpp>
+#include <boost/asio/detail/scoped_ptr.hpp>
 
 #include <boost/asio/detail/push_options.hpp>
 
@@ -96,10 +97,11 @@ public:
       const implementation_type& impl) const;
 
 private:
-  // Helper function to dispatch a handler.
-  BOOST_ASIO_DECL void do_dispatch(implementation_type& impl, operation* op);
+  // Helper function to dispatch a handler. Returns true if the handler should
+  // be dispatched immediately.
+  BOOST_ASIO_DECL bool do_dispatch(implementation_type& impl, operation* op);
 
-  // Helper function to post a handler.
+  // Helper fiunction to post a handler.
   BOOST_ASIO_DECL void do_post(implementation_type& impl,
       operation* op, bool is_continuation);
 
@@ -107,11 +109,8 @@ private:
       operation* base, const boost::system::error_code& ec,
       std::size_t bytes_transferred);
 
-  // The io_context used to obtain an I/O executor.
-  io_context& io_context_;
-
   // The io_context implementation used to post completions.
-  io_context_impl& io_context_impl_;
+  io_context_impl& io_context_;
 
   // Mutex to protect access to the array of implementations.
   boost::asio::detail::mutex mutex_;
@@ -124,7 +123,7 @@ private:
 #endif // defined(BOOST_ASIO_STRAND_IMPLEMENTATIONS)
 
   // Pool of implementations.
-  shared_ptr<strand_impl> implementations_[num_implementations];
+  scoped_ptr<strand_impl> implementations_[num_implementations];
 
   // Extra value used when hashing to prevent recycled memory locations from
   // getting the same strand implementation.

@@ -10,16 +10,15 @@
 
 #include <boost/gil/io/base.hpp>
 
-// Historically, LibRaw expects WIN32, not _WIN32 (see https://github.com/LibRaw/LibRaw/pull/206)
-#ifdef _MSC_VER
-#ifndef WIN32
-#define WIN32
-#endif
-#pragma warning(push)
-#pragma warning(disable:4251) // 'type' needs to have dll-interface to be used by clients of class
+#ifndef BOOST_GIL_EXTENSION_IO_RAW_C_LIB_COMPILED_AS_CPLUSPLUS
+    extern "C" {
 #endif
 
 #include <libraw/libraw.h>
+
+#ifndef BOOST_GIL_EXTENSION_IO_RAW_C_LIB_COMPILED_AS_CPLUSPLUS
+    }
+#endif
 
 namespace boost { namespace gil {
 
@@ -123,7 +122,7 @@ template<>
 struct image_read_info< raw_tag >
 {
     /// Default contructor.
-    image_read_info()
+    image_read_info< raw_tag >()
     : _valid( false )
     {}
 
@@ -182,8 +181,8 @@ struct image_read_settings< raw_tag > : public image_read_settings_base
     /// Constructor
     /// \param top_left Top left coordinate for reading partial image.
     /// \param dim      Dimensions for reading partial image.
-    image_read_settings( point_t const& top_left
-                       , point_t const& dim
+    image_read_settings( const point_t& top_left
+                       , const point_t& dim
                        )
     : image_read_settings_base( top_left
                               , dim
@@ -199,10 +198,7 @@ struct image_write_info< raw_tag >
 {
 };
 
-}} // namespace boost::gil
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
+} // namespace gil
+} // namespace boost
 
 #endif

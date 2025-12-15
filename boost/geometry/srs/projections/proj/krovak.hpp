@@ -2,9 +2,8 @@
 
 // Copyright (c) 2008-2015 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017, 2018, 2019, 2022.
-// Modifications copyright (c) 2017-2022, Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// This file was modified by Oracle on 2017, 2018.
+// Modifications copyright (c) 2017-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle.
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -48,9 +47,8 @@
 
 #include <boost/geometry/srs/projections/impl/base_static.hpp>
 #include <boost/geometry/srs/projections/impl/base_dynamic.hpp>
-#include <boost/geometry/srs/projections/impl/factory_entry.hpp>
-#include <boost/geometry/srs/projections/impl/pj_param.hpp>
 #include <boost/geometry/srs/projections/impl/projects.hpp>
+#include <boost/geometry/srs/projections/impl/factory_entry.hpp>
 
 namespace boost { namespace geometry
 {
@@ -102,18 +100,24 @@ namespace projections
 
              **/
 
+            // template class, using CRTP to implement forward/inverse
             template <typename T, typename Parameters>
             struct base_krovak_ellipsoid
+                : public base_t_fi<base_krovak_ellipsoid<T, Parameters>, T, Parameters>
             {
                 par_krovak<T> m_proj_parm;
 
+                inline base_krovak_ellipsoid(const Parameters& par)
+                    : base_t_fi<base_krovak_ellipsoid<T, Parameters>, T, Parameters>(*this, par)
+                {}
+
                 // FORWARD(e_forward)  ellipsoid
                 // Project coordinates from geographic (lon, lat) to cartesian (x, y)
-                inline void fwd(Parameters const& par, T const& lp_lon, T const& lp_lat, T& xy_x, T& xy_y) const
+                inline void fwd(T const& lp_lon, T const& lp_lat, T& xy_x, T& xy_y) const
                 {
                     T gfi, u, deltav, s, d, eps, rho;
 
-                    gfi = math::pow( (T(1) + par.e * sin(lp_lat)) / (T(1) - par.e * sin(lp_lat)), this->m_proj_parm.alpha * par.e / T(2));
+                    gfi = math::pow( (T(1) + this->m_par.e * sin(lp_lat)) / (T(1) - this->m_par.e * sin(lp_lat)), this->m_proj_parm.alpha * this->m_par.e / T(2));
 
                     u = 2. * (atan(this->m_proj_parm.k * math::pow( tan(lp_lat / T(2) + S45), this->m_proj_parm.alpha) / gfi)-S45);
                     deltav = -lp_lon * this->m_proj_parm.alpha;
@@ -129,17 +133,19 @@ namespace projections
 
                     xy_y *= this->m_proj_parm.czech;
                     xy_x *= this->m_proj_parm.czech;
-                    if (this->m_proj_parm.czech == 1) std::swap(xy_x, xy_y);
                 }
 
                 // INVERSE(e_inverse)  ellipsoid
                 // Project coordinates from cartesian (x, y) to geographic (lon, lat)
-                inline void inv(Parameters const& par, T xy_x, T xy_y, T& lp_lon, T& lp_lat) const
+                inline void inv(T xy_x, T xy_y, T& lp_lon, T& lp_lat) const
                 {
-                    T u, deltav, s, d, eps, rho, fi1;
+                    T u, deltav, s, d, eps, rho, fi1, xy0;
                     int i;
 
-                    if (this->m_proj_parm.czech == -1) std::swap(xy_x, xy_y);
+                    // TODO: replace with std::swap()
+                    xy0 = xy_x;
+                    xy_x = xy_y;
+                    xy_y = xy0;
 
                     xy_x *= this->m_proj_parm.czech;
                     xy_y *= this->m_proj_parm.czech;
@@ -153,7 +159,7 @@ namespace projections
                     u = asin(cos(this->m_proj_parm.ad) * sin(s) - sin(this->m_proj_parm.ad) * cos(s) * cos(d));
                     deltav = asin(cos(s) * sin(d) / cos(u));
 
-                    lp_lon = par.lam0 - deltav / this->m_proj_parm.alpha;
+                    lp_lon = this->m_par.lam0 - deltav / this->m_proj_parm.alpha;
 
                     /* ITERATION FOR lp_lat */
                     fi1 = u;
@@ -161,7 +167,7 @@ namespace projections
                     for (i = max_iter; i ; --i) {
                         lp_lat = T(2) * ( atan( math::pow( this->m_proj_parm.k, T(-1) / this->m_proj_parm.alpha)  *
                                               math::pow( tan(u / T(2) + S45) , T(1) / this->m_proj_parm.alpha)  *
-                                              math::pow( (T(1) + par.e * sin(fi1)) / (T(1) - par.e * sin(fi1)) , par.e / T(2))
+                                              math::pow( (T(1) + this->m_par.e * sin(fi1)) / (T(1) - this->m_par.e * sin(fi1)) , this->m_par.e / T(2))
                                             )  - S45);
 
                         if (fabs(fi1 - lp_lat) < epsilon)
@@ -171,7 +177,7 @@ namespace projections
                     if( i == 0 )
                         BOOST_THROW_EXCEPTION( projection_exception(error_non_convergent) );
 
-                   lp_lon -= par.lam0;
+                   lp_lon -= this->m_par.lam0;
                 }
 
                 static inline std::string get_name()
@@ -245,9 +251,10 @@ namespace projections
     struct krovak_ellipsoid : public detail::krovak::base_krovak_ellipsoid<T, Parameters>
     {
         template <typename Params>
-        inline krovak_ellipsoid(Params const& params, Parameters & par)
+        inline krovak_ellipsoid(Params const& params, Parameters const& par)
+            : detail::krovak::base_krovak_ellipsoid<T, Parameters>(par)
         {
-            detail::krovak::setup_krovak(params, par, this->m_proj_parm);
+            detail::krovak::setup_krovak(params, this->m_par, this->m_proj_parm);
         }
     };
 
@@ -256,11 +263,11 @@ namespace projections
     {
 
         // Static projection
-        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION_FI(srs::spar::proj_krovak, krovak_ellipsoid)
+        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION(srs::spar::proj_krovak, krovak_ellipsoid, krovak_ellipsoid)
 
         // Factory entry(s)
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_ENTRY_FI(krovak_entry, krovak_ellipsoid)
-
+        
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_BEGIN(krovak_init)
         {
             BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_ENTRY(krovak, krovak_entry)

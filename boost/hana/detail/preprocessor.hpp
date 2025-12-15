@@ -2,7 +2,7 @@
 @file
 Defines generally useful preprocessor macros.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -22,12 +22,7 @@ Distributed under the Boost Software License, Version 1.0.
 
 //! @ingroup group-details
 //! Expands to its first argument.
-#ifdef BOOST_HANA_WORKAROUND_MSVC_PREPROCESSOR_616033
-#define BOOST_HANA_PP_FRONT(...) BOOST_HANA_PP_FRONT_IMPL_I(__VA_ARGS__)
-#define BOOST_HANA_PP_FRONT_IMPL_I(...) BOOST_HANA_PP_CONCAT(BOOST_HANA_PP_FRONT_IMPL(__VA_ARGS__, ),)
-#else
 #define BOOST_HANA_PP_FRONT(...) BOOST_HANA_PP_FRONT_IMPL(__VA_ARGS__, )
-#endif
 #define BOOST_HANA_PP_FRONT_IMPL(e0, ...) e0
 
 //! @ingroup group-details

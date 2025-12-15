@@ -5,8 +5,7 @@
     Distributed under the Boost Software License, Version 1.0. (See accompanying
     file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
 =============================================================================*/
-#include <boost/spirit/repository/include/qi_subrule.hpp>
-
+#include <boost/detail/lightweight_test.hpp>
 #include <boost/spirit/include/qi_operator.hpp>
 #include <boost/spirit/include/qi_char.hpp>
 #include <boost/spirit/include/qi_string.hpp>
@@ -14,11 +13,13 @@
 #include <boost/spirit/include/qi_auxiliary.hpp>
 #include <boost/spirit/include/qi_nonterminal.hpp>
 #include <boost/spirit/include/qi_action.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp>
-#include <boost/phoenix/object.hpp>
-#include <boost/phoenix/bind.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_object.hpp>
+#include <boost/spirit/include/phoenix_bind.hpp>
 #include <boost/fusion/include/std_pair.hpp>
+
+#include <boost/spirit/repository/include/qi_subrule.hpp>
 
 #include <string>
 #include <cstring>
@@ -108,16 +109,7 @@ main()
         BOOST_TEST(test("aaaabababaaabba", start, false));
 
         // no-ops
-#if defined(BOOST_CLANG) && defined(__has_warning)
-# pragma clang diagnostic push
-# if __has_warning("-Wself-assign-overloaded")
-#  pragma clang diagnostic ignored "-Wself-assign-overloaded"
-# endif
-#endif
         a = a;
-#if defined(BOOST_CLANG) && defined(__has_warning)
-# pragma clang diagnostic pop
-#endif
         subrule<42> aa(a);
     }
 
@@ -152,16 +144,7 @@ main()
         BOOST_TEST(test(" a a a a b a b a b a a a b b a ", start, space, false));
 
         // no-ops
-#if defined(BOOST_CLANG) && defined(__has_warning)
-# pragma clang diagnostic push
-# if __has_warning("-Wself-assign-overloaded")
-#  pragma clang diagnostic ignored "-Wself-assign-overloaded"
-# endif
-#endif
         a = a;
-#if defined(BOOST_CLANG) && defined(__has_warning)
-# pragma clang diagnostic pop
-#endif
         subrule<1> aa(a);
     }
 

@@ -2,7 +2,7 @@
 // ssl/detail/stream_core.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -17,9 +17,13 @@
 
 #include <boost/asio/detail/config.hpp>
 
+#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+# include <boost/asio/deadline_timer.hpp>
+#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+# include <boost/asio/steady_timer.hpp>
+#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
 #include <boost/asio/ssl/detail/engine.hpp>
 #include <boost/asio/buffer.hpp>
-#include <boost/asio/steady_timer.hpp>
 
 #include <boost/asio/detail/push_options.hpp>
 
@@ -34,11 +38,10 @@ struct stream_core
   // sufficient to hold the largest possible TLS record.
   enum { max_tls_record_size = 17 * 1024 };
 
-  template <typename Executor>
-  stream_core(SSL_CTX* context, const Executor& ex)
+  stream_core(SSL_CTX* context, boost::asio::io_context& io_context)
     : engine_(context),
-      pending_read_(ex),
-      pending_write_(ex),
+      pending_read_(io_context),
+      pending_write_(io_context),
       output_buffer_space_(max_tls_record_size),
       output_buffer_(boost::asio::buffer(output_buffer_space_)),
       input_buffer_space_(max_tls_record_size),
@@ -46,79 +49,41 @@ struct stream_core
   {
     pending_read_.expires_at(neg_infin());
     pending_write_.expires_at(neg_infin());
-  }
-
-  template <typename Executor>
-  stream_core(SSL* ssl_impl, const Executor& ex)
-    : engine_(ssl_impl),
-      pending_read_(ex),
-      pending_write_(ex),
-      output_buffer_space_(max_tls_record_size),
-      output_buffer_(boost::asio::buffer(output_buffer_space_)),
-      input_buffer_space_(max_tls_record_size),
-      input_buffer_(boost::asio::buffer(input_buffer_space_))
-  {
-    pending_read_.expires_at(neg_infin());
-    pending_write_.expires_at(neg_infin());
-  }
-
-  stream_core(stream_core&& other)
-    : engine_(static_cast<engine&&>(other.engine_)),
-      pending_read_(
-         static_cast<boost::asio::steady_timer&&>(
-           other.pending_read_)),
-      pending_write_(
-         static_cast<boost::asio::steady_timer&&>(
-           other.pending_write_)),
-      output_buffer_space_(
-          static_cast<std::vector<unsigned char>&&>(
-            other.output_buffer_space_)),
-      output_buffer_(other.output_buffer_),
-      input_buffer_space_(
-          static_cast<std::vector<unsigned char>&&>(
-            other.input_buffer_space_)),
-      input_buffer_(other.input_buffer_),
-      input_(other.input_)
-  {
-    other.output_buffer_ = boost::asio::mutable_buffer(0, 0);
-    other.input_buffer_ = boost::asio::mutable_buffer(0, 0);
-    other.input_ = boost::asio::const_buffer(0, 0);
   }
 
   ~stream_core()
   {
   }
 
-  stream_core& operator=(stream_core&& other)
-  {
-    if (this != &other)
-    {
-      engine_ = static_cast<engine&&>(other.engine_);
-      pending_read_ =
-        static_cast<boost::asio::steady_timer&&>(
-          other.pending_read_);
-      pending_write_ =
-        static_cast<boost::asio::steady_timer&&>(
-          other.pending_write_);
-      output_buffer_space_ =
-        static_cast<std::vector<unsigned char>&&>(
-          other.output_buffer_space_);
-      output_buffer_ = other.output_buffer_;
-      input_buffer_space_ =
-        static_cast<std::vector<unsigned char>&&>(
-          other.input_buffer_space_);
-      input_buffer_ = other.input_buffer_;
-      input_ = other.input_;
-      other.output_buffer_ = boost::asio::mutable_buffer(0, 0);
-      other.input_buffer_ = boost::asio::mutable_buffer(0, 0);
-      other.input_ = boost::asio::const_buffer(0, 0);
-    }
-    return *this;
-  }
-
   // The SSL engine.
   engine engine_;
 
+#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+  // Timer used for storing queued read operations.
+  boost::asio::deadline_timer pending_read_;
+
+  // Timer used for storing queued write operations.
+  boost::asio::deadline_timer pending_write_;
+
+  // Helper function for obtaining a time value that always fires.
+  static boost::asio::deadline_timer::time_type neg_infin()
+  {
+    return boost::posix_time::neg_infin;
+  }
+
+  // Helper function for obtaining a time value that never fires.
+  static boost::asio::deadline_timer::time_type pos_infin()
+  {
+    return boost::posix_time::pos_infin;
+  }
+
+  // Helper function to get a timer's expiry time.
+  static boost::asio::deadline_timer::time_type expiry(
+      const boost::asio::deadline_timer& timer)
+  {
+    return timer.expires_at();
+  }
+#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
   // Timer used for storing queued read operations.
   boost::asio::steady_timer pending_read_;
 
@@ -143,18 +108,19 @@ struct stream_core
   {
     return timer.expiry();
   }
+#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
 
   // Buffer space used to prepare output intended for the transport.
   std::vector<unsigned char> output_buffer_space_;
 
   // A buffer that may be used to prepare output intended for the transport.
-  boost::asio::mutable_buffer output_buffer_;
+  const boost::asio::mutable_buffer output_buffer_;
 
   // Buffer space used to read input intended for the engine.
   std::vector<unsigned char> input_buffer_space_;
 
   // A buffer that may be used to read input intended for the engine.
-  boost::asio::mutable_buffer input_buffer_;
+  const boost::asio::mutable_buffer input_buffer_;
 
   // The buffer pointing to the engine's unconsumed input.
   boost::asio::const_buffer input_;

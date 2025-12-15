@@ -1,5 +1,10 @@
-#ifndef BOOST_NUMERIC_CHECKED_RESULT_OPERATIONS
+  #ifndef BOOST_NUMERIC_CHECKED_RESULT_OPERATIONS
 #define BOOST_NUMERIC_CHECKED_RESULT_OPERATIONS
+
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
 
 //  Copyright (c) 2012 Robert Ramey
 //
@@ -8,12 +13,12 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 // Implemenation of arithmetic on "extended" integers.
-// Extended integers are defined in terms of C++ primitive integers as
+// extended integers are
 //     a) an interger range
 //     b) extra elements +inf, -inf, indeterminate
 //
-// Integer operations are closed on the set of extended integers
-// but operations are not necessarily associative when they result in the
+// arithmetic operations are closed on the set of extended integers
+// but operations are not associative when they result in the
 // extensions +inf, -inf, and indeterminate
 //
 // in this code, the type "checked_result<T>" where T is some
@@ -32,34 +37,6 @@
 
 namespace boost {
 namespace safe_numerics {
-
-template<typename T>
-constexpr inline void display(const boost::safe_numerics::checked_result<T> & c){
-    switch(c.m_e){
-    case safe_numerics_error::success:
-        std::terminate();
-    case safe_numerics_error::positive_overflow_error:    // result is above representational maximum
-        std::terminate();
-    case safe_numerics_error::negative_overflow_error:    // result is below representational minimum
-        std::terminate();
-    case safe_numerics_error::domain_error:               // one operand is out of valid range
-        std::terminate();
-    case safe_numerics_error::range_error:                // result cannot be produced for this operation
-        std::terminate();
-    case safe_numerics_error::precision_overflow_error:   // result lost precision
-        std::terminate();
-    case safe_numerics_error::underflow_error:            // result is too small to be represented
-        std::terminate();
-    case safe_numerics_error::negative_value_shift:       // negative value in shift operator
-        std::terminate();
-    case safe_numerics_error::negative_shift:             // shift a negative value
-        std::terminate();
-    case safe_numerics_error::shift_too_large:            // l/r shift exceeds variable size
-        std::terminate();
-    case safe_numerics_error::uninitialized_value:        // creating of uninitialized value
-        std::terminate();
-    }
-}
 
 //////////////////////////////////////////////////////////////////////////
 // implement C++ operators for check_result<T>
@@ -108,13 +85,13 @@ constexpr inline operator+(
     const checked_result<T> & u
 ){
     using value_type = sum_value_type;
-    const std::uint8_t order = static_cast<std::uint8_t>(value_type::count);
+    constexpr const std::uint8_t order = static_cast<std::uint8_t>(value_type::count);
 
     // note major pain.  Clang constexpr multi-dimensional array is fine.
     // but gcc doesn't permit a multi-dimensional array to be be constexpr.
     // so we need to some ugly gymnastics to make our system work for all
     // all systems.
-    const enum safe_numerics_error result[order * order] = {
+    constexpr const enum safe_numerics_error result[order * order] = {
         // t == known_value
         //{
             // u == ...
@@ -156,18 +133,6 @@ constexpr inline operator+(
     if(safe_numerics_error::success == e)
         return checked::add<T>(t, u);
     return checked_result<T>(e, "addition result");
-}
-
-// unary +
-template<class T>
-typename std::enable_if<
-    std::is_integral<T>::value,
-    checked_result<T>
->::type
-constexpr inline operator+(
-    const checked_result<T> & t
-){
-    return t;
 }
 
 // integers subtraction
@@ -227,19 +192,6 @@ constexpr inline operator-(
     return checked_result<T>(e, "subtraction result");
 }
 
-// unary -
-template<class T>
-typename std::enable_if<
-    std::is_integral<T>::value,
-    checked_result<T>
->::type
-constexpr inline operator-(
-    const checked_result<T> & t
-){
-//    assert(false);
-    return checked_result<T>(0) - t;
-}
-
 struct product_value_type {
     // characterization of various values
     const enum flag {
@@ -249,12 +201,8 @@ struct product_value_type {
         greater_than_zero,
         greater_than_max,
         indeterminate,
-        // count of number of cases for values
         count,
-        // temporary values for special cases
-        t_value,
-        u_value,
-        z_value
+        t_value
     } m_flag;
     template<class T>
     constexpr flag to_flag(const checked_result<T> & t) const {
@@ -492,20 +440,20 @@ constexpr inline operator%(
         //{
             // u == ...
             value_type::indeterminate,      // less_than_min,
-            value_type::z_value,            // less_than_zero,
+            value_type::indeterminate,      // less_than_zero,
             value_type::indeterminate,      // zero,
-            value_type::z_value,            // greater_than_zero,
+            value_type::indeterminate,      // greater_than_zero,
             value_type::indeterminate,      // greater than max,
             value_type::indeterminate,      // indeterminate,
         //},
         // t == less_than_zero,
         //{
             // u == ...
-            value_type::t_value,            // less_than_min,
+            value_type::t_value,      // less_than_min,
             value_type::greater_than_zero,  // less_than_zero,
             value_type::indeterminate,      // zero,
             value_type::less_than_zero,     // greater_than_zero,
-            value_type::t_value,            // greater than max,
+            value_type::t_value,     // greater than max,
             value_type::indeterminate,      // indeterminate,
         //},
         // t == zero,
@@ -531,9 +479,9 @@ constexpr inline operator%(
         // t == greater_than_max
         //{
             value_type::indeterminate,      // less_than_min,
-            value_type::u_value,            // less_than_zero,
+            value_type::indeterminate,      // less_than_zero,
             value_type::indeterminate,      // zero,
-            value_type::u_value,            // greater_than_zero,
+            value_type::indeterminate,      // greater_than_zero,
             value_type::indeterminate,      // greater than max,
             value_type::indeterminate,      // indeterminate,
         //},
@@ -561,10 +509,6 @@ constexpr inline operator%(
             return safe_numerics_error::range_error;
         case value_type::t_value:
             return t;
-        case value_type::u_value:
-            return checked::subtract<T>(u, 1);
-        case value_type::z_value:
-            return checked::subtract<T>(1, u);
         case value_type::greater_than_max:
         case value_type::less_than_min:
         default:
@@ -592,8 +536,9 @@ constexpr boost::logic::tribool operator<(
     //
     // b) return false because the two values are "equal"
     //
-    // for our purposes, a) seems the better interpretation.
-    
+    // for our purposes, b) is the better interpretation as it better
+    // models our view that the < operation referes to the place holders
+    // rather than some underlying value.
     enum class result_type : std::uint8_t {
         runtime,
         false_value,
@@ -613,7 +558,7 @@ constexpr boost::logic::tribool operator<(
         //{
             // u == ...
             result_type::true_value,    // known_value,
-            result_type::indeterminate, // less_than_min, see above argument
+            result_type::false_value,   // less_than_min, see above argument
             result_type::true_value,    // greater_than_max,
             result_type::indeterminate, // indeterminate,
         //},
@@ -622,7 +567,7 @@ constexpr boost::logic::tribool operator<(
             // u == ...
             result_type::false_value,   // known_value,
             result_type::false_value,   // less_than_min,
-            result_type::indeterminate, // greater_than_max, see above argument
+            result_type::false_value,   // greater_than_max, see above argument
             result_type::indeterminate, // indeterminate,
         //},
         // t == indeterminate
@@ -774,6 +719,18 @@ typename std::enable_if<
     std::is_integral<T>::value,
     checked_result<T>
 >::type
+constexpr inline operator-(
+    const checked_result<T> & t
+){
+//    assert(false);
+    return checked_result<T>(0) - t;
+}
+
+template<class T>
+typename std::enable_if<
+    std::is_integral<T>::value,
+    checked_result<T>
+>::type
 constexpr inline operator~(
     const checked_result<T> & t
 ){
@@ -793,7 +750,7 @@ constexpr inline operator<<(
     using value_type = product_value_type;
     const std::uint8_t order = static_cast<std::uint8_t>(value_type::count);
 
-    constexpr const std::uint8_t result[order * order] = {
+    const std::uint8_t result[order * order] = {
         // t == less_than_min
         //{
             // u == ...
@@ -1127,12 +1084,10 @@ inline std::basic_ostream<CharT, Traits> & operator<<(
     std::basic_ostream<CharT, Traits> & os,
     const boost::safe_numerics::checked_result<R> & r
 ){
-    bool e = r.exception();
-    os << e;
-    if(!e)
+    if(!r.exception())
         os << static_cast<R>(r);
     else
-        os << std::error_code(r.m_e).message() << ':' << static_cast<char const *>(r);
+        os << std::error_code(r.m_e).message() << ':' << r.m_msg;
     return os;
 }
 
@@ -1141,12 +1096,22 @@ inline std::basic_ostream<CharT, Traits> & operator<<(
     std::basic_ostream<CharT, Traits> & os,
     const boost::safe_numerics::checked_result<signed char> & r
 ){
-    bool e = r.exception();
-    os << e;
-    if(! e)
+    if(! r.exception())
         os << static_cast<std::int16_t>(r);
     else
-        os << std::error_code(r.m_e).message() << ':' << static_cast<char const *>(r);
+        os << std::error_code(r.m_e).message() << ':' << r.m_msg;
+    return os;
+}
+
+template<typename CharT, typename Traits>
+inline std::basic_ostream<CharT, Traits> & operator<<(
+    std::basic_ostream<CharT, Traits> & os,
+    const boost::safe_numerics::checked_result<unsigned char> & r
+){
+    if(! r.exception())
+        os << static_cast<std::uint16_t>(r);
+    else
+        os << std::error_code(r.m_e).message() << ':' << r.m_msg;
     return os;
 }
 
@@ -1155,29 +1120,29 @@ inline std::basic_istream<CharT, Traits> & operator>>(
     std::basic_istream<CharT, Traits> & is,
     boost::safe_numerics::checked_result<R> & r
 ){
-    bool e;
-    is >> e;
-    if(!e)
-        is >> static_cast<R>(r);
-    else
-        is >> std::error_code(r.m_e).message() >> ':' >> static_cast<char const *>(r);
+    is >> r.m_r;
     return is;
 }
 
-template<typename CharT, typename Traits>
+template<typename CharT, typename Traits, typename R>
 inline std::basic_istream<CharT, Traits> & operator>>(
     std::basic_istream<CharT, Traits> & is, 
     boost::safe_numerics::checked_result<signed char> & r
 ){
-    bool e;
-    is >> e;
-    if(!e){
-        std::int16_t i;
-        is >> i;
-        r.m_contents.m_r = static_cast<signed char>(i);
-    }
-    else
-        is >> std::error_code(r.m_e).message() >> ':' >> static_cast<char const *>(r);
+    std::int16_t i;
+    is >> i;
+    r.m_r = i;
+    return is;
+}
+
+template<typename CharT, typename Traits, typename R>
+inline std::basic_istream<CharT, Traits> & operator>>(
+    std::basic_istream<CharT, Traits> & is,
+    boost::safe_numerics::checked_result<unsigned char> & r
+){
+    std::uint16_t i;
+    is >> i;
+    r.m_r = i;
     return is;
 }
 

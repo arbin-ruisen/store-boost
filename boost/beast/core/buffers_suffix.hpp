@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -11,7 +11,8 @@
 #define BOOST_BEAST_BUFFERS_SUFFIX_HPP
 
 #include <boost/beast/core/detail/config.hpp>
-#include <boost/beast/core/buffer_traits.hpp>
+#include <boost/beast/core/detail/type_traits.hpp>
+#include <boost/asio/buffer.hpp>
 #include <boost/optional.hpp>
 #include <cstdint>
 #include <iterator>
@@ -20,12 +21,12 @@
 namespace boost {
 namespace beast {
 
-/** Adaptor to progressively trim the front of a <em>BufferSequence</em>.
+/** Adapter to trim the front of a `BufferSequence`.
 
-    This adaptor wraps a buffer sequence to create a new sequence
+    This adapter wraps a buffer sequence to create a new sequence
     which may be incrementally consumed. Bytes consumed are removed
     from the front of the buffer. The underlying memory is not changed,
-    instead the adaptor efficiently iterates through a subset of
+    instead the adapter efficiently iterates through a subset of
     the buffers wrapped.
 
     The wrapped buffer is not modified, a copy is made instead.
@@ -44,7 +45,7 @@ namespace beast {
     void send(SyncWriteStream& stream, ConstBufferSequence const& buffers)
     {
         buffers_suffix<ConstBufferSequence> bs{buffers};
-        while(buffer_bytes(bs) > 0)
+        while(boost::asio::buffer_size(bs) > 0)
             bs.consume(stream.write_some(bs));
     }
     @endcode
@@ -52,18 +53,21 @@ namespace beast {
 template<class BufferSequence>
 class buffers_suffix
 {
-    using iter_type =
-        buffers_iterator_type<BufferSequence>;
+    using buffers_type =
+        typename std::decay<BufferSequence>::type;
+
+    using iter_type = typename
+        detail::buffer_sequence_iterator<buffers_type>::type;
 
     BufferSequence bs_;
-    iter_type begin_{};
+    iter_type begin_;
     std::size_t skip_ = 0;
 
     template<class Deduced>
     buffers_suffix(Deduced&& other, std::size_t dist)
         : bs_(std::forward<Deduced>(other).bs_)
         , begin_(std::next(
-            net::buffer_sequence_begin(bs_),
+            boost::asio::buffer_sequence_begin(bs_),
                 dist))
         , skip_(other.skip_)
     {
@@ -72,20 +76,25 @@ class buffers_suffix
 public:
     /** The type for each element in the list of buffers.
 
-        If <em>BufferSequence</em> meets the requirements of
-        <em>MutableBufferSequence</em>, then this type will be
-        `net::mutable_buffer`, otherwise this type will be
-        `net::const_buffer`.
+        If the buffers in the underlying sequence are convertible to
+        `boost::asio::mutable_buffer`, then this type will be
+        `boost::asio::mutable_buffer`, else this type will be
+        `boost::asio::const_buffer`.
     */
 #if BOOST_BEAST_DOXYGEN
-    using value_type = __see_below__;
+    using value_type = implementation_defined;
 #else
-    using value_type = buffers_type<BufferSequence>;
+    using value_type = typename std::conditional<
+        std::is_convertible<typename
+            std::iterator_traits<iter_type>::value_type,
+                boost::asio::mutable_buffer>::value,
+                    boost::asio::mutable_buffer,
+                        boost::asio::const_buffer>::type;
 #endif
 
 #if BOOST_BEAST_DOXYGEN
     /// A bidirectional iterator type that may be used to read elements.
-    using const_iterator = __implementation_defined__;
+    using const_iterator = implementation_defined;
 
 #else
     class const_iterator;
@@ -95,7 +104,10 @@ public:
     /// Constructor
     buffers_suffix();
 
-    /// Copy Constructor
+    /// Constructor
+    buffers_suffix(buffers_suffix&&);
+
+    /// Constructor
     buffers_suffix(buffers_suffix const&);
 
     /** Constructor
@@ -114,10 +126,12 @@ public:
         @param args Arguments forwarded to the buffers constructor.
     */
     template<class... Args>
-    explicit
     buffers_suffix(boost::in_place_init_t, Args&&... args);
 
-    /// Copy Assignment
+    /// Assignment
+    buffers_suffix& operator=(buffers_suffix&&);
+
+    /// Assignment
     buffers_suffix& operator=(buffers_suffix const&);
 
     /// Get a bidirectional iterator to the first element.
@@ -141,6 +155,6 @@ public:
 } // beast
 } // boost
 
-#include <boost/beast/core/impl/buffers_suffix.hpp>
+#include <boost/beast/core/impl/buffers_suffix.ipp>
 
 #endif

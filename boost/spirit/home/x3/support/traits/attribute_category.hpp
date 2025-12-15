@@ -11,6 +11,7 @@
 #include <boost/mpl/identity.hpp>
 #include <boost/mpl/logical.hpp>
 #include <boost/mpl/eval_if.hpp>
+#include <boost/fusion/include/copy.hpp>
 #include <boost/fusion/include/is_sequence.hpp>
 #include <boost/fusion/support/category_of.hpp>
 #include <boost/spirit/home/x3/support/traits/is_variant.hpp>

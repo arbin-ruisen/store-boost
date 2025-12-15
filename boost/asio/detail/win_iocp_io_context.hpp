@@ -2,7 +2,7 @@
 // detail/win_iocp_io_context.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -22,6 +22,7 @@
 #include <boost/asio/detail/limits.hpp>
 #include <boost/asio/detail/mutex.hpp>
 #include <boost/asio/detail/op_queue.hpp>
+#include <boost/asio/detail/scoped_ptr.hpp>
 #include <boost/asio/detail/socket_types.hpp>
 #include <boost/asio/detail/thread.hpp>
 #include <boost/asio/detail/thread_context.hpp>
@@ -45,19 +46,10 @@ class win_iocp_io_context
     public thread_context
 {
 public:
-  // Tag type used for constructing as an internal scheduler.
-  struct internal {};
-
-  // Constructor.
-  BOOST_ASIO_DECL win_iocp_io_context(
-      boost::asio::execution_context& ctx, bool own_thread = true);
-
-  // Construct as an internal scheduler.
-  BOOST_ASIO_DECL win_iocp_io_context(internal,
-      boost::asio::execution_context& ctx);
-
-  // Destructor.
-  BOOST_ASIO_DECL ~win_iocp_io_context();
+  // Constructor. Specifies a concurrency hint that is passed through to the
+  // underlying I/O completion port.
+  BOOST_ASIO_DECL win_iocp_io_context(boost::asio::execution_context& ctx,
+      int concurrency_hint = -1);
 
   // Destroy all user-defined handler objects owned by the service.
   BOOST_ASIO_DECL void shutdown();
@@ -115,10 +107,10 @@ public:
   }
 
   // Return whether a handler can be dispatched immediately.
-  BOOST_ASIO_DECL bool can_dispatch();
-
-  /// Capture the current exception so it can be rethrown from a run function.
-  BOOST_ASIO_DECL void capture_current_exception();
+  bool can_dispatch()
+  {
+    return thread_call_stack::contains(this) != 0;
+  }
 
   // Request invocation of the given operation and return immediately. Assumes
   // that work_started() has not yet been called for the operation.
@@ -182,39 +174,38 @@ public:
       const boost::system::error_code& ec, DWORD bytes_transferred = 0);
 
   // Add a new timer queue to the service.
-  template <typename TimeTraits, typename Allocator>
-  void add_timer_queue(timer_queue<TimeTraits, Allocator>& timer_queue);
+  template <typename Time_Traits>
+  void add_timer_queue(timer_queue<Time_Traits>& timer_queue);
 
   // Remove a timer queue from the service.
-  template <typename TimeTraits, typename Allocator>
-  void remove_timer_queue(timer_queue<TimeTraits, Allocator>& timer_queue);
+  template <typename Time_Traits>
+  void remove_timer_queue(timer_queue<Time_Traits>& timer_queue);
 
   // Schedule a new operation in the given timer queue to expire at the
   // specified absolute time.
-  template <typename TimeTraits, typename Allocator>
-  void schedule_timer(timer_queue<TimeTraits, Allocator>& queue,
-      const typename TimeTraits::time_type& time,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& timer,
-      wait_op* op);
+  template <typename Time_Traits>
+  void schedule_timer(timer_queue<Time_Traits>& queue,
+      const typename Time_Traits::time_type& time,
+      typename timer_queue<Time_Traits>::per_timer_data& timer, wait_op* op);
 
   // Cancel the timer associated with the given token. Returns the number of
   // handlers that have been posted or dispatched.
-  template <typename TimeTraits, typename Allocator>
-  std::size_t cancel_timer(timer_queue<TimeTraits, Allocator>& queue,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& timer,
+  template <typename Time_Traits>
+  std::size_t cancel_timer(timer_queue<Time_Traits>& queue,
+      typename timer_queue<Time_Traits>::per_timer_data& timer,
       std::size_t max_cancelled = (std::numeric_limits<std::size_t>::max)());
 
-  // Cancel the timer operations associated with the given key.
-  template <typename TimeTraits, typename Allocator>
-  void cancel_timer_by_key(timer_queue<TimeTraits, Allocator>& queue,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data* timer,
-      void* cancellation_key);
-
   // Move the timer operations associated with the given timer.
-  template <typename TimeTraits, typename Allocator>
-  void move_timer(timer_queue<TimeTraits, Allocator>& queue,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& to,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& from);
+  template <typename Time_Traits>
+  void move_timer(timer_queue<Time_Traits>& queue,
+      typename timer_queue<Time_Traits>::per_timer_data& to,
+      typename timer_queue<Time_Traits>::per_timer_data& from);
+
+  // Get the concurrency hint that was used to initialise the io_context.
+  int concurrency_hint() const
+  {
+    return concurrency_hint_;
+  }
 
 private:
 #if defined(WINVER) && (WINVER < 0x0500)
@@ -228,8 +219,7 @@ private:
   // Dequeues at most one operation from the I/O completion port, and then
   // executes it. Returns the number of operations that were dequeued (i.e.
   // either 0 or 1).
-  BOOST_ASIO_DECL size_t do_one(DWORD msec,
-      win_iocp_thread_info& this_thread, boost::system::error_code& ec);
+  BOOST_ASIO_DECL size_t do_one(DWORD msec, boost::system::error_code& ec);
 
   // Helper to calculate the GetQueuedCompletionStatus timeout.
   BOOST_ASIO_DECL static DWORD get_gqcs_timeout();
@@ -265,7 +255,7 @@ private:
 
   // Flag to indicate whether there is an in-flight stop event. Every event
   // posted using PostQueuedCompletionStatus consumes non-paged pool, so to
-  // avoid exhausting this resource we limit the number of outstanding events.
+  // avoid exhausting this resouce we limit the number of outstanding events.
   long stop_event_posted_;
 
   // Flag to indicate whether the service has been shut down.
@@ -273,13 +263,11 @@ private:
 
   enum
   {
-#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0600)
     // Timeout to use with GetQueuedCompletionStatus on older versions of
     // Windows. Some versions of windows have a "bug" where a call to
     // GetQueuedCompletionStatus can appear stuck even though there are events
     // waiting on the queue. Using a timeout helps to work around the issue.
     default_gqcs_timeout = 500,
-#endif // !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0600)
 
     // Maximum waitable timer timeout, in milliseconds.
     max_timeout_msec = 5 * 60 * 1000,
@@ -300,16 +288,12 @@ private:
   // Timeout to use with GetQueuedCompletionStatus.
   const DWORD gqcs_timeout_;
 
-  // Helper class to run the scheduler in its own thread.
-  struct thread_function;
-  friend struct thread_function;
-
   // Function object for processing timeouts in a background thread.
   struct timer_thread_function;
   friend struct timer_thread_function;
 
   // Background thread used for processing timeouts.
-  boost::asio::detail::thread timer_thread_;
+  scoped_ptr<thread> timer_thread_;
 
   // A waitable timer object used for waiting for timeouts.
   auto_handle waitable_timer_;
@@ -328,9 +312,6 @@ private:
 
   // The concurrency hint used to initialise the io_context.
   const int concurrency_hint_;
-
-  // The thread that is running the io_context.
-  boost::asio::detail::thread thread_;
 };
 
 } // namespace detail

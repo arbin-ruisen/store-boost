@@ -11,7 +11,6 @@
 #include <boost/gil/extension/io/bmp/detail/is_allowed.hpp>
 #include <boost/gil/extension/io/bmp/detail/reader_backend.hpp>
 
-#include <boost/gil/io/detail/dynamic.hpp>
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/bit_operations.hpp>
 #include <boost/gil/io/conversion_policies.hpp>
@@ -20,9 +19,10 @@
 #include <boost/gil/io/row_buffer_helper.hpp>
 #include <boost/gil/io/typedefs.hpp>
 
-#include <boost/assert.hpp>
+#include <boost/mpl/and.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/utility/enable_if.hpp>
 
-#include <type_traits>
 #include <vector>
 
 namespace boost { namespace gil {
@@ -51,12 +51,16 @@ class reader< Device
 {
 private:
 
-    using this_t = reader<Device, bmp_tag, ConversionPolicy>;
-    using cc_t = typename ConversionPolicy::color_converter_type;
+    typedef reader< Device
+                  , bmp_tag
+                  , ConversionPolicy
+                  > this_t;
+
+    typedef typename ConversionPolicy::color_converter_type cc_t;
 
 public:
 
-    using backend_t = reader_backend< Device, bmp_tag>;
+    typedef reader_backend< Device, bmp_tag > backend_t;
 
 public:
 
@@ -98,11 +102,9 @@ public:
             io_error( "Image header was not read." );
         }
 
-        using is_read_and_convert_t = typename std::is_same
-            <
-                ConversionPolicy,
-                detail::read_and_no_convert
-            >::type;
+        typedef typename is_same< ConversionPolicy
+                                , detail::read_and_no_convert
+                                >::type is_read_and_convert_t;
 
         io_error_if( !detail::is_allowed< View >( this->_info
                                                 , is_read_and_convert_t()
@@ -128,11 +130,11 @@ public:
             {
                 this->_scanline_length = ( this->_info._width * num_channels< rgba8_view_t >::value + 3 ) & ~3;
 
-                read_palette_image
-                    <
-                        gray1_image_t::view_t,
-                        detail::mirror_bits<byte_vector_t, std::true_type>
-                    >(dst_view);
+                read_palette_image< gray1_image_t::view_t
+                                  , detail::mirror_bits< byte_vector_t
+                                                       , mpl::true_
+                                                       >
+                                  > ( dst_view );
                 break;
             }
 
@@ -154,11 +156,11 @@ public:
                     {
                         this->_scanline_length = ( this->_info._width * num_channels< rgba8_view_t >::value + 3 ) & ~3;
 
-                        read_palette_image
-                            <
-                                gray4_image_t::view_t,
-                                detail::swap_half_bytes<byte_vector_t, std::true_type>
-                            >(dst_view);
+                        read_palette_image< gray4_image_t::view_t
+                                          , detail::swap_half_bytes< byte_vector_t
+                                                                   , mpl::true_
+                                                                   >
+                                          > ( dst_view );
                         break;
                     }
 
@@ -260,8 +262,8 @@ private:
     {
         this->read_palette();
 
-        using rh_t = detail::row_buffer_helper_view<View_Src>;
-        using it_t = typename rh_t::iterator_t;
+        typedef detail::row_buffer_helper_view< View_Src > rh_t;
+        typedef typename rh_t::iterator_t          it_t;
 
         rh_t rh( _pitch, true );
 
@@ -344,8 +346,8 @@ private:
             io_error( "bmp_reader::apply(): unsupported BMP compression" );
         }
 
-        using image_t = rgb8_image_t;
-        using it_t = typename image_t::view_t::x_iterator;
+        typedef rgb8_image_t image_t;
+        typedef typename image_t::view_t::x_iterator it_t;
 
         for( std::ptrdiff_t y = 0
            ; y < this->_settings._dim.y
@@ -448,9 +450,9 @@ private:
     template< typename View_Dst >
     void read_palette_image_rle( const View_Dst& view )
     {
-        BOOST_ASSERT(
-            this->_info._compression == bmp_compression::_rle4 ||
-            this->_info._compression == bmp_compression::_rle8);
+        assert(  this->_info._compression == bmp_compression::_rle4
+              || this->_info._compression == bmp_compression::_rle8
+              );
 
         this->read_palette();
 
@@ -460,7 +462,7 @@ private:
         // we need to know the stream position for padding purposes
         std::size_t stream_pos = this->_info._offset;
 
-        using Buf_type = std::vector<rgba8_pixel_t>;
+        typedef std::vector< rgba8_pixel_t > Buf_type;
         Buf_type buf( this->_settings._dim.x );
         Buf_type::iterator dst_it  = buf.begin();
         Buf_type::iterator dst_end = buf.end();
@@ -692,7 +694,10 @@ class dynamic_image_reader< Device
                    , detail::read_and_no_convert
                    >
 {
-    using parent_t = reader<Device, bmp_tag, detail::read_and_no_convert>;
+    typedef reader< Device
+                  , bmp_tag
+                  , detail::read_and_no_convert
+                  > parent_t;
 
 public:
 
@@ -704,12 +709,12 @@ public:
               )
     {}
 
-    template< typename ...Images >
-    void apply( any_image< Images... >& images )
+    template< typename Images >
+    void apply( any_image< Images >& images )
     {
         detail::bmp_type_format_checker format_checker( this->_info._bits_per_pixel );
 
-        if( !detail::construct_matched( images
+        if( !construct_matched( images
                               , format_checker
                               ))
         {
@@ -725,8 +730,8 @@ public:
                                     , parent_t
                                     > op( this );
 
-            variant2::visit( op
-                           ,view( images )
+            apply_operation( view( images )
+                           , op
                            );
         }
     }

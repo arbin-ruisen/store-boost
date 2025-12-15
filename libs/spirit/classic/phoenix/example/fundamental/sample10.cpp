@@ -480,7 +480,7 @@ main()
 {
     int _10 = 10;
 
-#if !defined(__BORLANDC__) || defined(__clang__)
+#ifndef __BORLANDC__
 
     context<nil_t>
     (

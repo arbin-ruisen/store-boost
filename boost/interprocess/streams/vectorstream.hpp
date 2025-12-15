@@ -52,7 +52,6 @@
 #include <istream>
 #include <ostream>
 #include <string>    // char traits
-#include <climits>   // INT_MAX
 #include <cstddef>   // ptrdiff_t
 #include <boost/interprocess/interprocess_fwd.hpp>
 #include <boost/assert.hpp>
@@ -116,7 +115,7 @@ class basic_vectorbuf
             mp_high_water = base_t::pptr();
          }
          //This does not reallocate
-         m_vect.resize(std::size_t(mp_high_water - (m_vect.size() ? &m_vect[0] : 0)));
+         m_vect.resize(mp_high_water - (m_vect.size() ? &m_vect[0] : 0));
       }
       //Now swap vector
       m_vect.swap(vect);
@@ -139,9 +138,9 @@ class basic_vectorbuf
          if(m_vect.size() > high_pos){
             m_vect.resize(high_pos);
             //But we must update end write pointer because vector size is now shorter
-            off_type old_pos = base_t::pptr() - base_t::pbase();
+            int old_pos = base_t::pptr() - base_t::pbase();
             const_cast<basic_vectorbuf*>(this)->base_t::setp(old_ptr, old_ptr + high_pos);
-            const_cast<basic_vectorbuf*>(this)->pbump(old_pos);
+            const_cast<basic_vectorbuf*>(this)->base_t::pbump(old_pos);
          }
       }
       return m_vect;
@@ -153,14 +152,14 @@ class basic_vectorbuf
    void reserve(typename vector_type::size_type size)
    {
       if (this->m_mode & std::ios_base::out && size > m_vect.size()){
-         off_type write_pos = base_t::pptr() - base_t::pbase();
-         off_type read_pos  = base_t::gptr() - base_t::eback();
+         typename vector_type::difference_type write_pos = base_t::pptr() - base_t::pbase();
+         typename vector_type::difference_type read_pos  = base_t::gptr() - base_t::eback();
          //Now update pointer data
          m_vect.reserve(size);
          this->initialize_pointers();
-         this->pbump(write_pos);
+         base_t::pbump((int)write_pos);
          if(this->m_mode & std::ios_base::in){
-            base_t::setg(base_t::eback(), base_t::eback() + read_pos, base_t::egptr());
+            base_t::gbump((int)read_pos);
          }
       }
    }
@@ -190,7 +189,7 @@ class basic_vectorbuf
       // The initial write position is the beginning of the vector.
       if(m_mode & std::ios_base::out){
          //First get real size
-         off_type real_size = static_cast<off_type>(m_vect.size());
+         int real_size = (int)m_vect.size();
          //Then maximize size for high watermarking
          m_vect.resize(m_vect.capacity());
          BOOST_ASSERT(m_vect.size() == m_vect.capacity());
@@ -209,23 +208,13 @@ class basic_vectorbuf
                this->setg(p, p, p + real_size);
          }
          if (m_mode & (std::ios_base::app | std::ios_base::ate)){
-            this->pbump(real_size);
+            base_t::pbump((int)real_size);
          }
       }
    }
 
-   // LWG255-inspired variant of base_t::pbump that takes a streamoff instead of an int.
-   void pbump(off_type delta) {
-      if (delta > INT_MAX) {
-            for (off_type d = delta / INT_MAX; d > 0; d--)
-                base_t::pbump(INT_MAX);
-            delta %= INT_MAX;
-      }
-      base_t::pbump((int)delta);
-   }
-
    protected:
-   virtual int_type underflow() BOOST_OVERRIDE
+   virtual int_type underflow()
    {
       if (base_t::gptr() == 0)
          return CharTraits::eof();
@@ -240,7 +229,7 @@ class basic_vectorbuf
       return CharTraits::eof();
    }
 
-   virtual int_type pbackfail(int_type c = CharTraits::eof()) BOOST_OVERRIDE
+   virtual int_type pbackfail(int_type c = CharTraits::eof())
    {
       if(this->gptr() != this->eback()) {
          if(!CharTraits::eq_int_type(c, CharTraits::eof())) {
@@ -250,7 +239,7 @@ class basic_vectorbuf
             }
             else if(m_mode & std::ios_base::out) {
                this->gbump(-1);
-               *this->gptr() = CharTraits::to_char_type(c);
+               *this->gptr() = c;
                return c;
             }
             else
@@ -265,7 +254,7 @@ class basic_vectorbuf
          return CharTraits::eof();
    }
 
-   virtual int_type overflow(int_type c = CharTraits::eof()) BOOST_OVERRIDE
+   virtual int_type overflow(int_type c = CharTraits::eof())
    {
       if(m_mode & std::ios_base::out) {
          if(!CharTraits::eq_int_type(c, CharTraits::eof())) {
@@ -288,7 +277,7 @@ class basic_vectorbuf
                if (m_mode & std::ios_base::in)
                   base_t::setg(p, p + (base_t::gptr() - base_t::eback()), mp_high_water);
                //Update write position to the old position + 1
-               this->pbump((off_type)new_outpos);
+               base_t::pbump((int)new_outpos);
                return c;
          }
          else  // c is EOF, so we don't have to do anything
@@ -300,7 +289,7 @@ class basic_vectorbuf
 
    virtual pos_type seekoff(off_type off, std::ios_base::seekdir dir,
                               std::ios_base::openmode mode
-                                 = std::ios_base::in | std::ios_base::out) BOOST_OVERRIDE
+                                 = std::ios_base::in | std::ios_base::out)
    {
       //Get seek mode
       bool in(0 != (mode & std::ios_base::in)), out(0 != (mode & std::ios_base::out));
@@ -362,13 +351,13 @@ class basic_vectorbuf
          base_t::setg(base_t::eback(), base_t::eback() + newoff, base_t::egptr());
       if (out){
          base_t::setp(base_t::pbase(), base_t::epptr());
-         this->pbump(newoff);
+         base_t::pbump(newoff);
       }
       return pos_type(newoff);
    }
 
    virtual pos_type seekpos(pos_type pos, std::ios_base::openmode mode
-                                 = std::ios_base::in | std::ios_base::out) BOOST_OVERRIDE
+                                 = std::ios_base::in | std::ios_base::out)
    {  return seekoff(pos - pos_type(off_type(0)), std::ios_base::beg, mode);  }
 
    private:

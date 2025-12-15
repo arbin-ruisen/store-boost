@@ -9,14 +9,13 @@
 #ifndef BOOST_GIL_EXTENSION_IO_RAW_DETAIL_DEVICE_HPP
 #define BOOST_GIL_EXTENSION_IO_RAW_DETAIL_DEVICE_HPP
 
-#include <boost/gil/extension/io/raw/tags.hpp>
-
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/device.hpp>
 
+#include <boost/utility/enable_if.hpp>
+
 #include <memory>
 #include <string>
-#include <type_traits>
 
 namespace boost { namespace gil { namespace detail {
 
@@ -73,7 +72,7 @@ public:
 
     int unpack()                                                         { return _processor_ptr.get()->unpack(); }
     int dcraw_process()                                                  { return _processor_ptr.get()->dcraw_process(); }
-    libraw_processed_image_t* dcraw_make_mem_image(int* error_code=nullptr) { return _processor_ptr.get()->dcraw_make_mem_image(error_code); }
+    libraw_processed_image_t* dcraw_make_mem_image(int* error_code=NULL) { return _processor_ptr.get()->dcraw_make_mem_image(error_code); }
 
 protected:
 
@@ -118,9 +117,13 @@ public:
 };
 
 template< typename FormatTag >
-struct is_adaptable_input_device<FormatTag, LibRaw, void> : std::true_type
+struct is_adaptable_input_device< FormatTag
+                                , LibRaw
+                                , void
+                                >
+    : mpl::true_
 {
-    using device_type = file_stream_device<FormatTag>;
+    typedef file_stream_device< FormatTag > device_type;
 };
 
 

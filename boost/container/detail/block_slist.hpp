@@ -25,7 +25,6 @@
 #include <boost/container/container_fwd.hpp>
 #include <boost/container/pmr/memory_resource.hpp>
 #include <boost/container/throw_exception.hpp>
-#include <boost/container/detail/placement_new.hpp>
 
 #include <boost/move/detail/type_traits.hpp>
 #include <boost/intrusive/linear_slist_algorithms.hpp>
@@ -68,11 +67,11 @@ class block_slist_base
 {
    slist_node m_slist;
 
-   BOOST_STATIC_CONSTEXPR std::size_t MaxAlignMinus1 = memory_resource::max_align-1u;
+   static const std::size_t MaxAlignMinus1 = memory_resource::max_align-1u;
 
    public:
 
-   BOOST_STATIC_CONSTEXPR std::size_t header_size = std::size_t(sizeof(DerivedFromBlockSlistHeader) + MaxAlignMinus1) & std::size_t(~MaxAlignMinus1);
+   static const std::size_t header_size = std::size_t(sizeof(DerivedFromBlockSlistHeader) + MaxAlignMinus1) & std::size_t(~MaxAlignMinus1);
 
    explicit block_slist_base()
    {  slist_algo::init_header(&m_slist);  }
@@ -95,7 +94,7 @@ class block_slist_base
       if((size_t(-1) - header_size) < size)
          throw_bad_alloc();
       void *p = mr.allocate(size+header_size);
-      block_slist_header &mb  = *::new((void*)p, boost_container_new_t()) DerivedFromBlockSlistHeader;
+      block_slist_header &mb  = *::new((void*)p) DerivedFromBlockSlistHeader;
       mb.size = size+header_size;
       slist_algo::link_after(&m_slist, &mb);
       return (char *)p + header_size;

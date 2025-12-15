@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -124,6 +124,7 @@ public:
 };
 
 template<class FwdIt>
+inline
 bool
 bitstream::
 fill(std::size_t n, FwdIt& first, FwdIt const& last)
@@ -139,6 +140,7 @@ fill(std::size_t n, FwdIt& first, FwdIt const& last)
 }
 
 template<class FwdIt>
+inline
 void
 bitstream::
 fill_8(FwdIt& it)
@@ -148,6 +150,7 @@ fill_8(FwdIt& it)
 }
 
 template<class FwdIt>
+inline
 void
 bitstream::
 fill_16(FwdIt& it)
@@ -159,6 +162,7 @@ fill_16(FwdIt& it)
 }
 
 template<class Unsigned>
+inline
 void
 bitstream::
 peek(Unsigned& value, std::size_t n)
@@ -170,6 +174,7 @@ peek(Unsigned& value, std::size_t n)
 }
 
 template<class Unsigned>
+inline
 void
 bitstream::
 read(Unsigned& value, std::size_t n)
@@ -183,6 +188,7 @@ read(Unsigned& value, std::size_t n)
 }
 
 template<class BidirIt>
+inline
 void
 bitstream::
 rewind(BidirIt& it)

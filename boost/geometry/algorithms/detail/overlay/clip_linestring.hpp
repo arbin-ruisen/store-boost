@@ -2,11 +2,10 @@
 
 // Copyright (c) 2007-2015 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2015-2024.
-// Modifications copyright (c) 2015-2024 Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// This file was modified by Oracle on 2015.
+// Modifications copyright (c) 2015 Oracle and/or its affiliates.
+
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -15,9 +14,7 @@
 #ifndef BOOST_GEOMETRY_ALGORITHMS_DETAIL_OVERLAY_CLIP_LINESTRING_HPP
 #define BOOST_GEOMETRY_ALGORITHMS_DETAIL_OVERLAY_CLIP_LINESTRING_HPP
 
-#include <boost/range/begin.hpp>
-#include <boost/range/empty.hpp>
-#include <boost/range/end.hpp>
+#include <boost/range.hpp>
 
 #include <boost/geometry/algorithms/clear.hpp>
 #include <boost/geometry/algorithms/convert.hpp>
@@ -26,8 +23,6 @@
 
 #include <boost/geometry/util/select_coordinate_type.hpp>
 #include <boost/geometry/geometries/segment.hpp>
-
-#include <boost/geometry/strategies/cartesian/point_in_point.hpp>
 
 namespace boost { namespace geometry
 {
@@ -54,7 +49,7 @@ template<typename Box, typename Point>
 class liang_barsky
 {
 private:
-    using segment_type = model::referring_segment<Point>;
+    typedef model::referring_segment<Point> segment_type;
 
     template <typename CoordinateType, typename CalcType>
     inline bool check_edge(CoordinateType const& p, CoordinateType const& q, CalcType& t1, CalcType& t2) const
@@ -88,19 +83,10 @@ private:
 
 public:
 
-// TODO: Temporary, this strategy should be moved, it is cartesian-only
-
-    using equals_point_point_strategy_type = strategy::within::cartesian_point_point;
-
-    static inline equals_point_point_strategy_type get_equals_point_point_strategy()
-    {
-        return equals_point_point_strategy_type();
-    }
-
     inline bool clip_segment(Box const& b, segment_type& s, bool& sp1_clipped, bool& sp2_clipped) const
     {
-        using coordinate_type = typename select_coordinate_type<Box, Point>::type;
-        using calc_type = typename select_most_precise<coordinate_type, double>::type;
+        typedef typename select_coordinate_type<Box, Point>::type coordinate_type;
+        typedef typename select_most_precise<coordinate_type, double>::type calc_type;
 
         calc_type t1 = 0;
         calc_type t2 = 1;
@@ -180,23 +166,26 @@ template
     typename OutputLinestring,
     typename OutputIterator,
     typename Range,
+    typename RobustPolicy,
     typename Box,
     typename Strategy
 >
 OutputIterator clip_range_with_box(Box const& b, Range const& range,
-                                   OutputIterator out, Strategy const& strategy)
+            RobustPolicy const&,
+            OutputIterator out, Strategy const& strategy)
 {
     if (boost::begin(range) == boost::end(range))
     {
         return out;
     }
 
-    using point_type = point_type_t<OutputLinestring>;
+    typedef typename point_type<OutputLinestring>::type point_type;
 
     OutputLinestring line_out;
 
-    auto vertex = boost::begin(range);
-    for (auto previous = vertex++;
+    typedef typename boost::range_iterator<Range const>::type iterator_type;
+    iterator_type vertex = boost::begin(range);
+    for(iterator_type previous = vertex++;
             vertex != boost::end(range);
             ++previous, ++vertex)
     {
@@ -235,10 +224,9 @@ OutputIterator clip_range_with_box(Box const& b, Range const& range,
             // b. Add p1 only if it is the first point, then add p2
             if (boost::empty(line_out))
             {
-                detail::overlay::append_with_duplicates(line_out, p1);
+                detail::overlay::append_no_duplicates(line_out, p1, true);
             }
-            detail::overlay::append_no_duplicates(line_out, p2,
-                                                  strategy.get_equals_point_point_strategy());
+            detail::overlay::append_no_duplicates(line_out, p2);
 
             // c. If c2 is clipped, finish the line
             if (c2)

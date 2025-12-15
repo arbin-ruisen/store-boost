@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::if_`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Conditionally return one of two values based on a condition.
     //! @ingroup group-Logical
     //!
@@ -50,8 +50,8 @@ namespace boost { namespace hana {
         constexpr decltype(auto) operator()(Cond&& cond, Then&& then, Else&& else_) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr if_t if_{};
+    constexpr if_t if_{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_IF_HPP

@@ -14,10 +14,8 @@
 #include <boost/spirit/home/qi/parse.hpp>
 #include <boost/spirit/home/support/iterators/istream_iterator.hpp>
 #include <boost/spirit/home/support/unused.hpp>
-#include <boost/core/enable_if.hpp>
 #include <boost/mpl/bool.hpp>
 
-#include <iosfwd>
 #include <iterator>
 #include <string>
 
@@ -25,10 +23,6 @@
 namespace boost { namespace spirit { namespace qi { namespace detail
 {
     ///////////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4512) // assignment operator could not be generated.
-#endif
     template <typename Expr
       , typename CopyExpr = mpl::false_, typename CopyAttr = mpl::false_
       , typename Skipper = unused_type, typename Attribute = unused_type const>
@@ -51,6 +45,10 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         Skipper const& skipper;
         Attribute& attr;
         BOOST_SCOPED_ENUM(skip_flag) const post_skip;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        match_manip& operator= (match_manip const&);
     };
 
     template <typename Expr, typename Skipper, typename Attribute>
@@ -67,6 +65,10 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         Skipper const& skipper;
         Attribute attr;
         BOOST_SCOPED_ENUM(skip_flag) const post_skip;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        match_manip& operator= (match_manip const&);
     };
 
     template <typename Expr, typename Skipper, typename Attribute>
@@ -83,10 +85,11 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         Skipper const& skipper;
         Attribute& attr;
         BOOST_SCOPED_ENUM(skip_flag) const post_skip;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        match_manip& operator= (match_manip const&);
     };
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
     ///////////////////////////////////////////////////////////////////////////
     template <typename Expr, typename Enable = void>
@@ -156,7 +159,7 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         input_iterator l;
         if (!qi::parse(f, l, fm.expr))
         {
-            is.setstate(std::basic_istream<Char, Traits>::failbit);
+            is.setstate(std::ios_base::failbit);
         }
         return is;
     }
@@ -175,7 +178,7 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         input_iterator l;
         if (!qi::parse(f, l, fm.expr, fm.attr))
         {
-            is.setstate(std::basic_istream<Char, Traits>::failbit);
+            is.setstate(std::ios_base::failbit);
         }
         return is;
     }
@@ -195,7 +198,7 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         if (!qi::phrase_parse(
                 f, l, fm.expr, fm.skipper, fm.post_skip))
         {
-            is.setstate(std::basic_istream<Char, Traits>::failbit);
+            is.setstate(std::ios_base::failbit);
         }
         return is;
     }
@@ -217,7 +220,7 @@ namespace boost { namespace spirit { namespace qi { namespace detail
         if (!qi::phrase_parse(
                 f, l, fm.expr, fm.skipper, fm.post_skip, fm.attr))
         {
-            is.setstate(std::basic_istream<Char, Traits>::failbit);
+            is.setstate(std::ios_base::failbit);
         }
         return is;
     }

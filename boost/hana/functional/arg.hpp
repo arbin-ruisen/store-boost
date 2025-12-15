@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::arg`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -16,7 +16,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <type_traits>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @ingroup group-functional
     //! Return the `n`th passed argument.
     //!
@@ -134,8 +134,8 @@ namespace boost { namespace hana {
     };
 
     template <std::size_t n>
-    BOOST_HANA_INLINE_VARIABLE constexpr arg_t<n> arg{};
+    constexpr arg_t<n> arg{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FUNCTIONAL_ARG_HPP

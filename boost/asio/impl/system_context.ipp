@@ -2,7 +2,7 @@
 // impl/system_context.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -29,32 +29,19 @@ struct system_context::thread_function
 
   void operator()()
   {
-#if !defined(BOOST_ASIO_NO_EXCEPTIONS)
-    try
-    {
-#endif// !defined(BOOST_ASIO_NO_EXCEPTIONS)
-      boost::system::error_code ec;
-      scheduler_->run(ec);
-#if !defined(BOOST_ASIO_NO_EXCEPTIONS)
-    }
-    catch (...)
-    {
-      std::terminate();
-    }
-#endif// !defined(BOOST_ASIO_NO_EXCEPTIONS)
+    boost::system::error_code ec;
+    scheduler_->run(ec);
   }
 };
 
 system_context::system_context()
-  : scheduler_(add_scheduler(new detail::scheduler(*this, false))),
-    threads_(std::allocator<void>())
+  : scheduler_(use_service<detail::scheduler>(*this))
 {
   scheduler_.work_started();
 
   thread_function f = { &scheduler_ };
-  num_threads_ = detail::thread::hardware_concurrency() * 2;
-  num_threads_ = num_threads_ ? num_threads_ : 2;
-  threads_.create_threads(f, num_threads_);
+  std::size_t num_threads = detail::thread::hardware_concurrency() * 2;
+  threads_.create_threads(f, num_threads ? num_threads : 2);
 }
 
 system_context::~system_context()
@@ -69,7 +56,7 @@ void system_context::stop()
   scheduler_.stop();
 }
 
-bool system_context::stopped() const noexcept
+bool system_context::stopped() const BOOST_ASIO_NOEXCEPT
 {
   return scheduler_.stopped();
 }
@@ -78,13 +65,6 @@ void system_context::join()
 {
   scheduler_.work_finished();
   threads_.join();
-}
-
-detail::scheduler& system_context::add_scheduler(detail::scheduler* s)
-{
-  detail::scoped_ptr<detail::scheduler> scoped_impl(s);
-  boost::asio::add_service<detail::scheduler>(*this, scoped_impl.get());
-  return *scoped_impl.release();
 }
 
 } // namespace asio

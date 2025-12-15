@@ -10,8 +10,6 @@
 #pragma once
 #endif
 
-#include <boost/math/tools/config.hpp>
-#include <boost/math/tools/type_traits.hpp>
 #include <boost/math/special_functions/math_fwd.hpp>
 #include <boost/math/special_functions/factorials.hpp>
 #include <boost/math/special_functions/beta.hpp>
@@ -20,14 +18,17 @@
 namespace boost{ namespace math{
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T binomial_coefficient(unsigned n, unsigned k, const Policy& pol)
+T binomial_coefficient(unsigned n, unsigned k, const Policy& pol)
 {
-   static_assert(!boost::math::is_integral<T>::value, "Type T must not be an integral type");
+   BOOST_STATIC_ASSERT(!boost::is_integral<T>::value);
    BOOST_MATH_STD_USING
-   constexpr auto function = "boost::math::binomial_coefficient<%1%>(unsigned, unsigned)";
+   static const char* function = "boost::math::binomial_coefficient<%1%>(unsigned, unsigned)";
    if(k > n)
-      return policies::raise_domain_error<T>(function, "The binomial coefficient is undefined for k > n, but got k = %1%.", static_cast<T>(k), pol);
-   T result;  // LCOV_EXCL_LINE
+      return policies::raise_domain_error<T>(
+         function, 
+         "The binomial coefficient is undefined for k > n, but got k = %1%.",
+         static_cast<T>(k), pol);
+   T result;
    if((k == 0) || (k == n))
       return static_cast<T>(1);
    if((k == 1) || (k == n-1))
@@ -44,11 +45,11 @@ BOOST_MATH_GPU_ENABLED T binomial_coefficient(unsigned n, unsigned k, const Poli
    {
       // Use the beta function:
       if(k < n - k)
-         result = static_cast<T>(k * boost::math::beta(static_cast<T>(k), static_cast<T>(n-k+1), pol));
+         result = k * beta(static_cast<T>(k), static_cast<T>(n-k+1), pol);
       else
-         result = static_cast<T>((n - k) * boost::math::beta(static_cast<T>(k+1), static_cast<T>(n-k), pol));
+         result = (n - k) * beta(static_cast<T>(k+1), static_cast<T>(n-k), pol);
       if(result == 0)
-         return policies::raise_overflow_error<T>(function, nullptr, pol);
+         return policies::raise_overflow_error<T>(function, 0, pol);
       result = 1 / result;
    }
    // convert to nearest integer:
@@ -60,19 +61,13 @@ BOOST_MATH_GPU_ENABLED T binomial_coefficient(unsigned n, unsigned k, const Poli
 // we'll promote to double:
 //
 template <>
-BOOST_MATH_GPU_ENABLED inline float binomial_coefficient<float, policies::policy<> >(unsigned n, unsigned k, const policies::policy<>&)
+inline float binomial_coefficient<float, policies::policy<> >(unsigned n, unsigned k, const policies::policy<>& pol)
 {
-   typedef policies::normalise<
-       policies::policy<>,
-       policies::promote_float<true>,
-       policies::promote_double<false>,
-       policies::discrete_quantile<>,
-       policies::assert_undefined<> >::type forwarding_policy;
-   return policies::checked_narrowing_cast<float, forwarding_policy>(binomial_coefficient<double>(n, k, forwarding_policy()), "boost::math::binomial_coefficient<%1%>(unsigned,unsigned)");
+   return policies::checked_narrowing_cast<float, policies::policy<> >(binomial_coefficient<double>(n, k, pol), "boost::math::binomial_coefficient<%1%>(unsigned,unsigned)");
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline T binomial_coefficient(unsigned n, unsigned k)
+inline T binomial_coefficient(unsigned n, unsigned k)
 {
    return binomial_coefficient<T>(n, k, policies::policy<>());
 }

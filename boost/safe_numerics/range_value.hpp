@@ -1,6 +1,11 @@
 #ifndef BOOST_RANGE_VALUE_HPP
 #define BOOST_RANGE_VALUE_HPP
 
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 //  Copyright (c) 2015 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -39,9 +44,9 @@ std::basic_ostream<CharT, Traits> & operator<<(
     const range_value<T> & t
 ){
     return os
-        << boost::safe_numerics::make_interval<T>()
+        << boost::safe_numerics::make_interval(t.m_t)
         << t.m_t;
-}
+};
 
 template<typename T>
 struct result_display {
@@ -52,7 +57,7 @@ struct result_display {
 };
 
 template<typename T>
-inline result_display<T> make_result_display(const T & t){
+result_display<T> make_result_display(const T & t){
     return result_display<T>(t);
 }
 

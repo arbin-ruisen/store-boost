@@ -97,7 +97,6 @@ struct char_constants< char >
     static const char_type* append_param_name() { return "Append"; }
     static const char_type* enable_final_rotation_param_name() { return "EnableFinalRotation"; }
     static const char_type* auto_flush_param_name() { return "AutoFlush"; }
-    static const char_type* auto_newline_mode_param_name() { return "AutoNewline"; }
     static const char_type* asynchronous_param_name() { return "Asynchronous"; }
     static const char_type* format_param_name() { return "Format"; }
     static const char_type* provider_id_param_name() { return "ProviderID"; }
@@ -114,10 +113,6 @@ struct char_constants< char >
 
     static const char_type* scan_method_all() { return "All"; }
     static const char_type* scan_method_matching() { return "Matching"; }
-
-    static const char_type* auto_newline_mode_disabled() { return "Disabled"; }
-    static const char_type* auto_newline_mode_always_insert() { return "AlwaysInsert"; }
-    static const char_type* auto_newline_mode_insert_if_missing() { return "InsertIfMissing"; }
 
     static const char_type* registration_never() { return "Never"; }
     static const char_type* registration_on_demand() { return "OnDemand"; }
@@ -150,7 +145,7 @@ struct char_constants< char >
     {
         using namespace std; // to make sure we can use C functions unqualified
         int n = 0;
-        if (isdigit(static_cast< unsigned char >(c)))
+        if (isdigit(c))
             n = c - '0';
         else if (c >= 'a' && c <= 'f')
             n = c - 'a' + 10;
@@ -233,7 +228,6 @@ struct char_constants< wchar_t >
     static const char_type* append_param_name() { return L"Append"; }
     static const char_type* enable_final_rotation_param_name() { return L"EnableFinalRotation"; }
     static const char_type* auto_flush_param_name() { return L"AutoFlush"; }
-    static const char_type* auto_newline_mode_param_name() { return L"AutoNewline"; }
     static const char_type* asynchronous_param_name() { return L"Asynchronous"; }
     static const char_type* format_param_name() { return L"Format"; }
     static const char_type* provider_id_param_name() { return L"ProviderID"; }
@@ -250,10 +244,6 @@ struct char_constants< wchar_t >
 
     static const char_type* scan_method_all() { return L"All"; }
     static const char_type* scan_method_matching() { return L"Matching"; }
-
-    static const char_type* auto_newline_mode_disabled() { return L"Disabled"; }
-    static const char_type* auto_newline_mode_always_insert() { return L"AlwaysInsert"; }
-    static const char_type* auto_newline_mode_insert_if_missing() { return L"InsertIfMissing"; }
 
     static const char_type* registration_never() { return L"Never"; }
     static const char_type* registration_on_demand() { return L"OnDemand"; }

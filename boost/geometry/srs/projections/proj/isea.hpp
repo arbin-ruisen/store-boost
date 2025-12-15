@@ -2,8 +2,8 @@
 
 // Copyright (c) 2008-2015 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017, 2018, 2019.
-// Modifications copyright (c) 2017-2019, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017, 2018.
+// Modifications copyright (c) 2017-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle.
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -48,14 +48,12 @@
 #include <boost/core/ignore_unused.hpp>
 
 #include <boost/geometry/core/assert.hpp>
+#include <boost/geometry/util/math.hpp>
 
 #include <boost/geometry/srs/projections/impl/base_static.hpp>
 #include <boost/geometry/srs/projections/impl/base_dynamic.hpp>
-#include <boost/geometry/srs/projections/impl/factory_entry.hpp>
-#include <boost/geometry/srs/projections/impl/pj_param.hpp>
 #include <boost/geometry/srs/projections/impl/projects.hpp>
-
-#include <boost/geometry/util/math.hpp>
+#include <boost/geometry/srs/projections/impl/factory_entry.hpp>
 
 namespace boost { namespace geometry
 {
@@ -207,17 +205,17 @@ namespace projections
 
             template <typename T>
             struct isea_dgg {
+                //isea_poly         polyhedron; /* ignored, icosahedron */
                 T                 o_lat, o_lon, o_az; /* orientation, radians */
-                T                 radius; /* radius of the earth in meters, ignored 1.0 */
-                unsigned long     serial;
-                //int               pole; /* true if standard snyder */
+                int               pole; /* true if standard snyder */
+                //isea_topology     topology; /* ignored, hexagon */
                 int               aperture; /* valid values depend on partitioning method */
                 int               resolution;
+                T                 radius; /* radius of the earth in meters, ignored 1.0 */
+                isea_address_form output; /* an isea_address_form */
                 int               triangle; /* triangle of last transformed point */
                 int               quad; /* quad of last transformed point */
-                //isea_poly         polyhedron; /* ignored, icosahedron */
-                //isea_topology     topology; /* ignored, hexagon */
-                isea_address_form output; /* an isea_address_form */
+                unsigned long     serial;
             };
 
             template <typename T>
@@ -232,9 +230,9 @@ namespace projections
 
             template <typename T>
             struct isea_address {
-                T      x,y; /* or i,j or lon,lat depending on type */
                 int    type; /* enum isea_address_form */
                 int    number;
+                T      x,y; /* or i,j or lon,lat depending on type */
             };
 
             /* ENDINC */
@@ -266,7 +264,7 @@ namespace projections
                 };
                 return result;
             }
-
+            
             template <typename T>
             inline const isea_geo<T> * vertex()
             {
@@ -1114,14 +1112,20 @@ namespace projections
                 isea_dgg<T> dgg;
             };
 
+            // template class, using CRTP to implement forward/inverse
             template <typename T, typename Parameters>
             struct base_isea_spheroid
+                : public base_t_f<base_isea_spheroid<T, Parameters>, T, Parameters>
             {
                 par_isea<T> m_proj_parm;
 
+                inline base_isea_spheroid(const Parameters& par)
+                    : base_t_f<base_isea_spheroid<T, Parameters>, T, Parameters>(*this, par)
+                {}
+
                 // FORWARD(s_forward)
                 // Project coordinates from geographic (lon, lat) to cartesian (x, y)
-                inline void fwd(Parameters const& , T const& lp_lon, T const& lp_lat, T& xy_x, T& xy_y) const
+                inline void fwd(T const& lp_lon, T const& lp_lat, T& xy_x, T& xy_y) const
                 {
                     isea_pt<T> out;
                     isea_geo<T> in;
@@ -1240,7 +1244,7 @@ namespace projections
                 pj_param_i<srs::spar::aperture>(params, "aperture", srs::dpar::aperture, proj_parm.dgg.aperture);
                 // TODO: this parameter is set below second time
                 pj_param_i<srs::spar::resolution>(params, "resolution", srs::dpar::resolution, proj_parm.dgg.resolution);
-
+                
                 isea_mode_init(params, proj_parm);
 
                 // TODO: pj_param_exists -> pj_get_param_b ?
@@ -1288,7 +1292,8 @@ namespace projections
     struct isea_spheroid : public detail::isea::base_isea_spheroid<T, Parameters>
     {
         template <typename Params>
-        inline isea_spheroid(Params const& params, Parameters const& )
+        inline isea_spheroid(Params const& params, Parameters const& par)
+            : detail::isea::base_isea_spheroid<T, Parameters>(par)
         {
             detail::isea::setup_isea(params, this->m_proj_parm);
         }
@@ -1299,11 +1304,11 @@ namespace projections
     {
 
         // Static projection
-        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION_F(srs::spar::proj_isea, isea_spheroid)
+        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION(srs::spar::proj_isea, isea_spheroid, isea_spheroid)
 
         // Factory entry(s)
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_ENTRY_F(isea_entry, isea_spheroid)
-
+        
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_BEGIN(isea_init)
         {
             BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_ENTRY(isea, isea_entry)

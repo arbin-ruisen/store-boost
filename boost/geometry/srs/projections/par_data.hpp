@@ -10,11 +10,9 @@
 #ifndef BOOST_GEOMETRY_SRS_PROJECTIONS_PAR_DATA_HPP
 #define BOOST_GEOMETRY_SRS_PROJECTIONS_PAR_DATA_HPP
 
+#include <boost/config.hpp>
 #include <string>
 #include <vector>
-
-#include <boost/geometry/core/assert.hpp>
-#include <boost/geometry/core/config.hpp>
 
 namespace boost { namespace geometry { namespace srs
 {
@@ -36,9 +34,11 @@ struct nadgrids
         : base_t(first, last)
     {}
 
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
     nadgrids(std::initializer_list<std::string> l)
         : base_t(l)
     {}
+#endif
 
     nadgrids(std::string const& g0)
         : base_t(1)
@@ -86,8 +86,13 @@ struct towgs84
 
     towgs84()
         : m_size(0)
+#ifndef BOOST_NO_CXX11_UNIFIED_INITIALIZATION_SYNTAX
+        , m_data{0, 0, 0, 0, 0, 0, 0}
+#endif
     {
+#ifdef BOOST_NO_CXX11_UNIFIED_INITIALIZATION_SYNTAX
         std::fill(m_data, m_data + 7, T(0));
+#endif
     }
 
     template <typename It>
@@ -96,10 +101,12 @@ struct towgs84
         assign(first, last);
     }
 
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
     towgs84(std::initializer_list<T> l)
     {
         assign(l.begin(), l.end());
     }
+#endif
 
     towgs84(T const& v0, T const& v1, T const& v2)
         : m_size(3)
@@ -135,10 +142,12 @@ struct towgs84
             m_data[m_size] = *first;
     }
 
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
     void assign(std::initializer_list<T> l)
     {
         assign(l.begin(), l.end());
     }
+#endif
 
     const_reference operator[](size_type i) const
     {
@@ -175,97 +184,6 @@ struct towgs84
 private:
     size_type m_size;
     T m_data[7];
-};
-
-struct axis
-{
-    static const std::size_t static_capacity = 3;
-
-    typedef std::size_t size_type;
-    typedef int value_type;
-    typedef int* iterator;
-    typedef const int* const_iterator;
-    typedef int& reference;
-    typedef const int& const_reference;
-
-    axis()
-        : m_size(3)
-        , m_data{0, 0, 0}
-    {}
-
-    template <typename It>
-    axis(It first, It last)
-    {
-        assign(first, last);
-    }
-
-    axis(std::initializer_list<int> l)
-    {
-        assign(l.begin(), l.end());
-    }
-
-    axis(int const& v0, int const& v1, int const& v2)
-        : m_size(3)
-    {
-        m_data[0] = v0;
-        m_data[1] = v1;
-        m_data[2] = v2;
-    }
-
-    void push_back(int const& v)
-    {
-        BOOST_GEOMETRY_ASSERT(m_size < static_capacity);
-        m_data[m_size] = v;
-        ++m_size;
-    }
-
-    template <typename It>
-    void assign(It first, It last)
-    {
-        for (m_size = 0 ; first != last && m_size < 3 ; ++first, ++m_size)
-            m_data[m_size] = *first;
-    }
-
-    void assign(std::initializer_list<int> l)
-    {
-        assign(l.begin(), l.end());
-    }
-
-    const_reference operator[](size_type i) const
-    {
-        BOOST_GEOMETRY_ASSERT(i < m_size);
-        return m_data[i];
-    }
-
-    reference operator[](size_type i)
-    {
-        BOOST_GEOMETRY_ASSERT(i < m_size);
-        return m_data[i];
-    }
-
-    size_type size() const
-    {
-        return m_size;
-    }
-
-    bool empty() const
-    {
-        return m_size == 0;
-    }
-
-    void clear()
-    {
-        m_size = 0;
-    }
-
-    iterator begin() { return m_data; }
-    iterator end() { return m_data + m_size; }
-    const_iterator begin() const { return m_data; }
-    const_iterator end() const { return m_data + m_size; }
-
-private:
-    size_type m_size;
-    int m_data[3];
 };
 
 } // namespace detail

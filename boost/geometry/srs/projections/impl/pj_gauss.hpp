@@ -40,8 +40,7 @@
 #define BOOST_GEOMETRY_PROJECTIONS_IMPL_PJ_GAUSS_HPP
 
 
-#include <boost/geometry/srs/projections/constants.hpp>
-#include <boost/geometry/srs/projections/exception.hpp>
+#include <boost/geometry/util/math.hpp>
 
 
 namespace boost { namespace geometry { namespace projections {

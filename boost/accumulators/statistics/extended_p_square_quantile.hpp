@@ -76,7 +76,6 @@ namespace impl
                 boost::begin(args[extended_p_square_probabilities])
               , boost::end(args[extended_p_square_probabilities])
             )
-          , probability()
         {
         }
 
@@ -186,17 +185,6 @@ namespace impl
             }
 
         }
-
-    public:
-        // make this accumulator serializeable
-        // TODO: do we need to split to load/save and verify that the parameters did not change?
-        template<class Archive>
-        void serialize(Archive & ar, const unsigned int file_version)
-        { 
-            ar & probabilities;
-            ar & probability;
-        }
-
     private:
 
         array_type probabilities;

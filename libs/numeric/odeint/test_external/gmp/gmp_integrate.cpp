@@ -15,7 +15,7 @@
 #include <gmpxx.h>
 
 #include <boost/test/unit_test.hpp>
-#include <array>
+#include <boost/array.hpp>
 
 #include <boost/mpl/vector.hpp>
 

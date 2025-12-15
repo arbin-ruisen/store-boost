@@ -2,30 +2,22 @@
 
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2013-2020.
-// Modifications copyright (c) 2013-2020, Oracle and/or its affiliates.
-
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+// This file was modified by Oracle on 2013, 2014.
+// Modifications copyright (c) 2013-2014, Oracle and/or its affiliates.
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 
+// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+
 #ifndef BOOST_GEOMETRY_ALGORITHMS_DETAIL_SUB_RANGE_HPP
 #define BOOST_GEOMETRY_ALGORITHMS_DETAIL_SUB_RANGE_HPP
 
-#include <type_traits>
-
-#include <boost/geometry/algorithms/not_implemented.hpp>
+#include <boost/mpl/if.hpp>
 
 #include <boost/geometry/core/assert.hpp>
-#include <boost/geometry/core/exterior_ring.hpp>
-#include <boost/geometry/core/interior_rings.hpp>
-#include <boost/geometry/core/tag.hpp>
-#include <boost/geometry/core/tags.hpp>
-
 #include <boost/geometry/util/range.hpp>
-#include <boost/geometry/util/type_traits.hpp>
 
 namespace boost { namespace geometry {
 
@@ -34,12 +26,9 @@ namespace boost { namespace geometry {
 #ifndef DOXYGEN_NO_DISPATCH
 namespace detail_dispatch {
 
-template
-<
-    typename Geometry,
-    typename Tag = geometry::tag_t<Geometry>,
-    bool IsMulti = util::is_multi<Geometry>::value
->
+template <typename Geometry,
+          typename Tag = typename geometry::tag<Geometry>::type,
+          bool IsMulti = boost::is_base_of<multi_tag, Tag>::value>
 struct sub_range : not_implemented<Tag>
 {};
 
@@ -58,7 +47,7 @@ struct sub_range<Geometry, Tag, false>
 template <typename Geometry>
 struct sub_range<Geometry, polygon_tag, false>
 {
-    using return_type = geometry::ring_return_type_t<Geometry>;
+    typedef typename geometry::ring_return_type<Geometry>::type return_type;
 
     template <typename Id> static inline
     return_type apply(Geometry & geometry, Id const& id)
@@ -69,10 +58,10 @@ struct sub_range<Geometry, polygon_tag, false>
         }
         else
         {
-            using size_type = typename boost::range_size
+            typedef typename boost::range_size
                 <
                     typename geometry::interior_type<Geometry>::type
-                >::type;
+                >::type size_type;
             size_type const ri = static_cast<size_type>(id.ring_index);
             return range::at(geometry::interior_rings(geometry), ri);
         }
@@ -83,12 +72,12 @@ template <typename Geometry, typename Tag>
 struct sub_range<Geometry, Tag, true>
 {
     typedef typename boost::range_value<Geometry>::type value_type;
-    typedef std::conditional_t
+    typedef typename boost::mpl::if_c
         <
-            std::is_const<Geometry>::value,
-            typename std::add_const<value_type>::type,
+            boost::is_const<Geometry>::value,
+            typename boost::add_const<value_type>::type,
             value_type
-        > sub_type;
+        >::type sub_type;
 
     typedef detail_dispatch::sub_range<sub_type> sub_sub_range;
 

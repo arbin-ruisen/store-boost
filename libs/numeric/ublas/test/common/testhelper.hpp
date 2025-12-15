@@ -11,9 +11,6 @@
 #include <iostream>
 #include <boost/numeric/ublas/vector_expression.hpp>
 #include <boost/numeric/ublas/matrix_expression.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/type_traits/is_integral.hpp>
-#include <boost/numeric/ublas/traits.hpp>
 
 static unsigned _success_counter = 0;
 static unsigned _fail_counter    = 0;
@@ -22,8 +19,6 @@ static inline
 void assertTrue(const char* message, bool condition) {
 #ifndef NOMESSAGES
   std::cout << message;
-#else
-  (void)message;
 #endif
   if ( condition ) {
     ++ _success_counter;
@@ -38,8 +33,6 @@ template < class T >
 void assertEquals(const char* message, T expected, T actual) {
 #ifndef NOMESSAGES
   std::cout << message;
-#else
-  (void)message;
 #endif
   if ( expected == actual ) {
     ++ _success_counter;
@@ -92,32 +85,9 @@ bool compare( const boost::numeric::ublas::vector_expression<M1> & m1,
 
 // Compare if two matrices or vectors are equals based on distance.
 
-template <typename T>
-struct promote_distance {
-    typedef typename boost::mpl::if_c<boost::is_integral<T>::value,
-                                      long double,
-                                      T>::type type;
-};
-
-template <typename M1, typename M2 = void>
-struct distance {
-private:
-    typedef typename boost::numeric::ublas::promote_traits<typename M1::value_type,
-                                                           typename M2::value_type>::promote_type value_type;
-
-public:
-    typedef typename promote_distance<value_type>::type type;
-};
-
-template <typename AE>
-struct distance<AE, void> {
-    typedef typename promote_distance<typename AE::value_type>::type type;
-};
-
-
 template <class AE>
-typename distance<AE>::type mean_square(const boost::numeric::ublas::matrix_expression<AE> &me) {
-    typename distance<AE>::type s(0);
+typename AE::value_type mean_square(const boost::numeric::ublas::matrix_expression<AE> &me) {
+    typename AE::value_type s(0);
     typename AE::size_type i, j;
     for (i=0; i!= me().size1(); i++) {
         for (j=0; j!= me().size2(); j++) {
@@ -128,20 +98,20 @@ typename distance<AE>::type mean_square(const boost::numeric::ublas::matrix_expr
 }
 
 template <class AE>
-typename distance<AE>::type mean_square(const boost::numeric::ublas::vector_expression<AE> &ve) {
+typename AE::value_type mean_square(const boost::numeric::ublas::vector_expression<AE> &ve) {
     // We could have use norm2 here, but ublas' ABS does not support unsigned types.
-    typename distance<AE>::type s(0);
+    typename AE::value_type s(0);
     typename AE::size_type i;
-    for (i = 0; i != ve().size(); i++) {
+    for (i=0; i!= ve().size(); i++) {
         s += boost::numeric::ublas::scalar_traits<typename AE::value_type>::type_abs(ve()(i));
     }
     return s / ve().size();
 }
 
 template < class M1, class M2 >
-bool compare_distance( const boost::numeric::ublas::matrix_expression<M1> & m1,
-                      const boost::numeric::ublas::matrix_expression<M2> & m2,
-                      typename distance<M1, M2>::type tolerance = 0 ) {
+bool compare_to( const boost::numeric::ublas::matrix_expression<M1> & m1,
+               const boost::numeric::ublas::matrix_expression<M2> & m2,
+               double tolerance = 0.0 ) {
     if ((m1().size1() != m2().size1()) ||
         (m1().size2() != m2().size2())) {
         return false;
@@ -151,9 +121,9 @@ bool compare_distance( const boost::numeric::ublas::matrix_expression<M1> & m1,
 }
 
 template < class M1, class M2 >
-bool compare_distance( const boost::numeric::ublas::vector_expression<M1> & m1,
-                       const boost::numeric::ublas::vector_expression<M2> & m2,
-                       typename distance<M1, M2>::type tolerance = 0 ) {
+bool compare_to( const boost::numeric::ublas::vector_expression<M1> & m1,
+               const boost::numeric::ublas::vector_expression<M2> & m2,
+               double tolerance = 0.0 ) {
     if (m1().size() != m2().size()) {
         return false;
     }

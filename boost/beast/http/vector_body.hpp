@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,38 +10,35 @@
 #ifndef BOOST_BEAST_HTTP_VECTOR_BODY_HPP
 #define BOOST_BEAST_HTTP_VECTOR_BODY_HPP
 
-#include <boost/beast/http/vector_body_fwd.hpp>
-
-#include <boost/beast/core/buffer_traits.hpp>
-#include <boost/beast/core/detail/clamp.hpp>
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/http/error.hpp>
 #include <boost/beast/http/message.hpp>
+#include <boost/beast/core/detail/type_traits.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/optional.hpp>
 #include <cstdint>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
-#include <vector>
 
 namespace boost {
 namespace beast {
 namespace http {
 
-/** A <em>Body</em> using `std::vector`
+/** A @b Body using `std::vector`
 
     This body uses `std::vector` as a memory-based container
     for holding message payloads. Messages using this body type
     may be serialized and parsed.
 */
-#if BOOST_BEAST_DOXYGEN
 template<class T, class Allocator = std::allocator<T>>
-#else
-template<class T, class Allocator>
-#endif
 struct vector_body
 {
 private:
-    static_assert(sizeof(T) == 1,
+    static_assert(sizeof(T) == 1 &&
+        std::is_integral<T>::value,
         "T requirements not met");
 
 public:
@@ -67,10 +64,10 @@ public:
 
     /** The algorithm for parsing the body
 
-        Meets the requirements of <em>BodyReader</em>.
+        Meets the requirements of @b BodyReader.
     */
 #if BOOST_BEAST_DOXYGEN
-    using reader = __implementation_defined__;
+    using reader = implementation_defined;
 #else
     class reader
     {
@@ -90,14 +87,23 @@ public:
         {
             if(length)
             {
-                if(*length > body_.max_size())
+                if(static_cast<std::size_t>(*length) != *length)
                 {
-                    BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                    ec = error::buffer_overflow;
                     return;
                 }
-                body_.reserve(beast::detail::clamp(*length));
+                try
+                {
+                    body_.reserve(
+                        static_cast<std::size_t>(*length));
+                }
+                catch(std::exception const&)
+                {
+                    ec = error::buffer_overflow;
+                    return;
+                }
             }
-            ec = {};
+            ec.assign(0, ec.category());
         }
 
         template<class ConstBufferSequence>
@@ -105,34 +111,38 @@ public:
         put(ConstBufferSequence const& buffers,
             error_code& ec)
         {
-            auto const n = buffer_bytes(buffers);
+            using boost::asio::buffer_size;
+            using boost::asio::buffer_copy;
+            auto const n = buffer_size(buffers);
             auto const len = body_.size();
-            if (n > body_.max_size() - len)
+            try
             {
-                BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                body_.resize(len + n);
+            }
+            catch(std::exception const&)
+            {
+                ec = error::buffer_overflow;
                 return 0;
             }
-
-            body_.resize(len + n);
-            ec = {};
-            return net::buffer_copy(net::buffer(
+            ec.assign(0, ec.category());
+            return buffer_copy(boost::asio::buffer(
                 &body_[0] + len, n), buffers);
         }
 
         void
         finish(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
         }
     };
 #endif
 
     /** The algorithm for serializing the body
 
-        Meets the requirements of <em>BodyWriter</em>.
+        Meets the requirements of @b BodyWriter.
     */
 #if BOOST_BEAST_DOXYGEN
-    using writer = __implementation_defined__;
+    using writer = implementation_defined;
 #else
     class writer
     {
@@ -140,7 +150,7 @@ public:
 
     public:
         using const_buffers_type =
-            net::const_buffer;
+            boost::asio::const_buffer;
 
         template<bool isRequest, class Fields>
         explicit
@@ -152,13 +162,13 @@ public:
         void
         init(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
         }
 
         boost::optional<std::pair<const_buffers_type, bool>>
         get(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
             return {{const_buffers_type{
                 body_.data(), body_.size()}, false}};
         }

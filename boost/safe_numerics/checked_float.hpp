@@ -1,6 +1,11 @@
 #ifndef BOOST_NUMERIC_CHECKED_FLOAT_HPP
 #define BOOST_NUMERIC_CHECKED_FLOAT_HPP
 
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 //  Copyright (c) 2017 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -21,19 +26,8 @@ namespace checked {
 ////////////////////////////////////////////////////
 // layer 0 - implement safe operations for floating
 
-template<
-    typename R,
-    R Min,
-    R Max,
-    typename T,
-    class F
->
-struct heterogeneous_checked_operation<
-    R,
-    Min,
-    Max,
-    T,
-    F,
+template<typename R, typename T>
+struct checked_unary_operation<R, T,
     typename std::enable_if<
         std::is_floating_point<R>::value
         && std::is_floating_point<T>::value
@@ -45,53 +39,20 @@ struct heterogeneous_checked_operation<
     };
 }; // checked_unary_operation
 
-template<
-    typename R,
-    R Min,
-    R Max,
-    typename T,
-    class
-    F
->
-struct heterogeneous_checked_operation<
-    R,
-    Min,
-    Max,
-    T,
-    F,
-    typename std::enable_if<
-        std::is_floating_point<R>::value
-        && std::is_integralt<T>::value
-    >::type
->{
-    constexpr static checked_result<R>
-    cast(const T & t) noexcept {
-        return t;
-    };
-}; // checked_unary_operation
-
 template<typename R, typename T, typename U>
-struct checked_operation<R, T, U, F,
+struct checked_binary_operation<R, T, U,
     typename std::enable_if<
         std::is_floating_point<R>::value
     >::type
 >{
-    constexpr static checked_result<R> cast(const T & t) {
-        return
-            cast_impl_detail::cast_impl(
-                t,
-                std::is_signed<R>(),
-                std::is_signed<T>()
-            );
-    }
-    constexpr static checked_result<R> add(const T & t, const U & u) {
+    constexpr static checked_result<R> add(const T & t, const U & u) noexcept {
         return t + u;
     }
 
     constexpr static checked_result<R> subtract(
         const T & t,
         const U & u
-    ) {
+    ) noexcept {
         return t - u;
     }
 
@@ -129,7 +90,6 @@ struct checked_operation<R, T, U, F,
     }
 
 }; // checked_binary_operation
-
 template<class R, class T, class U>
 typename std::enable_if<
     std::is_floating_point<R>::value
@@ -137,7 +97,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline bool less_than(const T & t, const U & u) noexcept {
+constexpr bool less_than(const T & t, const U & u) noexcept {
     return t < u;
 }
 
@@ -148,7 +108,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline bool equal(const T & t, const U & u) noexcept {
+constexpr bool equal(const T & t, const U & u) noexcept {
     return t < u;
 }
 
@@ -159,7 +119,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline checked_result<R> left_shift(const T & t, const U & u) noexcept {
+constexpr checked_result<R> left_shift(const T & t, const U & u) noexcept {
     return t << u;
 }
 
@@ -170,7 +130,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline checked_result<R> right_shift(const T & t, const U & u) noexcept {
+constexpr checked_result<R> right_shift(const T & t, const U & u) noexcept {
     return t >> u;
 }
 
@@ -181,7 +141,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline checked_result<R> bitwise_or(const T & t, const U & u) noexcept {
+constexpr checked_result<R> bitwise_or(const T & t, const U & u) noexcept {
     return t | u;
 }
 
@@ -192,7 +152,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline checked_result<R> bitwise_xor(const T & t, const U & u) noexcept {
+constexpr checked_result<R> bitwise_xor(const T & t, const U & u) noexcept {
     return t ^ u;
 }
 
@@ -203,7 +163,7 @@ typename std::enable_if<
     && std::is_floating_point<U>::value,
     checked_result<R>
 >::type
-constexpr inline checked_result<R> bitwise_and(const T & t, const U & u) noexcept {
+constexpr checked_result<R> bitwise_and(const T & t, const U & u) noexcept {
     return t & u;
 }
 

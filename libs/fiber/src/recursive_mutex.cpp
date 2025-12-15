@@ -28,14 +28,16 @@ recursive_mutex::lock() {
         if ( active_ctx == owner_) {
             ++count_;
             return;
-        }
-        if ( nullptr == owner_) {
+        } else if ( nullptr == owner_) {
             owner_ = active_ctx;
             count_ = 1;
             return;
         }
-
-        wait_queue_.suspend_and_wait( lk, active_ctx);
+        BOOST_ASSERT( ! active_ctx->wait_is_linked() );
+        active_ctx->wait_link( wait_queue_);
+        // suspend this fiber
+        active_ctx->suspend( lk);
+        BOOST_ASSERT( ! active_ctx->wait_is_linked() );
     }
 }
 
@@ -66,7 +68,11 @@ recursive_mutex::unlock() {
     }
     if ( 0 == --count_) {
         owner_ = nullptr;
-        wait_queue_.notify_one();
+        if ( ! wait_queue_.empty() ) {
+            context * ctx = & wait_queue_.front();
+            wait_queue_.pop_front();
+            active_ctx->schedule( ctx);
+        }
     }
 }
 

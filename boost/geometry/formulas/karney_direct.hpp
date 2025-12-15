@@ -1,15 +1,8 @@
 // Boost.Geometry
 
 // Copyright (c) 2018 Adeel Ahmad, Islamabad, Pakistan.
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
 
-// Contributed and/or modified by Adeel Ahmad,
-//   as part of Google Summer of Code 2018 program.
-
-// This file was modified by Oracle on 2018-2022.
-// Modifications copyright (c) 2018-2022 Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
+// Contributed and/or modified by Adeel Ahmad, as part of Google Summer of Code 2018 program.
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -32,16 +25,17 @@
 #define BOOST_GEOMETRY_FORMULAS_KARNEY_DIRECT_HPP
 
 
+#include <boost/array.hpp>
+
 #include <boost/math/constants/constants.hpp>
 #include <boost/math/special_functions/hypot.hpp>
 
+#include <boost/geometry/util/math.hpp>
+#include <boost/geometry/util/series_expansion.hpp>
+#include <boost/geometry/util/normalize_spheroidal_coordinates.hpp>
+
 #include <boost/geometry/formulas/flattening.hpp>
 #include <boost/geometry/formulas/result_direct.hpp>
-
-#include <boost/geometry/util/constexpr.hpp>
-#include <boost/geometry/util/math.hpp>
-#include <boost/geometry/util/normalize_spheroidal_coordinates.hpp>
-#include <boost/geometry/util/series_expansion.hpp>
 
 
 namespace boost { namespace geometry { namespace formula
@@ -82,11 +76,20 @@ public:
     {
         result_type result;
 
-        CT lon1 = lo1 * math::r2d<CT>();
-        CT const lat1 = la1 * math::r2d<CT>();
+        CT lon1 = lo1;
+        CT const lat1 = la1;
 
-        Azi azi12 = azimuth12 * math::r2d<CT>();
+        Azi azi12 = azimuth12;
         math::normalize_azimuth<degree, Azi>(azi12);
+
+        Dist const dist_c0 = 0;
+
+        if (math::equals(distance, dist_c0) || distance < dist_c0)
+        {
+            result.lon2 = lon1;
+            result.lat2 = lat1;
+            return result;
+        }
 
         CT const c0 = 0;
         CT const c1 = 1;
@@ -102,11 +105,11 @@ public:
         CT const ep2 = e2 / math::sqr(one_minus_f);
 
         CT sin_alpha1, cos_alpha1;
-        math::sin_cos_degrees<CT>(azi12, sin_alpha1, cos_alpha1);
+        math::sin_cos_degrees<CT>(math::round_angle<CT>(azi12), sin_alpha1, cos_alpha1);
 
         // Find the reduced latitude.
         CT sin_beta1, cos_beta1;
-        math::sin_cos_degrees<CT>(lat1, sin_beta1, cos_beta1);
+        math::sin_cos_degrees<CT>(math::round_angle<CT>(lat1), sin_beta1, cos_beta1);
         sin_beta1 *= one_minus_f;
 
         math::normalize_unit_vector<CT>(sin_beta1, cos_beta1);
@@ -151,9 +154,10 @@ public:
         // Index zero element of coeffs_C1p is unused.
         se::coeffs_C1p<SeriesOrder, CT> const coeffs_C1p(epsilon);
 
-        CT const B12 = - se::sin_cos_series(sin_tau1 * cos_tau12 + cos_tau1 * sin_tau12,
-                                            cos_tau1 * cos_tau12 - sin_tau1 * sin_tau12,
-                                            coeffs_C1p);
+        CT const B12 = - se::sin_cos_series
+                             (sin_tau1 * cos_tau12 + cos_tau1 * sin_tau12,
+                              cos_tau1 * cos_tau12 - sin_tau1 * sin_tau12,
+                              coeffs_C1p);
 
         CT const sigma12 = tau12 - (B12 - B11);
         CT const sin_sigma12 = sin(sigma12);
@@ -162,21 +166,27 @@ public:
         CT const sin_sigma2 = sin_sigma1 * cos_sigma12 + cos_sigma1 * sin_sigma12;
         CT const cos_sigma2 = cos_sigma1 * cos_sigma12 - sin_sigma1 * sin_sigma12;
 
-        if BOOST_GEOMETRY_CONSTEXPR (CalcRevAzimuth)
+        if (BOOST_GEOMETRY_CONDITION(CalcRevAzimuth))
         {
             CT const sin_alpha2 = sin_alpha0;
             CT const cos_alpha2 = cos_alpha0 * cos_sigma2;
 
             result.reverse_azimuth = atan2(sin_alpha2, cos_alpha2);
+
+            // Convert the angle to radians.
+            result.reverse_azimuth /= math::d2r<CT>();
         }
 
-        if BOOST_GEOMETRY_CONSTEXPR (CalcCoordinates)
+        if (BOOST_GEOMETRY_CONDITION(CalcCoordinates))
         {
             // Find the latitude at the second point.
             CT const sin_beta2 = cos_alpha0 * sin_sigma2;
             CT const cos_beta2 = boost::math::hypot(sin_alpha0, cos_alpha0 * cos_sigma2);
 
             result.lat2 = atan2(sin_beta2, one_minus_f * cos_beta2);
+
+            // Convert the coordinate to radians.
+            result.lat2 /= math::d2r<CT>();
 
             // Find the longitude at the second point.
             CT const sin_omega2 = sin_alpha0 * sin_sigma2;
@@ -194,11 +204,15 @@ public:
 
             CT const B31 = se::sin_cos_series(sin_sigma1, cos_sigma1, coeffs_C3);
 
-            CT const sin_cos_res = se::sin_cos_series(sin_sigma2, cos_sigma2, coeffs_C3);
-            CT const lam12 = omega12 + A3c * (sigma12 + (sin_cos_res - B31));
+            CT const lam12 = omega12 + A3c *
+                             (sigma12 + (se::sin_cos_series
+                                             (sin_sigma2,
+                                              cos_sigma2,
+                                              coeffs_C3) - B31));
 
-            // Convert to degrees to get the longitudinal difference.
-            CT lon12 = lam12 * math::r2d<CT>();
+            // Convert to radians to get the
+            // longitudinal difference.
+            CT lon12 = lam12 / math::d2r<CT>();
 
             // Add the longitude at first point to the longitudinal
             // difference and normalize the result.
@@ -206,18 +220,9 @@ public:
             math::normalize_longitude<degree, CT>(lon12);
 
             result.lon2 = lon1 + lon12;
-
-            // For longitudes close to the antimeridian the result can be out
-            // of range. Therefore normalize.
-            // In other formulas this has to be done at the end because
-            // otherwise differential quantities are calculated incorrectly.
-            // But here it's ok since result.lon2 is not used after this point.
-            math::normalize_longitude<degree, CT>(result.lon2);
-
-            result.lon2 *= math::d2r<CT>();
         }
 
-        if BOOST_GEOMETRY_CONSTEXPR (CalcQuantities)
+        if (BOOST_GEOMETRY_CONDITION(CalcQuantities))
         {
             // Evaluate the coefficients for C2.
             // Index zero element of coeffs_C2 is unused.
@@ -243,10 +248,12 @@ public:
                                           cos_sigma1 * cos_sigma2 * J12);
 
             // Find the geodesic scale.
-            CT const t = k2 * (sin_sigma2 - sin_sigma1) * (sin_sigma2 + sin_sigma1) / (dn1 + dn2);
+            CT const t = k2 * (sin_sigma2 - sin_sigma1) *
+                              (sin_sigma2 + sin_sigma1) / (dn1 + dn2);
 
-            result.geodesic_scale = cos_sigma12 + (t * sin_sigma2 - cos_sigma2 * J12) *
-                sin_sigma1 / dn1;
+            result.geodesic_scale = cos_sigma12 +
+                                    (t * sin_sigma2 - cos_sigma2 * J12) *
+                                    sin_sigma1 / dn1;
         }
 
         return result;

@@ -1,10 +1,8 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2014, Oracle and/or its affiliates.
 
-// Copyright (c) 2014-2021, Oracle and/or its affiliates.
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
@@ -17,19 +15,20 @@
 
 #include <boost/core/addressof.hpp>
 
-#include <boost/geometry/algorithms/assign.hpp>
-#include <boost/geometry/algorithms/detail/distance/is_comparable.hpp>
-#include <boost/geometry/algorithms/detail/distance/strategy_utils.hpp>
-#include <boost/geometry/algorithms/dispatch/distance.hpp>
-#include <boost/geometry/algorithms/intersects.hpp>
-
 #include <boost/geometry/core/point_type.hpp>
 #include <boost/geometry/core/tags.hpp>
+
+#include <boost/geometry/util/condition.hpp>
 
 #include <boost/geometry/strategies/distance.hpp>
 #include <boost/geometry/strategies/tags.hpp>
 
-#include <boost/geometry/util/constexpr.hpp>
+#include <boost/geometry/algorithms/assign.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
+
+#include <boost/geometry/algorithms/detail/distance/is_comparable.hpp>
+
+#include <boost/geometry/algorithms/dispatch/distance.hpp>
 
 
 namespace boost { namespace geometry
@@ -43,38 +42,54 @@ namespace detail { namespace distance
 
 
 // compute segment-segment distance
-template<typename Segment1, typename Segment2, typename Strategies>
+template<typename Segment1, typename Segment2, typename Strategy>
 class segment_to_segment
 {
-    typedef distance::strategy_t<Segment1, Segment2, Strategies> strategy_type;
+private:
+    typedef typename strategy::distance::services::comparable_type
+        <
+            Strategy
+        >::type comparable_strategy;
+
+    typedef typename strategy::distance::services::return_type
+        <
+            comparable_strategy,
+            typename point_type<Segment1>::type,
+            typename point_type<Segment2>::type
+        >::type comparable_return_type;
 
 public:
-    typedef distance::return_t<Segment1, Segment2, Strategies> return_type;
+    typedef typename strategy::distance::services::return_type
+        <
+            Strategy,
+            typename point_type<Segment1>::type,
+            typename point_type<Segment2>::type
+        >::type return_type;
 
-    static inline return_type apply(Segment1 const& segment1, Segment2 const& segment2,
-                                    Strategies const& strategies)
+    static inline return_type
+    apply(Segment1 const& segment1, Segment2 const& segment2,
+          Strategy const& strategy)
     {
-        if (geometry::intersects(segment1, segment2, strategies))
+        if (geometry::intersects(segment1, segment2))
         {
             return 0;
         }
 
-        point_type_t<Segment1> p[2];
+        typename point_type<Segment1>::type p[2];
         detail::assign_point_from_index<0>(segment1, p[0]);
         detail::assign_point_from_index<1>(segment1, p[1]);
 
-        point_type_t<Segment2> q[2];
+        typename point_type<Segment2>::type q[2];
         detail::assign_point_from_index<0>(segment2, q[0]);
         detail::assign_point_from_index<1>(segment2, q[1]);
 
-        strategy_type const strategy = strategies.distance(segment1, segment2);
+        comparable_strategy cstrategy =
+            strategy::distance::services::get_comparable
+                <
+                    Strategy
+                >::apply(strategy);
 
-        auto const cstrategy = strategy::distance::services::get_comparable
-                                <
-                                    strategy_type
-                                >::apply(strategy);
-
-        distance::creturn_t<Segment1, Segment2, Strategies> d[4];
+        comparable_return_type d[4];
         d[0] = cstrategy.apply(q[0], p[0], p[1]);
         d[1] = cstrategy.apply(q[1], p[0], p[1]);
         d[2] = cstrategy.apply(p[0], q[0], q[1]);
@@ -83,23 +98,21 @@ public:
         std::size_t imin = std::distance(boost::addressof(d[0]),
                                          std::min_element(d, d + 4));
 
-        if BOOST_GEOMETRY_CONSTEXPR (is_comparable<strategy_type>::value)
+        if (BOOST_GEOMETRY_CONDITION(is_comparable<Strategy>::value))
         {
             return d[imin];
         }
-        else // else prevents unreachable code warning
+
+        switch (imin)
         {
-            switch (imin)
-            {
-            case 0:
-                return strategy.apply(q[0], p[0], p[1]);
-            case 1:
-                return strategy.apply(q[1], p[0], p[1]);
-            case 2:
-                return strategy.apply(p[0], q[0], q[1]);
-            default:
-                return strategy.apply(p[1], q[0], q[1]);
-            }
+        case 0:
+            return strategy.apply(q[0], p[0], p[1]);
+        case 1:
+            return strategy.apply(q[1], p[0], p[1]);
+        case 2:
+            return strategy.apply(p[0], q[0], q[1]);
+        default:
+            return strategy.apply(p[1], q[0], q[1]);
         }
     }
 };

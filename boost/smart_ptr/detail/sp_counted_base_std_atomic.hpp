@@ -15,17 +15,10 @@
 //  See accompanying file LICENSE_1_0.txt or copy at
 //  http://www.boost.org/LICENSE_1_0.txt
 
-#include <boost/smart_ptr/detail/sp_typeinfo_.hpp>
+#include <boost/detail/sp_typeinfo.hpp>
 #include <boost/config.hpp>
 #include <atomic>
 #include <cstdint>
-
-#if defined(BOOST_SP_REPORT_IMPLEMENTATION)
-
-#include <boost/config/pragma_message.hpp>
-BOOST_PRAGMA_MESSAGE("Using std::atomic sp_counted_base")
-
-#endif
 
 namespace boost
 {
@@ -33,17 +26,17 @@ namespace boost
 namespace detail
 {
 
-inline void atomic_increment( std::atomic_int_least32_t * pw ) noexcept
+inline void atomic_increment( std::atomic_int_least32_t * pw )
 {
     pw->fetch_add( 1, std::memory_order_relaxed );
 }
 
-inline std::int_least32_t atomic_decrement( std::atomic_int_least32_t * pw ) noexcept
+inline std::int_least32_t atomic_decrement( std::atomic_int_least32_t * pw )
 {
     return pw->fetch_sub( 1, std::memory_order_acq_rel );
 }
 
-inline std::int_least32_t atomic_conditional_increment( std::atomic_int_least32_t * pw ) noexcept
+inline std::int_least32_t atomic_conditional_increment( std::atomic_int_least32_t * pw )
 {
     // long r = *pw;
     // if( r != 0 ) ++*pw;
@@ -77,41 +70,41 @@ private:
 
 public:
 
-    sp_counted_base() noexcept: use_count_( 1 ), weak_count_( 1 )
+    sp_counted_base(): use_count_( 1 ), weak_count_( 1 )
     {
     }
 
-    virtual ~sp_counted_base() /*noexcept*/
+    virtual ~sp_counted_base() // nothrow
     {
     }
 
     // dispose() is called when use_count_ drops to zero, to release
     // the resources managed by *this.
 
-    virtual void dispose() noexcept = 0;
+    virtual void dispose() = 0; // nothrow
 
     // destroy() is called when weak_count_ drops to zero.
 
-    virtual void destroy() noexcept
+    virtual void destroy() // nothrow
     {
         delete this;
     }
 
-    virtual void * get_deleter( sp_typeinfo_ const & ti ) noexcept = 0;
-    virtual void * get_local_deleter( sp_typeinfo_ const & ti ) noexcept = 0;
-    virtual void * get_untyped_deleter() noexcept = 0;
+    virtual void * get_deleter( sp_typeinfo const & ti ) = 0;
+    virtual void * get_local_deleter( sp_typeinfo const & ti ) = 0;
+    virtual void * get_untyped_deleter() = 0;
 
-    void add_ref_copy() noexcept
+    void add_ref_copy()
     {
         atomic_increment( &use_count_ );
     }
 
-    bool add_ref_lock() noexcept // true on success
+    bool add_ref_lock() // true on success
     {
         return atomic_conditional_increment( &use_count_ ) != 0;
     }
 
-    void release() noexcept
+    void release() // nothrow
     {
         if( atomic_decrement( &use_count_ ) == 1 )
         {
@@ -120,12 +113,12 @@ public:
         }
     }
 
-    void weak_add_ref() noexcept
+    void weak_add_ref() // nothrow
     {
         atomic_increment( &weak_count_ );
     }
 
-    void weak_release() noexcept
+    void weak_release() // nothrow
     {
         if( atomic_decrement( &weak_count_ ) == 1 )
         {
@@ -133,7 +126,7 @@ public:
         }
     }
 
-    long use_count() const noexcept
+    long use_count() const // nothrow
     {
         return use_count_.load( std::memory_order_acquire );
     }

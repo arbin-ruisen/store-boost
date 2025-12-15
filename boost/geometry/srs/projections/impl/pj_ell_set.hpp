@@ -3,8 +3,8 @@
 
 // Copyright (c) 2008-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017-2020.
-// Modifications copyright (c) 2017-2020, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017, 2018.
+// Modifications copyright (c) 2017-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -42,10 +42,8 @@
 #define BOOST_GEOMETRY_PROJECTIONS_IMPL_PJ_ELL_SET_HPP
 
 #include <string>
-#include <type_traits>
 #include <vector>
 
-#include <boost/geometry/core/static_assert.hpp>
 #include <boost/geometry/formulas/eccentricity_sqr.hpp>
 #include <boost/geometry/util/math.hpp>
 
@@ -129,7 +127,7 @@ inline bool pj_ell_init_ellps(srs::dpar::parameters<T> const& params, T &a, T &b
             const pj_ellps_type<T>* pj_ellps = pj_get_ellps<T>().first;
             const int n = pj_get_ellps<T>().second;
             int i = it->template get_value<int>();
-
+        
             if (i < 0 || i >= n) {
                 BOOST_THROW_EXCEPTION( projection_exception(error_unknown_ellp_param) );
             }
@@ -163,23 +161,23 @@ inline bool pj_ell_init_ellps(srs::dpar::parameters<T> const& params, T &a, T &b
 template
 <
     typename Params,
-    int I = geometry::tuples::find_index_if
+    int I = srs::spar::detail::tuples_find_index_if
         <
             Params,
             srs::spar::detail::is_param_tr<srs::spar::detail::ellps_traits>::pred
         >::value,
-    int N = geometry::tuples::size<Params>::value
+    int N = boost::tuples::length<Params>::value
 >
 struct pj_ell_init_ellps_static
 {
     template <typename T>
     static bool apply(Params const& params, T &a, T &b)
     {
-        typedef typename geometry::tuples::element<I, Params>::type param_type;
+        typedef typename boost::tuples::element<I, Params>::type param_type;
         typedef srs::spar::detail::ellps_traits<param_type> traits_type;
         typedef typename traits_type::template model_type<T>::type model_type;
 
-        param_type const& param = geometry::tuples::get<I>(params);
+        param_type const& param = boost::tuples::get<I>(params);
         model_type const& model = traits_type::template model<T>(param);
 
         a = geometry::get_radius<0>(model);
@@ -198,13 +196,13 @@ struct pj_ell_init_ellps_static<Params, N, N>
     }
 };
 
-template <typename T, typename ...Ps>
-inline bool pj_ell_init_ellps(srs::spar::parameters<Ps...> const& params,
+template <typename T, BOOST_GEOMETRY_PROJECTIONS_DETAIL_TYPENAME_PX>
+inline bool pj_ell_init_ellps(srs::spar::parameters<BOOST_GEOMETRY_PROJECTIONS_DETAIL_PX> const& params,
                               T &a, T &b)
 {
     return pj_ell_init_ellps_static
         <
-            srs::spar::parameters<Ps...>
+            srs::spar::parameters<BOOST_GEOMETRY_PROJECTIONS_DETAIL_PX>
         >::apply(params, a, b);
 }
 
@@ -244,7 +242,7 @@ inline void pj_ell_init(Params const& params, T &a, T &es)
         } else if (pj_param_f<srs::spar::rf>(params, "rf", srs::dpar::rf, es)) { /* recip flattening */
             if (es == 0.0) {
                 BOOST_THROW_EXCEPTION( projection_exception(error_rev_flattening_is_zero) );
-            }
+            }    
             es = 1./ es;
             es = es * (2. - es);
             is_ell_set = true;
@@ -363,104 +361,104 @@ inline void pj_ell_init(Params const& params, T &a, T &es)
 template <typename Params>
 struct static_srs_tag_check_nonexpanded
 {
-    typedef std::conditional_t
+    typedef typename boost::mpl::if_c
         <
-            geometry::tuples::exists_if
+            srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param_t<srs::spar::r>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param<srs::spar::r_au>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param<srs::spar::r_v>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param<srs::spar::r_a>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param<srs::spar::r_g>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param<srs::spar::r_h>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param_t<srs::spar::r_lat_a>::pred
                 >::value
-         || geometry::tuples::exists_if
+         || srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param_t<srs::spar::r_lat_g>::pred
                 >::value,
             srs_sphere_tag,
             // NOTE: The assumption here is that if the user defines either one of:
             // b, es, e, f, rf parameters then he wants to define spheroid, not sphere
-            std::conditional_t
+            typename boost::mpl::if_c
                 <
-                    geometry::tuples::exists_if
+                    srs::spar::detail::tuples_exists_if
                         <
                             Params, srs::spar::detail::is_param_t<srs::spar::b>::pred
                         >::value
-                 || geometry::tuples::exists_if
+                 || srs::spar::detail::tuples_exists_if
                         <
                             Params, srs::spar::detail::is_param_t<srs::spar::es>::pred
                         >::value
-                 || geometry::tuples::exists_if
+                 || srs::spar::detail::tuples_exists_if
                         <
                             Params, srs::spar::detail::is_param_t<srs::spar::e>::pred
                         >::value
-                 || geometry::tuples::exists_if
+                 || srs::spar::detail::tuples_exists_if
                         <
                             Params, srs::spar::detail::is_param_t<srs::spar::rf>::pred
                         >::value
-                 || geometry::tuples::exists_if
+                 || srs::spar::detail::tuples_exists_if
                         <
                             Params, srs::spar::detail::is_param_t<srs::spar::f>::pred
                         >::value,
                     srs_spheroid_tag,
                     void
-                >
-        > type;
+                >::type
+        >::type type;
 };
 
 template <typename Params>
 struct static_srs_tag_check_ellps
 {
-    using type = geometry::tag_t
+    typedef typename geometry::tag
         <
             typename srs::spar::detail::ellps_traits
                 <
-                    typename geometry::tuples::find_if
+                    typename srs::spar::detail::tuples_find_if
                         <
                             Params,
                             srs::spar::detail::is_param_tr<srs::spar::detail::ellps_traits>::pred
                         >::type
                 >::template model_type<double>::type // dummy type
-        >;
+        >::type type;
 };
 
 template <typename Params>
 struct static_srs_tag_check_datum
 {
-    using type = geometry::tag_t
+    typedef typename geometry::tag
         <
             typename srs::spar::detail::ellps_traits
                 <
                     typename srs::spar::detail::datum_traits
                         <
-                            typename geometry::tuples::find_if
+                            typename srs::spar::detail::tuples_find_if
                                 <
                                     Params,
                                     srs::spar::detail::is_param_tr<srs::spar::detail::datum_traits>::pred
                                 >::type
                         >::ellps_type
                 >::template model_type<double>::type // dummy type
-        >;
+        >::type type;
 };
 
 template
@@ -506,20 +504,18 @@ struct static_srs_tag<Params, void, void, void>
 {
     // User didn't pass any parameter defining model
     // so use default or generate error
-    typedef std::conditional_t
+    typedef typename boost::mpl::if_c
         <
-            geometry::tuples::exists_if
+            srs::spar::detail::tuples_exists_if
                 <
                     Params, srs::spar::detail::is_param<srs::spar::no_defs>::pred
                 >::value,
             void,
             srs_spheroid_tag // WGS84
-        > type;
+        >::type type;
 
-    static const bool is_found = ! std::is_void<type>::value;
-    BOOST_GEOMETRY_STATIC_ASSERT((is_found),
-        "Expected ellipsoid or sphere definition.",
-        Params);
+    static const bool is_found = ! boost::is_same<type, void>::value;
+    BOOST_MPL_ASSERT_MSG((is_found), UNKNOWN_ELLP_PARAM, (Params));
 };
 
 

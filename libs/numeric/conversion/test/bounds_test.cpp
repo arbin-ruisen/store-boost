@@ -13,7 +13,7 @@
 
 #include "boost/numeric/conversion/bounds.hpp"
 
-#ifdef BOOST_BORLANDC
+#ifdef __BORLANDC__
 #pragma hdrstop
 #endif
 
@@ -32,11 +32,17 @@ void test_bounds( T expected_lowest, T expected_highest, T expected_smallest )
   T highest  = bounds<T>::highest () ;
   T smallest = bounds<T>::smallest() ;
 
-  BOOST_TEST_EQ(lowest, expected_lowest);
+  BOOST_CHECK_MESSAGE ( lowest == expected_lowest,
+                        "bounds<" << typeid(T).name() << ">::lowest() = " << printable(lowest) << ". Expected " << printable(expected_lowest)
+                      ) ;
 
-  BOOST_TEST_EQ(highest, expected_highest);
+  BOOST_CHECK_MESSAGE ( highest == expected_highest,
+                        "bounds<" << typeid(T).name() << ">::highest() = " << printable(highest) << ". Expected " << printable(expected_highest)
+                      ) ;
 
-  BOOST_TEST_EQ(smallest, expected_smallest);
+  BOOST_CHECK_MESSAGE ( smallest == expected_smallest,
+                        "bounds<" << typeid(T).name() << ">::smallest() = " << printable(smallest) << ". Expected " << printable(expected_smallest)
+                      ) ;
 }
 
 
@@ -84,12 +90,12 @@ void test_bounds()
 }
 
 
-int main( )
+int test_main( int, char * [] )
 {
   cout << setprecision( std::numeric_limits<long double>::digits10 ) ;
 
   test_bounds();
 
-  return boost::report_errors();
+  return 0;
 }
 

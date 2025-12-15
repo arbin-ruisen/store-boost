@@ -10,22 +10,16 @@
 #pragma once
 #endif
 
-#include <iosfwd>
 #include <iterator>
 #include <string>
 #include <boost/spirit/home/karma/generate.hpp>
 #include <boost/spirit/home/support/iterators/ostream_iterator.hpp>
-#include <boost/core/scoped_enum.hpp>
 #include <boost/mpl/bool.hpp>
 
 ///////////////////////////////////////////////////////////////////////////////
 namespace boost { namespace spirit { namespace karma { namespace detail
 {
     ///////////////////////////////////////////////////////////////////////////
-#ifdef _MSC_VER
-#  pragma warning(push)
-#  pragma warning(disable: 4512) // assignment operator could not be generated.
-#endif
     template <typename Expr
       , typename CopyExpr = mpl::false_, typename CopyAttr = mpl::false_
       , typename Delimiter = unused_type, typename Attribute = unused_type>
@@ -48,6 +42,10 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         Delimiter const& delim;
         BOOST_SCOPED_ENUM(delimit_flag) const pre;
         Attribute const& attr;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        format_manip& operator= (format_manip const&);
     };
 
     template <typename Expr, typename Delimiter, typename Attribute>
@@ -64,6 +62,10 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         Delimiter const& delim;
         BOOST_SCOPED_ENUM(delimit_flag) const pre;
         Attribute attr;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        format_manip& operator= (format_manip const&);
     };
 
     template <typename Expr, typename Delimiter, typename Attribute>
@@ -80,10 +82,11 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         Delimiter const& delim;
         BOOST_SCOPED_ENUM(delimit_flag) const pre;
         Attribute const& attr;
+
+    private:
+        // silence MSVC warning C4512: assignment operator could not be generated
+        format_manip& operator= (format_manip const&);
     };
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
     ///////////////////////////////////////////////////////////////////////////
     template <typename Expr, typename Enable = void>
@@ -150,7 +153,7 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         karma::ostream_iterator<Char, Char, Traits> sink(os);
         if (!karma::generate (sink, fm.expr))
         {
-            os.setstate(std::basic_ostream<Char, Traits>::failbit);
+            os.setstate(std::ios_base::failbit);
         }
         return os;
     }
@@ -165,7 +168,7 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         karma::ostream_iterator<Char, Char, Traits> sink(os);
         if (!karma::generate(sink, fm.expr, fm.attr))
         {
-            os.setstate(std::basic_ostream<Char, Traits>::failbit);
+            os.setstate(std::ios_base::failbit);
         }
         return os;
     }
@@ -179,7 +182,7 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         karma::ostream_iterator<Char, Char, Traits> sink(os);
         if (!karma::generate_delimited(sink, fm.expr, fm.delim, fm.pre))
         {
-            os.setstate(std::basic_ostream<Char, Traits>::failbit);
+            os.setstate(std::ios_base::failbit);
         }
         return os;
     }
@@ -195,7 +198,7 @@ namespace boost { namespace spirit { namespace karma { namespace detail
         karma::ostream_iterator<Char, Char, Traits> sink(os);
         if (!karma::generate_delimited(sink, fm.expr, fm.delim, fm.pre, fm.attr))
         {
-            os.setstate(std::basic_ostream<Char, Traits>::failbit);
+            os.setstate(std::ios_base::failbit);
         }
         return os;
     }

@@ -13,10 +13,9 @@
  *         at http://www.boost.org/doc/libs/release/libs/log/doc/html/index.html.
  */
 
-#include <boost/log/detail/setup_config.hpp>
-
 #ifndef BOOST_LOG_WITHOUT_SETTINGS_PARSERS
 
+#include <boost/log/detail/setup_config.hpp>
 #include <string>
 #include <locale>
 #include <iostream>
@@ -50,7 +49,6 @@ private:
     typedef CharT char_type;
     typedef const char_type* iterator_type;
     typedef typename log::aux::encoding< char_type >::type encoding;
-    typedef typename encoding::classify_type char_classify_type;
     typedef settings_parser< char_type > this_type;
 
     typedef std::basic_string< char_type > string_type;
@@ -158,7 +156,7 @@ private:
         for (iterator_type p = begin; p != end; ++p)
         {
             char_type c = *p;
-            if (c != constants::char_dot && !encoding::isalnum(static_cast< char_classify_type >(c)))
+            if (c != constants::char_dot && !encoding::isalnum(c))
                 BOOST_LOG_THROW_DESCR_PARAMS(parse_error, "Section name is invalid", (m_LineCounter));
         }
 
@@ -184,12 +182,12 @@ private:
             BOOST_LOG_THROW_DESCR_PARAMS(parse_error, "Parameter name is empty", (m_LineCounter));
 
         iterator_type p = begin;
-        if (!encoding::isalpha(static_cast< char_classify_type >(*p)))
+        if (!encoding::isalpha(*p))
             BOOST_LOG_THROW_DESCR_PARAMS(parse_error, "Parameter name is invalid", (m_LineCounter));
         for (++p; p != end; ++p)
         {
             char_type c = *p;
-            if (!encoding::isgraph(static_cast< char_classify_type >(c)))
+            if (!encoding::isgraph(c))
                 BOOST_LOG_THROW_DESCR_PARAMS(parse_error, "Parameter name is invalid", (m_LineCounter));
         }
 

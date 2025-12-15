@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2011 Helge Bahmann
  * Copyright (c) 2013 Tim Blechmann
- * Copyright (c) 2014, 2025 Andrey Semashev
+ * Copyright (c) 2014 Andrey Semashev
  */
 /*!
  * \file   atomic/fences.hpp
@@ -18,9 +18,7 @@
 
 #include <boost/memory_order.hpp>
 #include <boost/atomic/capabilities.hpp>
-#include <boost/atomic/detail/config.hpp>
-#include <boost/atomic/detail/fence_operations.hpp>
-#include <boost/atomic/detail/header.hpp>
+#include <boost/atomic/detail/operations.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
@@ -28,22 +26,36 @@
 
 /*
  * IMPLEMENTATION NOTE: All interface functions MUST be declared with BOOST_FORCEINLINE,
- *                      see comment for convert_memory_order_to_gcc in gcc_atomic_memory_order_utils.hpp.
+ *                      see comment for convert_memory_order_to_gcc in ops_gcc_atomic.hpp.
  */
 
 namespace boost {
 
 namespace atomics {
 
-BOOST_FORCEINLINE void atomic_thread_fence(memory_order order) noexcept
+#if BOOST_ATOMIC_THREAD_FENCE > 0
+BOOST_FORCEINLINE void atomic_thread_fence(memory_order order) BOOST_NOEXCEPT
 {
-    atomics::detail::fence_operations::thread_fence(order);
+    detail::thread_fence(order);
 }
+#else
+BOOST_FORCEINLINE void atomic_thread_fence(memory_order) BOOST_NOEXCEPT
+{
+    detail::lockpool::thread_fence();
+}
+#endif
 
-BOOST_FORCEINLINE void atomic_signal_fence(memory_order order) noexcept
+#if BOOST_ATOMIC_SIGNAL_FENCE > 0
+BOOST_FORCEINLINE void atomic_signal_fence(memory_order order) BOOST_NOEXCEPT
 {
-    atomics::detail::fence_operations::signal_fence(order);
+    detail::signal_fence(order);
 }
+#else
+BOOST_FORCEINLINE void atomic_signal_fence(memory_order) BOOST_NOEXCEPT
+{
+    detail::lockpool::signal_fence();
+}
+#endif
 
 } // namespace atomics
 
@@ -51,7 +63,5 @@ using atomics::atomic_thread_fence;
 using atomics::atomic_signal_fence;
 
 } // namespace boost
-
-#include <boost/atomic/detail/footer.hpp>
 
 #endif // BOOST_ATOMIC_FENCES_HPP_INCLUDED_

@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::basic_tuple`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -32,7 +32,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     namespace detail {
         //////////////////////////////////////////////////////////////////////
         // basic_tuple_impl<n, Xn>
@@ -42,18 +42,10 @@ namespace boost { namespace hana {
         struct from_other { };
 
         template <typename Indices, typename ...Xn>
-#ifdef BOOST_HANA_WORKAROUND_MSVC_EMPTYBASE
-        struct __declspec(empty_bases) basic_tuple_impl;
-#else
         struct basic_tuple_impl;
-#endif
 
         template <std::size_t ...n, typename ...Xn>
-#ifdef BOOST_HANA_WORKAROUND_MSVC_EMPTYBASE
-        struct __declspec(empty_bases) basic_tuple_impl<std::index_sequence<n...>, Xn...>
-#else
         struct basic_tuple_impl<std::index_sequence<n...>, Xn...>
-#endif
             : detail::ebo<bti<n>, Xn>...
         {
             static constexpr std::size_t size_ = sizeof...(Xn);
@@ -201,7 +193,7 @@ namespace boost { namespace hana {
         static constexpr auto apply(Xs&& xs, N const&) {
             constexpr std::size_t len = detail::decay<Xs>::type::size_;
             return drop_front_helper<N::value>(static_cast<Xs&&>(xs), std::make_index_sequence<
-                (N::value < len) ? len - N::value : 0
+                N::value < len ? len - N::value : 0
             >{});
         }
     };
@@ -259,6 +251,6 @@ namespace boost { namespace hana {
             return hana::size_t<sizeof...(Xn)>{};
         }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_BASIC_TUPLE_HPP

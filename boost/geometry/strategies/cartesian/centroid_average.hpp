@@ -3,10 +3,10 @@
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
-// Copyright (c) 2017-2023 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2017 Adam Wulkiewicz, Lodz, Poland.
 
-// This file was modified by Oracle on 2015-2021.
-// Modifications copyright (c) 2015-2021 Oracle and/or its affiliates.
+// This file was modified by Oracle on 2015.
+// Modifications copyright (c) 2015 Oracle and/or its affiliates.
 
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
@@ -44,20 +44,19 @@ namespace strategy { namespace centroid
 */
 template
 <
-    typename Ignored1 = void,
-    typename Ignored2 = void
+    typename PointCentroid,
+    typename Point = PointCentroid
 >
 class average
 {
 private :
 
     /*! subclass to keep state */
-    template <typename GeometryPoint, typename ResultPoint>
     class sum
     {
         friend class average;
         signed_size_type count;
-        ResultPoint centroid;
+        PointCentroid centroid;
 
     public :
         inline sum()
@@ -68,29 +67,22 @@ private :
     };
 
 public :
-    template <typename GeometryPoint, typename ResultPoint>
-    struct state_type
-    {
-        typedef sum<GeometryPoint, ResultPoint> type;
-    };
+    typedef sum state_type;
+    typedef PointCentroid centroid_point_type;
+    typedef Point point_type;
 
-    template <typename GeometryPoint, typename ResultPoint>
-    static inline void apply(GeometryPoint const& p,
-                             sum<GeometryPoint, ResultPoint>& state)
+    static inline void apply(Point const& p, sum& state)
     {
         add_point(state.centroid, p);
         state.count++;
     }
 
-    template <typename GeometryPoint, typename ResultPoint>
-    static inline bool result(sum<GeometryPoint, ResultPoint> const& state,
-                              ResultPoint& centroid)
+    static inline bool result(sum const& state, PointCentroid& centroid)
     {
         centroid = state.centroid;
         if ( state.count > 0 )
         {
-            using coord_t = coordinate_type_t<ResultPoint>;
-            divide_value(centroid, static_cast<coord_t>(state.count));
+            divide_value(centroid, state.count);
             return true;
         }
         return false;
@@ -118,7 +110,7 @@ struct default_strategy
     typedef average
         <
             Point,
-            point_type_t<Geometry>
+            typename point_type<Geometry>::type
         > type;
 };
 

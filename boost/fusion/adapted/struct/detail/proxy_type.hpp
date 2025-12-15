@@ -19,9 +19,6 @@
                                                                                 \
     BOOST_FUSION_ADAPT_STRUCT_NAMESPACE_DEFINITION_BEGIN(NAMESPACE_SEQ)         \
                                                                                 \
-    BOOST_FUSION_PUSH_WARNINGS                                                  \
-    BOOST_FUSION_DISABLE_MSVC_WARNING(4512)                                     \
-                                                                                \
     struct NAME                                                                 \
     {                                                                           \
         BOOST_CONSTEXPR BOOST_FUSION_GPU_ENABLED                                \
@@ -30,9 +27,10 @@
         {}                                                                      \
                                                                                 \
         WRAPPED_TYPE& obj;                                                      \
-    };                                                                          \
                                                                                 \
-    BOOST_FUSION_POP_WARNINGS                                                   \
+    private:                                                                    \
+        NAME& operator= (NAME const&);                                          \
+    };                                                                          \
                                                                                 \
     BOOST_FUSION_ADAPT_STRUCT_NAMESPACE_DEFINITION_END(NAMESPACE_SEQ)
 

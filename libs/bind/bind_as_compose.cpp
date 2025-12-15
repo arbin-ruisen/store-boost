@@ -19,11 +19,9 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include <iostream>
 #include <string>
-
-using namespace boost::placeholders;
 
 std::string f(std::string const & x)
 {

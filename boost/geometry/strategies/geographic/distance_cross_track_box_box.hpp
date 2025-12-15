@@ -1,8 +1,6 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2025 Adam Wulkiewicz, Lodz, Poland.
-
-// Copyright (c) 2017-2021, Oracle and/or its affiliates.
+// Copyright (c) 2017-2018, Oracle and/or its affiliates.
 
 // Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
@@ -16,6 +14,8 @@
 
 #include <boost/config.hpp>
 #include <boost/concept_check.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_void.hpp>
 
 #include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/assert.hpp>
@@ -25,8 +25,6 @@
 
 #include <boost/geometry/strategies/distance.hpp>
 #include <boost/geometry/strategies/concepts/distance_concept.hpp>
-#include <boost/geometry/strategies/geographic/distance.hpp>
-#include <boost/geometry/strategies/geographic/distance_cross_track.hpp>
 #include <boost/geometry/strategies/spherical/distance_cross_track.hpp>
 #include <boost/geometry/strategies/spherical/distance_cross_track_box_box.hpp>
 
@@ -85,8 +83,8 @@ public:
     struct return_type : services::return_type
             <
                 typename distance_ps_strategy::type,
-                point_type_t<Box1>,
-                point_type_t<Box2>
+                typename point_type<Box1>::type,
+                typename point_type<Box2>::type
             >
     {};
 
@@ -107,8 +105,8 @@ public:
                 (concepts::PointSegmentDistanceStrategy
                     <
                         Strategy,
-                        point_type_t<Box1>,
-                        point_type_t<Box2>
+                        typename point_type<Box1>::type,
+                        typename point_type<Box2>::type
                     >)
             );
 #endif
@@ -119,12 +117,6 @@ public:
                                                             typename distance_pp_strategy::type(m_spheroid),
                                                             typename distance_ps_strategy::type(m_spheroid));
     }
-
-    Spheroid model() const
-    {
-        return m_spheroid;
-    }
-
 private :
     Spheroid m_spheroid;
 };
@@ -135,52 +127,69 @@ private :
 namespace services
 {
 
-template <typename FormulaPolicy, typename Spheroid, typename CalculationType>
-struct tag<geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType> >
+template <typename Strategy, typename Spheroid, typename CalculationType>
+struct tag<geographic_cross_track_box_box<Strategy, Spheroid, CalculationType> >
 {
     typedef strategy_tag_distance_box_box type;
 };
 
 
-template <typename FormulaPolicy, typename Spheroid, typename CalculationType, typename Box1, typename Box2>
-struct return_type<geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType>, Box1, Box2>
+template <typename Strategy, typename Spheroid, typename CalculationType, typename Box1, typename Box2>
+struct return_type<geographic_cross_track_box_box<Strategy, Spheroid, CalculationType>, Box1, Box2>
     : geographic_cross_track_box_box
         <
-            FormulaPolicy, Spheroid, CalculationType
+            Strategy, Spheroid, CalculationType
         >::template return_type<Box1, Box2>
 {};
 
+template <typename Strategy, typename Spheroid, typename Box1, typename Box2>
+struct return_type<geographic_cross_track_box_box<Strategy, Spheroid>, Box1, Box2>
+    : geographic_cross_track_box_box
+        <
+            Strategy, Spheroid
+        >::template return_type<Box1, Box2>
+{};
 
-template <typename FormulaPolicy, typename Spheroid, typename CalculationType>
-struct comparable_type<geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType> >
+template <typename Strategy, typename Box1, typename Box2>
+struct return_type<geographic_cross_track_box_box<Strategy>, Box1, Box2>
+    : geographic_cross_track_box_box
+        <
+            Strategy
+        >::template return_type<Box1, Box2>
+{};
+
+template <typename Strategy, typename Spheroid, typename CalculationType>
+struct comparable_type<geographic_cross_track_box_box<Strategy, Spheroid, CalculationType> >
 {
     typedef geographic_cross_track_box_box
         <
-            FormulaPolicy, Spheroid, CalculationType
+            typename comparable_type<Strategy>::type, Spheroid, CalculationType
         > type;
 };
 
 
-template <typename FormulaPolicy, typename Spheroid, typename CalculationType>
-struct get_comparable<geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType> >
+template <typename Strategy, typename Spheroid, typename CalculationType>
+struct get_comparable<geographic_cross_track_box_box<Strategy, Spheroid, CalculationType> >
 {
+    typedef geographic_cross_track_box_box<Strategy, Spheroid, CalculationType> this_strategy;
+    typedef typename comparable_type<this_strategy>::type comparable_type;
+
 public:
-    static inline geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType>
-    apply(geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType> const& str)
+    static inline comparable_type apply(this_strategy const& /*strategy*/)
     {
-        return str;
+        return comparable_type();
     }
 };
 
 
-template <typename FormulaPolicy, typename Spheroid, typename CalculationType, typename Box1, typename Box2>
+template <typename Strategy, typename Spheroid, typename CalculationType, typename Box1, typename Box2>
 struct result_from_distance
     <
-        geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType>, Box1, Box2
+        geographic_cross_track_box_box<Strategy, Spheroid, CalculationType>, Box1, Box2
     >
 {
 private:
-    typedef geographic_cross_track_box_box<FormulaPolicy, Spheroid, CalculationType> this_strategy;
+    typedef geographic_cross_track_box_box<Strategy, Spheroid, CalculationType> this_strategy;
 
     typedef typename this_strategy::template return_type
         <
@@ -189,9 +198,15 @@ private:
 
 public:
     template <typename T>
-    static inline return_type apply(this_strategy const& , T const& distance)
+    static inline return_type apply(this_strategy const& strategy,
+                                    T const& distance)
     {
-        return static_cast<return_type>(distance);
+        result_from_distance
+            <
+                Strategy,
+                typename point_type<Box1>::type,
+                typename point_type<Box2>::type
+            >::apply(strategy, distance);
     }
 };
 

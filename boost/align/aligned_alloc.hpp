@@ -18,16 +18,12 @@ Distributed under the Boost Software License, Version 1.0.
 #include <AvailabilityMacros.h>
 #endif
 
-#if defined(BOOST_ALIGN_USE_ALIGN)
+#if defined(BOOST_ALIGN_USE_ALLOCATE)
 #include <boost/align/detail/aligned_alloc.hpp>
-#elif defined(BOOST_ALIGN_USE_NEW)
-#include <boost/align/detail/aligned_alloc_new.hpp>
 #elif defined(_MSC_VER) && !defined(UNDER_CE)
 #include <boost/align/detail/aligned_alloc_msvc.hpp>
 #elif defined(__MINGW32__) && (__MSVCRT_VERSION__ >= 0x0700)
 #include <boost/align/detail/aligned_alloc_msvc.hpp>
-#elif defined(__MINGW32__)
-#include <boost/align/detail/aligned_alloc_mingw.hpp>
 #elif MAC_OS_X_VERSION_MIN_REQUIRED >= 1090
 #include <boost/align/detail/aligned_alloc_posix.hpp>
 #elif MAC_OS_X_VERSION_MIN_REQUIRED >= 1060
@@ -38,7 +34,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/align/detail/aligned_alloc_posix.hpp>
 #elif defined(sun) || defined(__sun)
 #include <boost/align/detail/aligned_alloc_sunos.hpp>
-#elif defined(_POSIX_VERSION)
+#elif (_POSIX_C_SOURCE >= 200112L) || (_XOPEN_SOURCE >= 600)
 #include <boost/align/detail/aligned_alloc_posix.hpp>
 #else
 #include <boost/align/detail/aligned_alloc.hpp>

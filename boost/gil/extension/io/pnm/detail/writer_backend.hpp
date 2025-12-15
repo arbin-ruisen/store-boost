@@ -27,7 +27,7 @@ struct writer_backend< Device
 {
 public:
 
-    using format_tag_t = pnm_tag;
+    typedef pnm_tag format_tag_t;
 
 public:
 

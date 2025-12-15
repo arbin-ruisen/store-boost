@@ -10,12 +10,10 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <type_traits>
-
 #include <boost/dll/detail/demangling/demangle_symbol.hpp>
 #include <boost/dll/library_info.hpp>
 #include <boost/type_index/ctti_type_index.hpp>
-
+#include <boost/type_traits/remove_reference.hpp>
 
 namespace boost { namespace dll { namespace detail {
 
@@ -72,7 +70,7 @@ public:
     explicit mangled_storage_base(library_info & li) : mangled_storage_base(li.symbols()) {}
 
     explicit mangled_storage_base(
-            const boost::dll::fs::path& library_path,
+            const boost::filesystem::path& library_path,
             bool throw_if_not_native_format = true)
         : mangled_storage_base(library_info(library_path, throw_if_not_native_format).symbols())
     {
@@ -80,7 +78,7 @@ public:
     }
 
     void load(library_info & li) { storage_.clear(); add_symbols(li.symbols()); };
-    void load(const boost::dll::fs::path& library_path,
+    void load(const boost::filesystem::path& library_path,
             bool throw_if_not_native_format = true)
     {
         storage_.clear();

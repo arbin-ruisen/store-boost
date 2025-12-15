@@ -14,24 +14,22 @@
 */
 
 //#define BOOST_SPIRIT_DEBUG        // uncomment to enable debug output
-#include <boost/spirit/include/classic.hpp>
+#include <boost/spirit.hpp>
 
-namespace spirit = boost::spirit;
-
-struct info_grammar: public spirit::classic::grammar<info_grammar>
+struct info_grammar: public boost::spirit::grammar<info_grammar>
 {
     
     template<class Scanner>
     struct definition
     {
         
-        spirit::classic::rule<typename spirit::classic::lexeme_scanner<Scanner>::type> chr, qchr, escape_seq;
-        spirit::classic::rule<Scanner> string, qstring, cstring, key, value, entry, info;
+        boost::spirit::rule<typename boost::spirit::lexeme_scanner<Scanner>::type> chr, qchr, escape_seq;
+        boost::spirit::rule<Scanner> string, qstring, cstring, key, value, entry, info;
 
-        definition(const info_grammar & /*self*/)
+        definition(const info_grammar &self)
         {
 
-            using namespace spirit::classic;
+            using namespace boost::spirit;
 
             escape_seq = chset_p("0abfnrtv\"\'\\");
             chr = (anychar_p - space_p - '\\' - '{' - '}' - '#' - '"') | ('\\' >> escape_seq);
@@ -57,7 +55,7 @@ struct info_grammar: public spirit::classic::grammar<info_grammar>
 
         }
 
-        const spirit::classic::rule<Scanner> &start() const
+        const boost::spirit::rule<Scanner> &start() const
         {
             return info;
         }
@@ -68,7 +66,7 @@ struct info_grammar: public spirit::classic::grammar<info_grammar>
 void info_parse(const char *s)
 {
 
-    using namespace boost::spirit::classic;
+    using namespace boost::spirit;
 
     // Parse and display result
     info_grammar g;

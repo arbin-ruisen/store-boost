@@ -13,6 +13,7 @@
 #define BOOST_TEST_GLOBAL_TYPEDEF_HPP_021005GER
 
 #include <boost/test/utils/basic_cstring/basic_cstring.hpp>
+#include <boost/test/detail/workaround.hpp>
 
 #define BOOST_TEST_L( s )         ::boost::unit_test::const_string( s, sizeof( s ) - 1 )
 #define BOOST_TEST_STRINGIZE( s ) BOOST_TEST_L( BOOST_STRINGIZE( s ) )
@@ -29,21 +30,17 @@ typedef unsigned long   counter_t;
 
 //____________________________________________________________________________//
 
-enum BOOST_SYMBOL_VISIBLE report_level  { INV_REPORT_LEVEL,
-                                          CONFIRMATION_REPORT,
-                                          SHORT_REPORT,
-                                          DETAILED_REPORT,
-                                          NO_REPORT };
+enum report_level  { INV_REPORT_LEVEL, CONFIRMATION_REPORT, SHORT_REPORT, DETAILED_REPORT, NO_REPORT };
 
 //____________________________________________________________________________//
 
 //! Indicates the output format for the loggers or the test tree printing
-enum BOOST_SYMBOL_VISIBLE output_format { OF_INVALID,
-                                          OF_CLF,      ///< compiler log format
-                                          OF_XML,      ///< XML format for report and log,
-                                          OF_JUNIT,    ///< JUNIT format for report and log,
-                                          OF_CUSTOM_LOGGER, ///< User specified logger.
-                                          OF_DOT       ///< dot format for output content
+enum output_format { OF_INVALID,
+                     OF_CLF,      ///< compiler log format
+                     OF_XML,      ///< XML format for report and log,
+                     OF_JUNIT,    ///< JUNIT format for report and log,
+                     OF_CUSTOM_LOGGER, ///< User specified logger.
+                     OF_DOT       ///< dot format for output content
 };
 
 //____________________________________________________________________________//
@@ -109,19 +106,14 @@ T static_constant<T>::value;
 // BOOST_TEST_SINGLETON_CONS_IMPL should be in only one translation unit. The
 // global instance should be declared by BOOST_TEST_SINGLETON_INST.
 
-#define BOOST_TEST_SINGLETON_CONS_NO_CTOR( type )       \
+#define BOOST_TEST_SINGLETON_CONS( type )               \
 public:                                                 \
   static type& instance();                              \
 private:                                                \
   BOOST_DELETED_FUNCTION(type(type const&))             \
   BOOST_DELETED_FUNCTION(type& operator=(type const&))  \
-  BOOST_DEFAULTED_FUNCTION(~type(), {})                 \
-/**/
-
-#define BOOST_TEST_SINGLETON_CONS( type )               \
-  BOOST_TEST_SINGLETON_CONS_NO_CTOR(type)               \
-private:                                                \
   BOOST_DEFAULTED_FUNCTION(type(), {})                  \
+  BOOST_DEFAULTED_FUNCTION(~type(), {})                 \
 /**/
 
 #define BOOST_TEST_SINGLETON_CONS_IMPL( type )          \
@@ -134,12 +126,12 @@ private:                                                \
 
 #if defined(__APPLE_CC__) && defined(__GNUC__) && __GNUC__ < 4
 #define BOOST_TEST_SINGLETON_INST( inst ) \
-static BOOST_JOIN( inst, _t)& inst BOOST_ATTRIBUTE_UNUSED = BOOST_JOIN (inst, _t)::instance();
+static BOOST_JOIN( inst, _t)& inst = BOOST_JOIN (inst, _t)::instance();
 
 #else
 
 #define BOOST_TEST_SINGLETON_INST( inst ) \
-namespace { BOOST_JOIN( inst, _t)& inst BOOST_ATTRIBUTE_UNUSED = BOOST_JOIN( inst, _t)::instance(); }
+namespace { BOOST_JOIN( inst, _t)& inst = BOOST_JOIN( inst, _t)::instance(); }
 
 #endif
 

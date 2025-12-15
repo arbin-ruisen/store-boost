@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,9 +10,6 @@
 #ifndef BOOST_BEAST_HTTP_SPAN_BODY_HPP
 #define BOOST_BEAST_HTTP_SPAN_BODY_HPP
 
-#include <boost/beast/http/span_body_fwd.hpp>
-
-#include <boost/beast/core/buffer_traits.hpp>
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/core/span.hpp>
 #include <boost/beast/http/error.hpp>
@@ -23,7 +20,7 @@ namespace boost {
 namespace beast {
 namespace http {
 
-/** A <em>Body</em> using @ref span
+/** A @b Body using @ref span
 
     This body uses @ref span as a memory-based container for
     holding message payloads. The container represents a
@@ -38,11 +35,8 @@ template<class T>
 struct span_body
 {
 private:
-    static_assert(
-        std::is_trivially_default_constructible<T>::value &&
-        std::is_trivially_copyable<T>::value &&
-        std::is_standard_layout<T>::value,
-            "POD requirements not met");
+    static_assert(std::is_pod<T>::value,
+        "POD requirements not met");
 
 public:
     /** The type of container used for the body
@@ -67,10 +61,10 @@ public:
 
     /** The algorithm for parsing the body
 
-        Meets the requirements of <em>BodyReader</em>.
+        Meets the requirements of @b BodyReader.
     */
 #if BOOST_BEAST_DOXYGEN
-    using reader = __implementation_defined__;
+    using reader = implementation_defined;
 #else
     class reader
     {
@@ -90,10 +84,10 @@ public:
         {
             if(length && *length > body_.size())
             {
-                BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                ec = error::buffer_overflow;
                 return;
             }
-            ec = {};
+            ec.assign(0, ec.category());
         }
 
         template<class ConstBufferSequence>
@@ -101,15 +95,17 @@ public:
         put(ConstBufferSequence const& buffers,
             error_code& ec)
         {
-            auto const n = buffer_bytes(buffers);
+            using boost::asio::buffer_size;
+            using boost::asio::buffer_copy;
+            auto const n = buffer_size(buffers);
             auto const len = body_.size();
             if(n > len)
             {
-                BOOST_BEAST_ASSIGN_EC(ec, error::buffer_overflow);
+                ec = error::buffer_overflow;
                 return 0;
             }
-            ec = {};
-            net::buffer_copy(net::buffer(
+            ec.assign(0, ec.category());
+            buffer_copy(boost::asio::buffer(
                 body_.data(), n), buffers);
             body_ = value_type{
                 body_.data() + n, body_.size() - n};
@@ -119,17 +115,17 @@ public:
         void
         finish(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
         }
     };
 #endif
 
     /** The algorithm for serializing the body
 
-        Meets the requirements of <em>BodyWriter</em>.
+        Meets the requirements of @b BodyWriter.
     */
 #if BOOST_BEAST_DOXYGEN
-    using writer = __implementation_defined__;
+    using writer = implementation_defined;
 #else
     class writer
     {
@@ -137,7 +133,7 @@ public:
 
     public:
         using const_buffers_type =
-            net::const_buffer;
+            boost::asio::const_buffer;
 
         template<bool isRequest, class Fields>
         explicit
@@ -149,13 +145,13 @@ public:
         void
         init(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
         }
 
         boost::optional<std::pair<const_buffers_type, bool>>
         get(error_code& ec)
         {
-            ec = {};
+            ec.assign(0, ec.category());
             return {{
                 { body_.data(),
                   body_.size() * sizeof(typename

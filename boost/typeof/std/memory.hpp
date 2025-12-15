@@ -5,10 +5,15 @@
 #ifndef BOOST_TYPEOF_STD_memory_hpp_INCLUDED
 #define BOOST_TYPEOF_STD_memory_hpp_INCLUDED
 
-// This header is no longer useful and is only retained for compatibility
-
-#include <boost/typeof/typeof.hpp>
-#include <boost/config.hpp>
 #include <memory>
+#include <boost/typeof/typeof.hpp>
+
+#include BOOST_TYPEOF_INCREMENT_REGISTRATION_GROUP()
+
+BOOST_TYPEOF_REGISTER_TEMPLATE(std::allocator, 1)
+BOOST_TYPEOF_REGISTER_TEMPLATE(std::raw_storage_iterator, 2)
+#ifndef BOOST_NO_AUTO_PTR
+BOOST_TYPEOF_REGISTER_TEMPLATE(std::auto_ptr, 1)
+#endif//BOOST_NO_AUTO_PTR
 
 #endif//BOOST_TYPEOF_STD_memory_hpp_INCLUDED

@@ -4,11 +4,6 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
-// This file was modified by Oracle on 2020-2023.
-// Modifications copyright (c) 2020-2023, Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -19,14 +14,15 @@
 #ifndef BOOST_GEOMETRY_CORE_INTERIOR_RINGS_HPP
 #define BOOST_GEOMETRY_CORE_INTERIOR_RINGS_HPP
 
-#include <type_traits>
+#include <cstddef>
 
+#include <boost/mpl/assert.hpp>
 #include <boost/range/value_type.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
-#include <boost/geometry/core/interior_type.hpp>
-#include <boost/geometry/core/static_assert.hpp>
 #include <boost/geometry/core/tag.hpp>
 #include <boost/geometry/core/tags.hpp>
+#include <boost/geometry/core/interior_type.hpp>
 
 namespace boost { namespace geometry
 {
@@ -49,9 +45,11 @@ namespace traits
 template <typename Geometry>
 struct interior_rings
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Geometry type.",
-        Geometry);
+    BOOST_MPL_ASSERT_MSG
+        (
+            false, NOT_IMPLEMENTED_FOR_THIS_GEOMETRY_TYPE
+            , (types<Geometry>)
+        );
 };
 
 
@@ -81,7 +79,7 @@ struct interior_rings<polygon_tag, Polygon>
     {
         return traits::interior_rings
             <
-                typename std::remove_const<Polygon>::type
+                typename boost::remove_const<Polygon>::type
             >::get(polygon);
     }
 };
@@ -90,11 +88,11 @@ struct interior_rings<polygon_tag, Polygon>
 template <typename MultiPolygon>
 struct interior_type<multi_polygon_tag, MultiPolygon>
 {
-    using type = typename core_dispatch::interior_type
+    typedef typename core_dispatch::interior_type
         <
             polygon_tag,
             typename boost::range_value<MultiPolygon>::type
-        >::type;
+        >::type type;
 };
 
 
@@ -113,11 +111,11 @@ struct interior_type<multi_polygon_tag, MultiPolygon>
 */
 
 template <typename Polygon>
-inline interior_return_type_t<Polygon> interior_rings(Polygon& polygon)
+inline typename interior_return_type<Polygon>::type interior_rings(Polygon& polygon)
 {
     return core_dispatch::interior_rings
         <
-            tag_t<Polygon>,
+            typename tag<Polygon>::type,
             Polygon
         >::apply(polygon);
 }
@@ -134,11 +132,12 @@ inline interior_return_type_t<Polygon> interior_rings(Polygon& polygon)
 \qbk{distinguish,const version}
 */
 template <typename Polygon>
-inline interior_return_type_t<Polygon const> interior_rings(Polygon const& polygon)
+inline typename interior_return_type<Polygon const>::type interior_rings(
+            Polygon const& polygon)
 {
     return core_dispatch::interior_rings
         <
-            tag_t<Polygon>,
+            typename tag<Polygon>::type,
             Polygon const
         >::apply(polygon);
 }

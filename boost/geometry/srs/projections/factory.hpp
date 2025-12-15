@@ -1,11 +1,9 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
 // Copyright (c) 2008-2012 Barend Gehrels, Amsterdam, the Netherlands.
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
 
-// This file was modified by Oracle on 2017-2022.
-// Modifications copyright (c) 2017-2022, Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// This file was modified by Oracle on 2017.
+// Modifications copyright (c) 2017, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -16,12 +14,12 @@
 #define BOOST_GEOMETRY_PROJECTIONS_FACTORY_HPP
 
 #include <map>
-#include <memory>
 #include <string>
 
-#include <boost/geometry/core/static_assert.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <boost/geometry/srs/projections/dpar.hpp>
+#include <boost/geometry/srs/projections/factory_key.hpp>
 #include <boost/geometry/srs/projections/proj4.hpp>
 #include <boost/geometry/srs/projections/impl/factory_entry.hpp>
 #include <boost/geometry/srs/projections/proj/aea.hpp>
@@ -37,7 +35,6 @@
 #include <boost/geometry/srs/projections/proj/cc.hpp>
 #include <boost/geometry/srs/projections/proj/cea.hpp>
 #include <boost/geometry/srs/projections/proj/chamb.hpp>
-#include <boost/geometry/srs/projections/proj/col_urban.hpp>
 #include <boost/geometry/srs/projections/proj/collg.hpp>
 #include <boost/geometry/srs/projections/proj/crast.hpp>
 #include <boost/geometry/srs/projections/proj/denoy.hpp>
@@ -130,45 +127,6 @@ namespace boost { namespace geometry { namespace projections
 namespace detail
 {
 
-template <typename Params>
-struct factory_key
-{
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Invalid parameters type.",
-        Params);
-};
-
-template <>
-struct factory_key<srs::detail::proj4_parameters>
-{
-    typedef std::string type;
-    template <typename ProjParams>
-    static type const& get(ProjParams const& par)
-    {
-        return par.id.name;
-    }
-    static const char* get(const char* name, srs::dpar::value_proj )
-    {
-        return name;
-    }
-};
-
-template <typename T>
-struct factory_key<srs::dpar::parameters<T> >
-{
-    typedef srs::dpar::value_proj type;
-    template <typename ProjParams>
-    static type const& get(ProjParams const& par)
-    {
-        return par.id.id;
-    }
-    static srs::dpar::value_proj get(const char* , srs::dpar::value_proj id)
-    {
-        return id;
-    }
-};
-
-
 template <typename Params, typename CT, typename ProjParams>
 class factory
 {
@@ -180,9 +138,8 @@ private:
             ProjParams
         > entry_base;
 
-    typedef factory_key<Params> key;
-    typedef typename key::type key_type;
-    typedef std::shared_ptr<entry_base> entry_ptr;
+    typedef typename factory_key_util<Params>::type key_type;
+    typedef boost::shared_ptr<entry_base> entry_ptr;
 
     typedef std::map<key_type, entry_ptr> entries_map;
 
@@ -205,7 +162,6 @@ public:
         detail::cc_init(*this);
         detail::cea_init(*this);
         detail::chamb_init(*this);
-        detail::col_urban_init(*this);
         detail::collg_init(*this);
         detail::crast_init(*this);
         detail::denoy_init(*this);
@@ -293,17 +249,17 @@ public:
         detail::wink2_init(*this);
     }
 
-    void add_to_factory(const char* name, srs::dpar::value_proj id, entry_base* entry)
+    void add_to_factory(key_type const& key, entry_base* entry)
     {
         // The pointer has to be owned before std::map::operator[] in case it thrown an exception.
         entry_ptr ptr(entry);
-        m_entries[key::get(name, id)] = ptr;
+        m_entries[key] = ptr;
     }
 
-    detail::dynamic_wrapper_b<CT, ProjParams>* create_new(Params const& params, ProjParams const& proj_par) const
+    detail::base_v<CT, ProjParams>* create_new(Params const& params, ProjParams const& proj_par) const
     {
-        typedef typename entries_map::const_iterator const_iterator;
-        const_iterator it = m_entries.find(key::get(proj_par));
+        typename factory_key_util<Params>::type key = factory_key_util<Params>::get(proj_par);
+        typename entries_map::const_iterator it = m_entries.find(key);
         if (it != m_entries.end())
         {
             return it->second->create_new(params, proj_par);
@@ -314,7 +270,7 @@ public:
 };
 
 template <typename T>
-inline detail::dynamic_wrapper_b<T, projections::parameters<T> >*
+inline detail::base_v<T, projections::parameters<T> >*
     create_new(srs::detail::proj4_parameters const& params,
                projections::parameters<T> const& parameters)
 {
@@ -323,7 +279,7 @@ inline detail::dynamic_wrapper_b<T, projections::parameters<T> >*
 }
 
 template <typename T>
-inline detail::dynamic_wrapper_b<T, projections::parameters<T> >*
+inline detail::base_v<T, projections::parameters<T> >*
     create_new(srs::dpar::parameters<T> const& params,
                projections::parameters<T> const& parameters)
 {

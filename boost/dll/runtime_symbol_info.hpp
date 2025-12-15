@@ -1,5 +1,5 @@
 // Copyright 2014 Renato Tegon Forti, Antony Polukhin.
-// Copyright Antony Polukhin, 2015-2025.
+// Copyright 2015-2017 Antony Polukhin.
 //
 // Distributed under the Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -8,34 +8,17 @@
 #ifndef BOOST_DLL_RUNTIME_SYMBOL_INFO_HPP
 #define BOOST_DLL_RUNTIME_SYMBOL_INFO_HPP
 
-#include <boost/dll/config.hpp>
+#include <boost/config.hpp>
 #include <boost/predef/os.h>
 #include <boost/predef/compiler/visualc.h>
 #include <boost/dll/detail/aggressive_ptr_cast.hpp>
-
 #if BOOST_OS_WINDOWS
 #   include <boost/winapi/dll.hpp>
 #   include <boost/dll/detail/windows/path_from_handle.hpp>
 #else
-#if BOOST_OS_CYGWIN
-// `Dl_info` & `dladdr` is hidden by `__GNU_VISIBLE`
-typedef struct Dl_info Dl_info;
-
-struct Dl_info
-{
-    char        dli_fname[PATH_MAX];  /* Filename of defining object */
-    void       *dli_fbase;            /* Load address of that object */
-    const char *dli_sname;            /* Name of nearest lower symbol */
-    void       *dli_saddr;            /* Exact value of nearest symbol */
-};
-
-extern "C" int dladdr (const void *addr, Dl_info *info);
-#endif
 #   include <dlfcn.h>
 #   include <boost/dll/detail/posix/program_location_impl.hpp>
 #endif
-
-#include <memory>  // std::addressof
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 # pragma once
@@ -47,7 +30,7 @@ namespace boost { namespace dll {
 
 #if BOOST_OS_WINDOWS
 namespace detail {
-    inline boost::dll::fs::path program_location_impl(std::error_code& ec) {
+    inline boost::filesystem::path program_location_impl(boost::system::error_code& ec) {
         return boost::dll::detail::path_from_handle(NULL, ec);
     }
 } // namespace detail
@@ -59,7 +42,7 @@ namespace detail {
     * \param ptr_to_symbol Pointer to symbol which location is to be determined.
     * \param ec Variable that will be set to the result of the operation.
     * \return Path to the binary object that holds symbol or empty path in case error.
-    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept \forcedlinkfs{error_code} also throws \forcedlinkfs{system_error}.
+    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept boost::system::error_code also throws boost::system::system_error.
     *
     * \b Examples:
     * \code
@@ -70,12 +53,13 @@ namespace detail {
     * \endcode
     */
     template <class T>
-    inline boost::dll::fs::path symbol_location_ptr(T ptr_to_symbol, std::error_code& ec) {
-        static_assert(std::is_pointer<T>::value, "boost::dll::symbol_location_ptr works only with pointers! `ptr_to_symbol` must be a pointer");
-        boost::dll::fs::path ret;
+    inline boost::filesystem::path symbol_location_ptr(T ptr_to_symbol, boost::system::error_code& ec) {
+        BOOST_STATIC_ASSERT_MSG(boost::is_pointer<T>::value, "boost::dll::symbol_location_ptr works only with pointers! `ptr_to_symbol` must be a pointer");
+        boost::filesystem::path ret;
         if (!ptr_to_symbol) {
-            ec = std::make_error_code(
-                std::errc::bad_address
+            ec = boost::system::error_code(
+                boost::system::errc::bad_address,
+                boost::system::generic_category()
             );
 
             return ret;
@@ -102,8 +86,9 @@ namespace detail {
             ret = info.dli_fname;
         } else {
             boost::dll::detail::reset_dlerror();
-            ec = std::make_error_code(
-                std::errc::bad_address
+            ec = boost::system::error_code(
+                boost::system::errc::bad_address,
+                boost::system::generic_category()
             );
         }
 
@@ -111,11 +96,11 @@ namespace detail {
 #endif
     }
 
-    //! \overload symbol_location_ptr(const void* ptr_to_symbol, std::error_code& ec)
+    //! \overload symbol_location_ptr(const void* ptr_to_symbol, boost::system::error_code& ec)
     template <class T>
-    inline boost::dll::fs::path symbol_location_ptr(T ptr_to_symbol) {
-        boost::dll::fs::path ret;
-        std::error_code ec;
+    inline boost::filesystem::path symbol_location_ptr(T ptr_to_symbol) {
+        boost::filesystem::path ret;
+        boost::system::error_code ec;
         ret = boost::dll::symbol_location_ptr(ptr_to_symbol, ec);
 
         if (ec) {
@@ -132,7 +117,7 @@ namespace detail {
     * \param symbol Symbol which location is to be determined.
     * \param ec Variable that will be set to the result of the operation.
     * \return Path to the binary object that holds symbol or empty path in case error.
-    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept \forcedlinkfs{error_code} also throws \forcedlinkfs{system_error}.
+    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept boost::system::error_code also throws boost::system::system_error.
     *
     * \b Examples:
     * \code
@@ -149,10 +134,10 @@ namespace detail {
     * \endcode
     */
     template <class T>
-    inline boost::dll::fs::path symbol_location(const T& symbol, std::error_code& ec) {
+    inline boost::filesystem::path symbol_location(const T& symbol, boost::system::error_code& ec) {
         ec.clear();
         return boost::dll::symbol_location_ptr(
-            boost::dll::detail::aggressive_ptr_cast<const void*>(std::addressof(symbol)),
+            boost::dll::detail::aggressive_ptr_cast<const void*>(boost::addressof(symbol)),
             ec
         );
     }
@@ -161,17 +146,17 @@ namespace detail {
     // Without this MSVC 7.1 fails with:
     //  ..\boost\dll\runtime_symbol_info.hpp(133) : error C2780: 'filesystem::path dll::symbol_location(const T &)' : expects 1 arguments - 2 provided
     template <class T>
-    inline boost::dll::fs::path symbol_location(const T& symbol, const char* /*workaround*/ = 0)
+    inline boost::filesystem::path symbol_location(const T& symbol, const char* /*workaround*/ = 0)
 #else
-    //! \overload symbol_location(const T& symbol, std::error_code& ec)
+    //! \overload symbol_location(const T& symbol, boost::system::error_code& ec)
     template <class T>
-    inline boost::dll::fs::path symbol_location(const T& symbol)
+    inline boost::filesystem::path symbol_location(const T& symbol)
 #endif
     {
-        boost::dll::fs::path ret;
-        std::error_code ec;
+        boost::filesystem::path ret;
+        boost::system::error_code ec;
         ret = boost::dll::symbol_location_ptr(
-            boost::dll::detail::aggressive_ptr_cast<const void*>(std::addressof(symbol)),
+            boost::dll::detail::aggressive_ptr_cast<const void*>(boost::addressof(symbol)),
             ec
         );
 
@@ -185,8 +170,6 @@ namespace detail {
     /// @cond
     // We have anonymous namespace here to make sure that `this_line_location()` method is instantiated in
     // current translation unit and is not shadowed by instantiations from other units.
-    //
-    // boost-no-inspect
     namespace {
     /// @endcond
 
@@ -195,18 +178,18 @@ namespace detail {
     * (the line in which the `this_line_location()` method was called).
     *
     * \param ec Variable that will be set to the result of the operation.
-    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept \forcedlinkfs{error_code} also throws \forcedlinkfs{system_error}.
+    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept boost::system::error_code also throws boost::system::system_error.
     */
-    static inline boost::dll::fs::path this_line_location(std::error_code& ec) {
-        typedef boost::dll::fs::path(func_t)(std::error_code& );
+    static inline boost::filesystem::path this_line_location(boost::system::error_code& ec) {
+        typedef boost::filesystem::path(func_t)(boost::system::error_code& );
         func_t& f = this_line_location;
         return boost::dll::symbol_location(f, ec);
     }
 
-    //! \overload this_line_location(std::error_code& ec)
-    static inline boost::dll::fs::path this_line_location() {
-        boost::dll::fs::path ret;
-        std::error_code ec;
+    //! \overload this_line_location(boost::system::error_code& ec)
+    static inline boost::filesystem::path this_line_location() {
+        boost::filesystem::path ret;
+        boost::system::error_code ec;
         ret = this_line_location(ec);
 
         if (ec) {
@@ -228,17 +211,17 @@ namespace detail {
     * on Linux OS.
     *
     * \param ec Variable that will be set to the result of the operation.
-    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept \forcedlinkfs{error_code} also throws \forcedlinkfs{system_error}.
+    * \throws std::bad_alloc in case of insufficient memory. Overload that does not accept boost::system::error_code also throws boost::system::system_error.
     */
-    inline boost::dll::fs::path program_location(std::error_code& ec) {
+    inline boost::filesystem::path program_location(boost::system::error_code& ec) {
         ec.clear();
         return boost::dll::detail::program_location_impl(ec);
     }
 
-    //! \overload program_location(std::error_code& ec) {
-    inline boost::dll::fs::path program_location() {
-        boost::dll::fs::path ret;
-        std::error_code ec;
+    //! \overload program_location(boost::system::error_code& ec) {
+    inline boost::filesystem::path program_location() {
+        boost::filesystem::path ret;
+        boost::system::error_code ec;
         ret = boost::dll::detail::program_location_impl(ec);
 
         if (ec) {

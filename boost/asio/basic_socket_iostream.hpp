@@ -2,7 +2,7 @@
 // basic_socket_iostream.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -23,6 +23,61 @@
 #include <ostream>
 #include <boost/asio/basic_socket_streambuf.hpp>
 
+#if defined(BOOST_ASIO_ENABLE_OLD_SERVICES)
+# include <boost/asio/stream_socket_service.hpp>
+#endif // defined(BOOST_ASIO_ENABLE_OLD_SERVICES)
+
+#if !defined(BOOST_ASIO_HAS_VARIADIC_TEMPLATES)
+
+# include <boost/asio/detail/variadic_templates.hpp>
+
+// A macro that should expand to:
+//   template <typename T1, ..., typename Tn>
+//   explicit basic_socket_iostream(T1 x1, ..., Tn xn)
+//     : std::basic_iostream<char>(
+//         &this->detail::socket_iostream_base<
+//           Protocol BOOST_ASIO_SVC_TARG, Clock,
+//           WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_)
+//   {
+//     if (rdbuf()->connect(x1, ..., xn) == 0)
+//       this->setstate(std::ios_base::failbit);
+//   }
+// This macro should only persist within this file.
+
+# define BOOST_ASIO_PRIVATE_CTR_DEF(n) \
+  template <BOOST_ASIO_VARIADIC_TPARAMS(n)> \
+  explicit basic_socket_iostream(BOOST_ASIO_VARIADIC_BYVAL_PARAMS(n)) \
+    : std::basic_iostream<char>( \
+        &this->detail::socket_iostream_base< \
+          Protocol BOOST_ASIO_SVC_TARG, Clock, \
+          WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_) \
+  { \
+    this->setf(std::ios_base::unitbuf); \
+    if (rdbuf()->connect(BOOST_ASIO_VARIADIC_BYVAL_ARGS(n)) == 0) \
+      this->setstate(std::ios_base::failbit); \
+  } \
+  /**/
+
+// A macro that should expand to:
+//   template <typename T1, ..., typename Tn>
+//   void connect(T1 x1, ..., Tn xn)
+//   {
+//     if (rdbuf()->connect(x1, ..., xn) == 0)
+//       this->setstate(std::ios_base::failbit);
+//   }
+// This macro should only persist within this file.
+
+# define BOOST_ASIO_PRIVATE_CONNECT_DEF(n) \
+  template <BOOST_ASIO_VARIADIC_TPARAMS(n)> \
+  void connect(BOOST_ASIO_VARIADIC_BYVAL_PARAMS(n)) \
+  { \
+    if (rdbuf()->connect(BOOST_ASIO_VARIADIC_BYVAL_ARGS(n)) == 0) \
+      this->setstate(std::ios_base::failbit); \
+  } \
+  /**/
+
+#endif // !defined(BOOST_ASIO_HAS_VARIADIC_TEMPLATES)
+
 #include <boost/asio/detail/push_options.hpp>
 
 namespace boost {
@@ -31,7 +86,8 @@ namespace detail {
 
 // A separate base class is used to ensure that the streambuf is initialised
 // prior to the basic_socket_iostream's basic_iostream base class.
-template <typename Protocol, typename Clock, typename WaitTraits>
+template <typename Protocol BOOST_ASIO_SVC_TPARAM,
+    typename Clock, typename WaitTraits BOOST_ASIO_SVC_TPARAM1>
 class socket_iostream_base
 {
 protected:
@@ -39,6 +95,7 @@ protected:
   {
   }
 
+#if defined(BOOST_ASIO_HAS_MOVE)
   socket_iostream_base(socket_iostream_base&& other)
     : streambuf_(std::move(other.streambuf_))
   {
@@ -54,8 +111,10 @@ protected:
     streambuf_ = std::move(other.streambuf_);
     return *this;
   }
+#endif // defined(BOOST_ASIO_HAS_MOVE)
 
-  basic_socket_streambuf<Protocol, Clock, WaitTraits> streambuf_;
+  basic_socket_streambuf<Protocol BOOST_ASIO_SVC_TARG,
+    Clock, WaitTraits BOOST_ASIO_SVC_TARG1> streambuf_;
 };
 
 } // namespace detail
@@ -64,9 +123,20 @@ protected:
 #define BOOST_ASIO_BASIC_SOCKET_IOSTREAM_FWD_DECL
 
 // Forward declaration with defaulted arguments.
-template <typename Protocol,
+template <typename Protocol
+    BOOST_ASIO_SVC_TPARAM_DEF1(= stream_socket_service<Protocol>),
+#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME) \
+  && defined(BOOST_ASIO_USE_BOOST_DATE_TIME_FOR_SOCKET_IOSTREAM)
+    typename Clock = boost::posix_time::ptime,
+    typename WaitTraits = time_traits<Clock>
+    BOOST_ASIO_SVC_TPARAM1_DEF2(= deadline_timer_service<Clock, WaitTraits>)>
+#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+      // && defined(BOOST_ASIO_USE_BOOST_DATE_TIME_FOR_SOCKET_IOSTREAM)
     typename Clock = chrono::steady_clock,
-    typename WaitTraits = wait_traits<Clock>>
+    typename WaitTraits = wait_traits<Clock>
+    BOOST_ASIO_SVC_TPARAM1_DEF1(= steady_timer::service_type)>
+#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+       // && defined(BOOST_ASIO_USE_BOOST_DATE_TIME_FOR_SOCKET_IOSTREAM)
 class basic_socket_iostream;
 
 #endif // !defined(BOOST_ASIO_BASIC_SOCKET_IOSTREAM_FWD_DECL)
@@ -75,16 +145,27 @@ class basic_socket_iostream;
 #if defined(GENERATING_DOCUMENTATION)
 template <typename Protocol,
     typename Clock = chrono::steady_clock,
-    typename WaitTraits = wait_traits<Clock>>
+    typename WaitTraits = wait_traits<Clock> >
 #else // defined(GENERATING_DOCUMENTATION)
-template <typename Protocol, typename Clock, typename WaitTraits>
+template <typename Protocol BOOST_ASIO_SVC_TPARAM,
+    typename Clock, typename WaitTraits BOOST_ASIO_SVC_TPARAM1>
 #endif // defined(GENERATING_DOCUMENTATION)
 class basic_socket_iostream
-  : private detail::socket_iostream_base<Protocol, Clock, WaitTraits>,
+  : private detail::socket_iostream_base<Protocol
+        BOOST_ASIO_SVC_TARG, Clock, WaitTraits BOOST_ASIO_SVC_TARG1>,
     public std::basic_iostream<char>
 {
 private:
+  // These typedefs are intended keep this class's implementation independent
+  // of whether it's using Boost.DateClock, Boost.Chrono or std::chrono.
+#if defined(BOOST_ASIO_HAS_BOOST_DATE_TIME) \
+  && defined(BOOST_ASIO_USE_BOOST_DATE_TIME_FOR_SOCKET_IOSTREAM)
+  typedef WaitTraits traits_helper;
+#else // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+      // && defined(BOOST_ASIO_USE_BOOST_DATE_TIME_FOR_SOCKET_IOSTREAM)
   typedef detail::chrono_time_traits<Clock, WaitTraits> traits_helper;
+#endif // defined(BOOST_ASIO_HAS_BOOST_DATE_TIME)
+       // && defined(BOOST_ASIO_USE_BOOST_DATE_TIME_FOR_SOCKET_IOSTREAM)
 
 public:
   /// The protocol type.
@@ -97,12 +178,22 @@ public:
   typedef Clock clock_type;
 
 #if defined(GENERATING_DOCUMENTATION)
+  /// (Deprecated: Use time_point.) The time type.
+  typedef typename WaitTraits::time_type time_type;
+
   /// The time type.
   typedef typename WaitTraits::time_point time_point;
+
+  /// (Deprecated: Use duration.) The duration type.
+  typedef typename WaitTraits::duration_type duration_type;
 
   /// The duration type.
   typedef typename WaitTraits::duration duration;
 #else
+# if !defined(BOOST_ASIO_NO_DEPRECATED)
+  typedef typename traits_helper::time_type time_type;
+  typedef typename traits_helper::duration_type duration_type;
+# endif // !defined(BOOST_ASIO_NO_DEPRECATED)
   typedef typename traits_helper::time_type time_point;
   typedef typename traits_helper::duration_type duration;
 #endif
@@ -111,30 +202,38 @@ public:
   basic_socket_iostream()
     : std::basic_iostream<char>(
         &this->detail::socket_iostream_base<
-          Protocol, Clock, WaitTraits>::streambuf_)
+          Protocol BOOST_ASIO_SVC_TARG, Clock,
+          WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_)
   {
     this->setf(std::ios_base::unitbuf);
   }
 
+#if defined(BOOST_ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
   /// Construct a basic_socket_iostream from the supplied socket.
   explicit basic_socket_iostream(basic_stream_socket<protocol_type> s)
     : detail::socket_iostream_base<
-        Protocol, Clock, WaitTraits>(std::move(s)),
+        Protocol BOOST_ASIO_SVC_TARG, Clock,
+        WaitTraits BOOST_ASIO_SVC_TARG1>(std::move(s)),
       std::basic_iostream<char>(
         &this->detail::socket_iostream_base<
-          Protocol, Clock, WaitTraits>::streambuf_)
+          Protocol BOOST_ASIO_SVC_TARG, Clock,
+          WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_)
   {
     this->setf(std::ios_base::unitbuf);
   }
 
+#if defined(BOOST_ASIO_HAS_STD_IOSTREAM_MOVE) \
+  || defined(GENERATING_DOCUMENTATION)
   /// Move-construct a basic_socket_iostream from another.
   basic_socket_iostream(basic_socket_iostream&& other)
     : detail::socket_iostream_base<
-        Protocol, Clock, WaitTraits>(std::move(other)),
+        Protocol BOOST_ASIO_SVC_TARG, Clock,
+        WaitTraits BOOST_ASIO_SVC_TARG1>(std::move(other)),
       std::basic_iostream<char>(std::move(other))
   {
     this->set_rdbuf(&this->detail::socket_iostream_base<
-          Protocol, Clock, WaitTraits>::streambuf_);
+          Protocol BOOST_ASIO_SVC_TARG, Clock,
+          WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_);
   }
 
   /// Move-assign a basic_socket_iostream from another.
@@ -142,39 +241,58 @@ public:
   {
     std::basic_iostream<char>::operator=(std::move(other));
     detail::socket_iostream_base<
-        Protocol, Clock, WaitTraits>::operator=(std::move(other));
+        Protocol BOOST_ASIO_SVC_TARG, Clock,
+        WaitTraits BOOST_ASIO_SVC_TARG1>::operator=(std::move(other));
     return *this;
   }
+#endif // defined(BOOST_ASIO_HAS_STD_IOSTREAM_MOVE)
+       //   || defined(GENERATING_DOCUMENTATION)
+#endif // defined(BOOST_ASIO_HAS_MOVE) || defined(GENERATING_DOCUMENTATION)
 
+#if defined(GENERATING_DOCUMENTATION)
   /// Establish a connection to an endpoint corresponding to a resolver query.
   /**
    * This constructor automatically establishes a connection based on the
    * supplied resolver query parameters. The arguments are used to construct
    * a resolver query object.
    */
+  template <typename T1, ..., typename TN>
+  explicit basic_socket_iostream(T1 t1, ..., TN tn);
+#elif defined(BOOST_ASIO_HAS_VARIADIC_TEMPLATES)
   template <typename... T>
   explicit basic_socket_iostream(T... x)
     : std::basic_iostream<char>(
         &this->detail::socket_iostream_base<
-          Protocol, Clock, WaitTraits>::streambuf_)
+          Protocol BOOST_ASIO_SVC_TARG, Clock,
+          WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_)
   {
     this->setf(std::ios_base::unitbuf);
     if (rdbuf()->connect(x...) == 0)
       this->setstate(std::ios_base::failbit);
   }
+#else
+  BOOST_ASIO_VARIADIC_GENERATE(BOOST_ASIO_PRIVATE_CTR_DEF)
+#endif
 
+#if defined(GENERATING_DOCUMENTATION)
   /// Establish a connection to an endpoint corresponding to a resolver query.
   /**
    * This function automatically establishes a connection based on the supplied
    * resolver query parameters. The arguments are used to construct a resolver
    * query object.
    */
+  template <typename T1, ..., typename TN>
+  void connect(T1 t1, ..., TN tn);
+#elif defined(BOOST_ASIO_HAS_VARIADIC_TEMPLATES)
   template <typename... T>
   void connect(T... x)
   {
     if (rdbuf()->connect(x...) == 0)
       this->setstate(std::ios_base::failbit);
   }
+#else
+  BOOST_ASIO_VARIADIC_GENERATE(BOOST_ASIO_PRIVATE_CONNECT_DEF)
+#endif
 
   /// Close the connection.
   void close()
@@ -184,15 +302,18 @@ public:
   }
 
   /// Return a pointer to the underlying streambuf.
-  basic_socket_streambuf<Protocol, Clock, WaitTraits>* rdbuf() const
+  basic_socket_streambuf<Protocol BOOST_ASIO_SVC_TARG,
+    Clock, WaitTraits BOOST_ASIO_SVC_TARG1>* rdbuf() const
   {
-    return const_cast<basic_socket_streambuf<Protocol, Clock, WaitTraits>*>(
+    return const_cast<basic_socket_streambuf<Protocol BOOST_ASIO_SVC_TARG,
+      Clock, WaitTraits BOOST_ASIO_SVC_TARG1>*>(
         &this->detail::socket_iostream_base<
-          Protocol, Clock, WaitTraits>::streambuf_);
+          Protocol BOOST_ASIO_SVC_TARG, Clock,
+          WaitTraits BOOST_ASIO_SVC_TARG1>::streambuf_);
   }
 
   /// Get a reference to the underlying socket.
-  basic_socket<Protocol>& socket()
+  basic_socket<Protocol BOOST_ASIO_SVC_TARG>& socket()
   {
     return rdbuf()->socket();
   }
@@ -213,6 +334,18 @@ public:
   {
     return rdbuf()->error();
   }
+
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use expiry().) Get the stream's expiry time as an absolute
+  /// time.
+  /**
+   * @return An absolute time value representing the stream's expiry time.
+   */
+  time_point expires_at() const
+  {
+    return rdbuf()->expires_at();
+  }
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
 
   /// Get the stream's expiry time as an absolute time.
   /**
@@ -251,17 +384,48 @@ public:
     rdbuf()->expires_after(expiry_time);
   }
 
+#if !defined(BOOST_ASIO_NO_DEPRECATED)
+  /// (Deprecated: Use expiry().) Get the stream's expiry time relative to now.
+  /**
+   * @return A relative time value representing the stream's expiry time.
+   */
+  duration expires_from_now() const
+  {
+    return rdbuf()->expires_from_now();
+  }
+
+  /// (Deprecated: Use expires_after().) Set the stream's expiry time relative
+  /// to now.
+  /**
+   * This function sets the expiry time associated with the stream. Stream
+   * operations performed after this time (where the operations cannot be
+   * completed using the internal buffers) will fail with the error
+   * boost::asio::error::operation_aborted.
+   *
+   * @param expiry_time The expiry time to be used for the timer.
+   */
+  void expires_from_now(const duration& expiry_time)
+  {
+    rdbuf()->expires_from_now(expiry_time);
+  }
+#endif // !defined(BOOST_ASIO_NO_DEPRECATED)
+
 private:
   // Disallow copying and assignment.
-  basic_socket_iostream(const basic_socket_iostream&) = delete;
+  basic_socket_iostream(const basic_socket_iostream&) BOOST_ASIO_DELETED;
   basic_socket_iostream& operator=(
-      const basic_socket_iostream&) = delete;
+      const basic_socket_iostream&) BOOST_ASIO_DELETED;
 };
 
 } // namespace asio
 } // namespace boost
 
 #include <boost/asio/detail/pop_options.hpp>
+
+#if !defined(BOOST_ASIO_HAS_VARIADIC_TEMPLATES)
+# undef BOOST_ASIO_PRIVATE_CTR_DEF
+# undef BOOST_ASIO_PRIVATE_CONNECT_DEF
+#endif // !defined(BOOST_ASIO_HAS_VARIADIC_TEMPLATES)
 
 #endif // !defined(BOOST_ASIO_NO_IOSTREAM)
 

@@ -1,17 +1,6 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = include examples # benchmarks
+SUBDIRS = include benchmarks
 OTHER_FILES += ../../changelog.txt
 
-
 include (tests.pri)
-
-
-
-
-
-
-
-
-
-

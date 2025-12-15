@@ -1,8 +1,9 @@
 // Boost.Geometry
 
-// Copyright (c) 2018-2023 Adam Wulkiewicz, Lodz, Poland.
+// Copyright (c) 2018 Adam Wulkiewicz, Lodz, Poland.
 
-// Copyright (c) 2015-2020 Oracle and/or its affiliates.
+// Copyright (c) 2015-2017 Oracle and/or its affiliates.
+
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -17,7 +18,7 @@
 
 #include <boost/geometry/core/radius.hpp>
 
-#include <boost/geometry/util/constexpr.hpp>
+#include <boost/geometry/util/condition.hpp>
 #include <boost/geometry/util/math.hpp>
 
 #include <boost/geometry/formulas/differential_quantities.hpp>
@@ -97,7 +98,7 @@ public:
         CT const d = acos(cos_d); // [0, pi]
         CT const sin_d = sin(d);  // [-1, 1]
 
-        if BOOST_GEOMETRY_CONSTEXPR (EnableDistance)
+        if ( BOOST_GEOMETRY_CONDITION(EnableDistance) )
         {
             CT const K = math::sqr(sin_lat1-sin_lat2);
             CT const L = math::sqr(sin_lat1+sin_lat2);
@@ -105,8 +106,7 @@ public:
 
             CT const one_minus_cos_d = c1 - cos_d;
             CT const one_plus_cos_d = c1 + cos_d;
-            // cos_d = 1 means that the points are very close
-            // cos_d = -1 means that the points are antipodal
+            // cos_d = 1 or cos_d = -1 means that the points are antipodal
 
             CT const H = math::equals(one_minus_cos_d, c0) ?
                             c0 :
@@ -122,9 +122,9 @@ public:
             result.distance = a * (d + dd);
         }
 
-        if BOOST_GEOMETRY_CONSTEXPR (CalcAzimuths)
+        if ( BOOST_GEOMETRY_CONDITION(CalcAzimuths) )
         {
-            // sin_d = 0 <=> antipodal points (incl. poles) or very close
+            // sin_d = 0 <=> antipodal points (incl. poles)
             if (math::equals(sin_d, c0))
             {
                 // T = inf
@@ -140,26 +140,16 @@ public:
                 // The most correct way of fixing it is to handle antipodal regions
                 // correctly and consistently across all formulas.
 
-                // points very close
-                if (cos_d >= c0)
+                // Set azimuth to 0 unless the first endpoint is the north pole
+                if (! math::equals(sin_lat1, c1))
                 {
                     result.azimuth = c0;
-                    result.reverse_azimuth = c0;
+                    result.reverse_azimuth = pi;
                 }
-                // antipodal points
                 else
                 {
-                    // Set azimuth to 0 unless the first endpoint is the north pole
-                    if (! math::equals(sin_lat1, c1))
-                    {
-                        result.azimuth = c0;
-                        result.reverse_azimuth = pi;
-                    }
-                    else
-                    {
-                        result.azimuth = pi;
-                        result.reverse_azimuth = c0;
-                    }
+                    result.azimuth = pi;
+                    result.reverse_azimuth = 0;
                 }
             }
             else
@@ -209,14 +199,14 @@ public:
                 // therefore dA and dB may be great and the resulting azimuths
                 // may be some more or less arbitrary angles
 
-                if BOOST_GEOMETRY_CONSTEXPR (CalcFwdAzimuth)
+                if (BOOST_GEOMETRY_CONDITION(CalcFwdAzimuth))
                 {
                     CT const dA = V*T - U;
                     result.azimuth = A - dA;
                     normalize_azimuth(result.azimuth, A, dA);
                 }
 
-                if BOOST_GEOMETRY_CONSTEXPR (CalcRevAzimuth)
+                if (BOOST_GEOMETRY_CONDITION(CalcRevAzimuth))
                 {
                     CT const dB = -U*T + V;
                     if (B >= 0)
@@ -228,7 +218,7 @@ public:
             }
         }
 
-        if BOOST_GEOMETRY_CONSTEXPR (CalcQuantities)
+        if (BOOST_GEOMETRY_CONDITION(CalcQuantities))
         {
             CT const b = CT(get_radius<2>(spheroid));
 

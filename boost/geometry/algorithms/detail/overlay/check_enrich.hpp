@@ -2,11 +2,6 @@
 
 // Copyright (c) 2007-2012 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2018.
-// Modifications copyright (c) 2018 Oracle and/or its affiliates.
-
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
@@ -14,20 +9,12 @@
 #ifndef BOOST_GEOMETRY_ALGORITHMS_DETAIL_OVERLAY_CHECK_ENRICH_HPP
 #define BOOST_GEOMETRY_ALGORITHMS_DETAIL_OVERLAY_CHECK_ENRICH_HPP
 
-#ifdef BOOST_GEOMETRY_DEBUG_ENRICH
-#include <iostream>
-#endif // BOOST_GEOMETRY_DEBUG_ENRICH
 
 #include <cstddef>
-#include <vector>
 
-#include <boost/core/ignore_unused.hpp>
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/value_type.hpp>
+#include <boost/range.hpp>
 
-#include <boost/geometry/algorithms/detail/overlay/overlay_type.hpp>
-#include <boost/geometry/views/enumerate_view.hpp>
+#include <boost/geometry/algorithms/detail/ring_identifier.hpp>
 
 
 namespace boost { namespace geometry
@@ -55,7 +42,7 @@ struct meta_turn
 
 
 template <typename MetaTurn>
-inline void display(MetaTurn const& meta_turn, const char* reason = "")
+inline void display(MetaTurn const& meta_turn, std::string const& reason = "")
 {
 #ifdef BOOST_GEOMETRY_DEBUG_ENRICH
     std::cout << meta_turn.index
@@ -67,8 +54,6 @@ inline void display(MetaTurn const& meta_turn, const char* reason = "")
         //<< " -> " << op_index
         << " " << reason
         << std::endl;
-#else
-boost::ignore_unused(meta_turn, reason);
 #endif
 }
 
@@ -126,35 +111,42 @@ inline void check_detailed(MetaTurns& meta_turns, MetaTurn const& meta_turn,
 
 
 template <typename TurnPoints>
-inline bool check_graph(TurnPoints const& turn_points, operation_type for_operation)
+inline bool check_graph(TurnPoints& turn_points, operation_type for_operation)
 {
-    using turn_point_type = typename boost::range_value<TurnPoints>::type;
+    typedef typename boost::range_value<TurnPoints>::type turn_point_type;
 
     bool error = false;
+    int index = 0;
 
     std::vector<meta_turn<turn_point_type> > meta_turns;
-    for (auto const& item : util::enumerate(turn_points))
+    for (typename boost::range_iterator<TurnPoints const>::type
+            it = boost::begin(turn_points);
+         it != boost::end(turn_points);
+         ++it, ++index)
     {
-        meta_turns.push_back(meta_turn<turn_point_type>(item.index, item.value));
+        meta_turns.push_back(meta_turn<turn_point_type>(index, *it));
     }
 
     int cycle = 0;
-    for (auto& meta_turn : meta_turns)
+    for (typename boost::range_iterator<std::vector<meta_turn<turn_point_type> > > ::type
+            it = boost::begin(meta_turns);
+         it != boost::end(meta_turns);
+         ++it)
     {
-        if (! (meta_turn.turn->blocked() || meta_turn.turn->discarded))
+        if (! (it->turn->blocked() || it->turn->discarded))
         {
             for (int i = 0 ; i < 2; i++)
             {
-                if (! meta_turn.handled[i]
-                    && meta_turn.turn->operations[i].operation == for_operation)
+                if (! it->handled[i]
+                    && it->turn->operations[i].operation == for_operation)
                 {
 #ifdef BOOST_GEOMETRY_DEBUG_ENRICH
                     std::cout << "CYCLE " << cycle << std::endl;
 #endif
-                    meta_turn.handled[i] = true;
-                    check_detailed(meta_turns, meta_turn, i, cycle++, meta_turn.index, for_operation, error);
+                    it->handled[i] = true;
+                    check_detailed(meta_turns, *it, i, cycle++, it->index, for_operation, error);
 #ifdef BOOST_GEOMETRY_DEBUG_ENRICH
-                    std::cout <<" END CYCLE " << meta_turn.index << std::endl;
+                    std::cout <<" END CYCLE " << it->index << std::endl;
 #endif
                 }
             }

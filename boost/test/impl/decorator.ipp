@@ -5,6 +5,10 @@
 
 //  See http://www.boost.org/libs/test for the library home page.
 //
+//  File        : $RCSfile$
+//
+//  Version     : $Revision$
+//
 //  Description : unit test decorators implementation
 // ***************************************************************************
 
@@ -41,7 +45,7 @@ BOOST_TEST_SINGLETON_CONS_IMPL(collector_t)
 collector_t&
 collector_t::operator*( base const& d )
 {
-    m_tu_decorators_stack.begin()->push_back( d.clone() );
+    m_tu_decorators.push_back( d.clone() );
 
     return *this;
 }
@@ -51,10 +55,7 @@ collector_t::operator*( base const& d )
 void
 collector_t::store_in( test_unit& tu )
 {
-    tu.p_decorators.value.insert(
-        tu.p_decorators.value.end(),
-        m_tu_decorators_stack.begin()->begin(),
-        m_tu_decorators_stack.begin()->end() );
+    tu.p_decorators.value.insert( tu.p_decorators.value.end(), m_tu_decorators.begin(), m_tu_decorators.end() );
 }
 
 //____________________________________________________________________________//
@@ -62,20 +63,7 @@ collector_t::store_in( test_unit& tu )
 void
 collector_t::reset()
 {
-    if(m_tu_decorators_stack.size() > 1) {
-        m_tu_decorators_stack.erase(m_tu_decorators_stack.begin());
-    }
-    else {
-        assert(m_tu_decorators_stack.size() == 1);
-        m_tu_decorators_stack.begin()->clear();
-    }
-}
-
-void
-collector_t::stack()
-{
-    assert(m_tu_decorators_stack.size() >= 1);
-    m_tu_decorators_stack.insert(m_tu_decorators_stack.begin(), std::vector<base_ptr>());
+    m_tu_decorators.clear();
 }
 
 //____________________________________________________________________________//
@@ -83,7 +71,7 @@ collector_t::stack()
 std::vector<base_ptr>
 collector_t::get_lazy_decorators() const
 {
-    return *m_tu_decorators_stack.begin();
+    return m_tu_decorators;
 }
 
 //____________________________________________________________________________//
@@ -96,24 +84,6 @@ collector_t&
 base::operator*() const
 {
     return collector_t::instance() * *this;
-}
-
-// ************************************************************************** //
-// **************           decorator::stack_decorator         ************** //
-// ************************************************************************** //
-
-collector_t&
-stack_decorator::operator*() const
-{
-    collector_t& instance = collector_t::instance();
-    instance.stack();
-    return instance * *this;
-}
-
-void
-stack_decorator::apply( test_unit& /*tu*/ )
-{
-    // does nothing by definition
 }
 
 // ************************************************************************** //

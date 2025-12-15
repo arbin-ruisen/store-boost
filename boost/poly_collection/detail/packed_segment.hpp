@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Joaquin M Lopez Munoz.
+/* Copyright 2016-2017 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -14,6 +14,7 @@
 #endif
 
 #include <boost/detail/workaround.hpp>
+#include <boost/poly_collection/detail/newdelete_allocator.hpp>
 #include <boost/poly_collection/detail/segment_backend.hpp>
 #include <boost/poly_collection/detail/value_holder.hpp>
 #include <memory>
@@ -35,31 +36,23 @@ namespace detail{
  *    {value_type*,sizeof(store_value_type)}.
  *  - Model provides a function value_ptr for
  *    const Concrete* -> const value_type* conversion.
- *  - If Model provides a final_type<Concrete> template alias, it is this
- *    type that is stored in the segment rather than Concrete. In this case,
- *    final_type<Concrete> must be constructible from Concrete and
- *    Concrete* must be reinterpret_castable to final_type<Concrete>* and vice
- *    versa.
  */
 
 template<typename Model,typename Concrete,typename Allocator>
-class packed_segment:public segment_backend<Model,Allocator>
+class packed_segment:public segment_backend<Model>
 {
-  template<typename M>
-  static typename M::template final_type<Concrete> final_type_helper(M);
-  static Concrete final_type_helper(...);
-
   using value_type=typename Model::value_type;
-  using final_type=decltype(final_type_helper(std::declval<Model>()));
-  using store_value_type=value_holder<final_type,Concrete>;
+  using store_value_type=value_holder<Concrete>;
   using store=std::vector<
     store_value_type,
-    typename std::allocator_traits<Allocator>::
-      template rebind_alloc<store_value_type>
+    value_holder_allocator_adaptor<
+      typename std::allocator_traits<Allocator>::
+        template rebind_alloc<store_value_type>
+    >
   >;
   using store_iterator=typename store::iterator;
   using const_store_iterator=typename store::const_iterator;
-  using segment_backend=detail::segment_backend<Model,Allocator>;
+  using segment_backend=detail::segment_backend<Model>;
   using typename segment_backend::segment_backend_unique_ptr;
   using typename segment_backend::value_pointer;
   using typename segment_backend::const_value_pointer;
@@ -69,43 +62,27 @@ class packed_segment:public segment_backend<Model,Allocator>
     typename segment_backend::template const_iterator<Concrete>;
   using typename segment_backend::base_sentinel;
   using typename segment_backend::range;
-  using segment_allocator_type=typename std::allocator_traits<Allocator>::
-    template rebind_alloc<packed_segment>;
-
+  using segment_allocator_type=newdelete_allocator_adaptor<
+    typename std::allocator_traits<Allocator>::
+      template rebind_alloc<packed_segment>
+  >;
 public:
   virtual ~packed_segment()=default;
-
-  static segment_backend_unique_ptr make(const segment_allocator_type& al)
-  {
-    return new_(al,al);
-  }
 
   virtual segment_backend_unique_ptr copy()const
   {
     return new_(s.get_allocator(),store{s});
   }
 
-  virtual segment_backend_unique_ptr copy(const Allocator& al)const
+  virtual segment_backend_unique_ptr empty_copy()const
   {
-    return new_(al,store{s,al});
-  }
-
-  virtual segment_backend_unique_ptr empty_copy(const Allocator& al)const
-  {
-    return new_(al,al);
-  }
-
-  virtual segment_backend_unique_ptr move(const Allocator& al)
-  {
-    return new_(al,store{std::move(s),al});
+    return new_(s.get_allocator(),s.get_allocator());
   }
 
   virtual bool equal(const segment_backend& x)const
   {
     return s==static_cast<const packed_segment&>(x).s;
   }
-
-  virtual Allocator get_allocator()const noexcept{return s.get_allocator();}
 
   virtual base_iterator begin()const noexcept{return nv_begin();}
 
@@ -237,6 +214,8 @@ public:
   base_sentinel         nv_clear()noexcept{s.clear();return sentinel();}
 
 private:
+  friend Model;
+
   template<typename... Args>
   static segment_backend_unique_ptr new_(
     segment_allocator_type al,Args&&... args)
@@ -276,7 +255,7 @@ private:
   static Concrete* concrete_ptr(store_value_type* p)noexcept
   {
     return reinterpret_cast<Concrete*>(
-      static_cast<value_holder_base<final_type>*>(p));
+      static_cast<value_holder_base<Concrete>*>(p));
   }
 
   static const Concrete* const_concrete_ptr(const store_value_type* p)noexcept
@@ -292,8 +271,8 @@ private:
   static const store_value_type* const_store_value_type_ptr(
     const Concrete* p)noexcept
   {
-    return static_cast<const store_value_type*>(
-      reinterpret_cast<const value_holder_base<final_type>*>(p));
+    return static_cast<const value_holder<Concrete>*>(
+      reinterpret_cast<const value_holder_base<Concrete>*>(p));
   }
 
   /* It would have sufficed if iterator_from returned const_store_iterator

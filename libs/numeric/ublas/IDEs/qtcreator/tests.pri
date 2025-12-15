@@ -1,3 +1,7 @@
+OTHER_FILES += \
+    ../../test/README \
+    ../../test/Jamfile.v2
+
 SUBDIRS += \
     begin_end \
     comp_mat_erase \
@@ -32,8 +36,7 @@ SUBDIRS += \
     test_ticket7296 \
     test_triangular \
     triangular_access \
-    triangular_layout \
-    test_tensor
+    triangular_layout
 
 begin_end.file = test/begin_end.pro
 comp_mat_erase.file = test/comp_mat_erase.pro
@@ -69,4 +72,3 @@ test_ticket7296.file = test/test_ticket7296.pro
 test_triangular.file = test/test_triangular.pro
 triangular_access.file = test/triangular_access.pro
 triangular_layout.file = test/triangular_layout.pro
-test_tensor.file = test/test_tensor.pro

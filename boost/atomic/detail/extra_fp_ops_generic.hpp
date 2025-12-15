@@ -3,7 +3,7 @@
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * Copyright (c) 2018-2025 Andrey Semashev
+ * Copyright (c) 2018 Andrey Semashev
  */
 /*!
  * \file   atomic/detail/extra_fp_ops_generic.hpp
@@ -18,17 +18,16 @@
 #include <boost/memory_order.hpp>
 #include <boost/atomic/detail/config.hpp>
 #include <boost/atomic/detail/bitwise_fp_cast.hpp>
-#include <boost/atomic/detail/storage_traits.hpp>
+#include <boost/atomic/detail/storage_type.hpp>
 #include <boost/atomic/detail/extra_fp_operations_fwd.hpp>
 #include <boost/atomic/detail/type_traits/is_iec559.hpp>
 #include <boost/atomic/detail/type_traits/is_integral.hpp>
-#include <boost/atomic/detail/header.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
 #endif
 
-#if defined(BOOST_GCC) && BOOST_GCC >= 60000
+#if defined(BOOST_GCC) && (BOOST_GCC+0) >= 60000
 #pragma GCC diagnostic push
 // ignoring attributes on template argument X - this warning is because we need to pass storage_type as a template argument; no problem in this case
 #pragma GCC diagnostic ignored "-Wignored-attributes"
@@ -47,14 +46,14 @@ template<
     , bool = atomics::detail::is_iec559< Value >::value && atomics::detail::is_integral< typename Base::storage_type >::value
 #endif
 >
-struct extra_fp_negate_generic :
+struct generic_extra_fp_negate :
     public Base
 {
-    using base_type = Base;
-    using storage_type = typename base_type::storage_type;
-    using value_type = Value;
+    typedef Base base_type;
+    typedef typename base_type::storage_type storage_type;
+    typedef Value value_type;
 
-    static BOOST_FORCEINLINE value_type fetch_negate(storage_type volatile& storage, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type fetch_negate(storage_type volatile& storage, memory_order order) BOOST_NOEXCEPT
     {
         storage_type old_storage, new_storage;
         value_type old_val, new_val;
@@ -69,7 +68,7 @@ struct extra_fp_negate_generic :
         return old_val;
     }
 
-    static BOOST_FORCEINLINE value_type negate(storage_type volatile& storage, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type negate(storage_type volatile& storage, memory_order order) BOOST_NOEXCEPT
     {
         storage_type old_storage, new_storage;
         value_type old_val, new_val;
@@ -84,7 +83,7 @@ struct extra_fp_negate_generic :
         return new_val;
     }
 
-    static BOOST_FORCEINLINE void opaque_negate(storage_type volatile& storage, memory_order order) noexcept
+    static BOOST_FORCEINLINE void opaque_negate(storage_type volatile& storage, memory_order order) BOOST_NOEXCEPT
     {
         fetch_negate(storage, order);
     }
@@ -94,27 +93,27 @@ struct extra_fp_negate_generic :
 
 //! Negate implementation for IEEE 754 / IEC 559 floating point types. We leverage the fact that the sign bit is the most significant bit in the value.
 template< typename Base, typename Value, std::size_t Size >
-struct extra_fp_negate_generic< Base, Value, Size, true > :
+struct generic_extra_fp_negate< Base, Value, Size, true > :
     public Base
 {
-    using base_type = Base;
-    using storage_type = typename base_type::storage_type;
-    using value_type = Value;
+    typedef Base base_type;
+    typedef typename base_type::storage_type storage_type;
+    typedef Value value_type;
 
     //! The mask with only one sign bit set to 1
-    static constexpr storage_type sign_mask = static_cast< storage_type >(1u) << (atomics::detail::value_size_of< value_type >::value * 8u - 1u);
+    static BOOST_CONSTEXPR_OR_CONST storage_type sign_mask = static_cast< storage_type >(1u) << (atomics::detail::value_sizeof< value_type >::value * 8u - 1u);
 
-    static BOOST_FORCEINLINE value_type fetch_negate(storage_type volatile& storage, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type fetch_negate(storage_type volatile& storage, memory_order order) BOOST_NOEXCEPT
     {
         return atomics::detail::bitwise_fp_cast< value_type >(base_type::fetch_xor(storage, sign_mask, order));
     }
 
-    static BOOST_FORCEINLINE value_type negate(storage_type volatile& storage, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type negate(storage_type volatile& storage, memory_order order) BOOST_NOEXCEPT
     {
         return atomics::detail::bitwise_fp_cast< value_type >(base_type::bitwise_xor(storage, sign_mask, order));
     }
 
-    static BOOST_FORCEINLINE void opaque_negate(storage_type volatile& storage, memory_order order) noexcept
+    static BOOST_FORCEINLINE void opaque_negate(storage_type volatile& storage, memory_order order) BOOST_NOEXCEPT
     {
         base_type::opaque_xor(storage, sign_mask, order);
     }
@@ -124,14 +123,14 @@ struct extra_fp_negate_generic< Base, Value, Size, true > :
 
 //! Generic implementation of floating point operations
 template< typename Base, typename Value, std::size_t Size >
-struct extra_fp_operations_generic :
-    public extra_fp_negate_generic< Base, Value, Size >
+struct generic_extra_fp_operations :
+    public generic_extra_fp_negate< Base, Value, Size >
 {
-    using base_type = extra_fp_negate_generic< Base, Value, Size >;
-    using storage_type = typename base_type::storage_type;
-    using value_type = Value;
+    typedef generic_extra_fp_negate< Base, Value, Size > base_type;
+    typedef typename base_type::storage_type storage_type;
+    typedef Value value_type;
 
-    static BOOST_FORCEINLINE value_type add(storage_type volatile& storage, value_type v, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type add(storage_type volatile& storage, value_type v, memory_order order) BOOST_NOEXCEPT
     {
         storage_type old_storage, new_storage;
         value_type old_val, new_val;
@@ -146,7 +145,7 @@ struct extra_fp_operations_generic :
         return new_val;
     }
 
-    static BOOST_FORCEINLINE value_type sub(storage_type volatile& storage, value_type v, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type sub(storage_type volatile& storage, value_type v, memory_order order) BOOST_NOEXCEPT
     {
         storage_type old_storage, new_storage;
         value_type old_val, new_val;
@@ -161,12 +160,12 @@ struct extra_fp_operations_generic :
         return new_val;
     }
 
-    static BOOST_FORCEINLINE void opaque_add(storage_type volatile& storage, value_type v, memory_order order) noexcept
+    static BOOST_FORCEINLINE void opaque_add(storage_type volatile& storage, value_type v, memory_order order) BOOST_NOEXCEPT
     {
         base_type::fetch_add(storage, v, order);
     }
 
-    static BOOST_FORCEINLINE void opaque_sub(storage_type volatile& storage, value_type v, memory_order order) noexcept
+    static BOOST_FORCEINLINE void opaque_sub(storage_type volatile& storage, value_type v, memory_order order) BOOST_NOEXCEPT
     {
         base_type::fetch_sub(storage, v, order);
     }
@@ -175,7 +174,7 @@ struct extra_fp_operations_generic :
 // Default extra_fp_operations template definition will be used unless specialized for a specific platform
 template< typename Base, typename Value, std::size_t Size >
 struct extra_fp_operations< Base, Value, Size, true > :
-    public extra_fp_operations_generic< Base, Value, Size >
+    public generic_extra_fp_operations< Base, Value, Size >
 {
 };
 
@@ -183,10 +182,8 @@ struct extra_fp_operations< Base, Value, Size, true > :
 } // namespace atomics
 } // namespace boost
 
-#if defined(BOOST_GCC) && BOOST_GCC >= 60000
+#if defined(BOOST_GCC) && (BOOST_GCC+0) >= 60000
 #pragma GCC diagnostic pop
 #endif
-
-#include <boost/atomic/detail/footer.hpp>
 
 #endif // BOOST_ATOMIC_DETAIL_FP_OPS_GENERIC_HPP_INCLUDED_

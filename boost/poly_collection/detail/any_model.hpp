@@ -1,4 +1,4 @@
-/* Copyright 2016-2024 Joaquin M Lopez Munoz.
+/* Copyright 2016-2017 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -100,25 +100,20 @@ struct any_model
     type_erasure::_self&
   >;
 
-  using type_index=std::type_info;
-
   template<typename Concrete>
   using is_implementation=std::true_type; /* can't compile-time check concept
                                            * compliance */
   template<typename T>
   using is_terminal=any_model_is_terminal<T>;
 
-  template<typename T> 
-  static const std::type_info& index(){return typeid(T);}
-
   template<typename T>
-  static const std::type_info& subindex(const T&){return typeid(T);}
+  static const std::type_info& subtypeid(const T&){return typeid(T);}
 
   template<
     typename Concept2,typename T,
     any_model_enable_if_has_typeid_<Concept2,T> =nullptr
   >
-  static const std::type_info& subindex(
+  static const std::type_info& subtypeid(
     const type_erasure::any<Concept2,T>& a)
   {
     return type_erasure::typeid_of(a);
@@ -156,11 +151,16 @@ struct any_model
   using iterator=Concrete*;
   template<typename Concrete>
   using const_iterator=const Concrete*;
-  template<typename Allocator>
-  using segment_backend=detail::segment_backend<any_model,Allocator>;
+  using segment_backend=detail::segment_backend<any_model>;
   template<typename Concrete,typename Allocator>
-  using segment_backend_implementation=
-    split_segment<any_model,Concrete,Allocator>;
+  using segment_backend_implementation=split_segment<
+    any_model,
+    Concrete,
+    typename std::allocator_traits<Allocator>::
+      template rebind_alloc<Concrete>
+  >;
+  using segment_backend_unique_ptr=
+    typename segment_backend::segment_backend_unique_ptr;
 
   static base_iterator nonconst_iterator(const_base_iterator it)
   {
@@ -172,6 +172,12 @@ struct any_model
   static iterator<T> nonconst_iterator(const_iterator<T> it)
   {
     return const_cast<iterator<T>>(it);
+  }
+
+  template<typename Concrete,typename Allocator>
+  static segment_backend_unique_ptr make(const Allocator& al)
+  {
+    return segment_backend_implementation<Concrete,Allocator>::new_(al,al);
   }
 
 private:
@@ -188,17 +194,14 @@ private:
      * https://lists.boost.org/boost-users/2017/05/87556.php
      */
 
-    using ref_type=type_erasure::any<Concept2,T>;
-    using make_ref=any_model_make_reference<type_erasure::_self,ref_type>;
-    using concept_=typename type_erasure::concept_of<value_type>::type;
+    using namespace boost::type_erasure;
+    using ref_type=any<Concept2,T>;
+    using make_ref=any_model_make_reference<_self,ref_type>;
+    using concept_=typename concept_of<value_type>::type;
 
-    auto b=type_erasure::make_binding<
-      mpl::map1<mpl::pair<type_erasure::_self,ref_type>>>();
+    auto b=make_binding<mpl::map1<mpl::pair<_self,ref_type>>>();
 
-    return {
-      type_erasure::call(type_erasure::binding<make_ref>{b},make_ref{},x),
-      type_erasure::binding<concept_>{b}
-    };
+    return {call(binding<make_ref>{b},make_ref{},x),binding<concept_>{b}};
   }
 };
 

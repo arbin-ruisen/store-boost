@@ -2,7 +2,7 @@
 @file
 Defines several `constexpr` algorithms.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -18,7 +18,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana { namespace detail {
+BOOST_HANA_NAMESPACE_BEGIN namespace detail {
     // Do not call this swap, otherwise it can get picked up by ADL and conflict
     // with std::swap (see https://github.com/boostorg/hana/issues/297).
     template <typename T>
@@ -181,6 +181,6 @@ namespace boost { namespace hana { namespace detail {
                 smallest = first;
         return smallest;
     }
-} }} // end namespace boost::hana
+} BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DETAIL_ALGORITHM_HPP

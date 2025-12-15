@@ -45,6 +45,9 @@
 
 #include <boost/numeric/odeint/integrate/max_step_checker.hpp>
 
+#include <boost/type_traits.hpp>
+
+
 namespace boost {
 namespace numeric {
 namespace odeint {
@@ -308,7 +311,7 @@ public:
     template< class StateType >
     void initialize( const StateType &x0 , const time_type &t0 , const time_type &dt0 )
     {
-        m_resizer.adjust_size(x0, [this](auto&& arg) { return this->resize_impl<StateType>(std::forward<decltype(arg)>(arg)); });
+        m_resizer.adjust_size( x0 , detail::bind( &controlled_error_bs_type::template resize_impl< StateType > , detail::ref( *this ) , detail::_1 ) );
         boost::numeric::odeint::copy( x0 , get_current_state() );
         m_t = t0;
         m_dt = dt0;
@@ -386,11 +389,6 @@ public:
         resize_impl( x );
         m_midpoint.adjust_size( x );
     }
-
-
-protected:
-
-    time_type m_max_dt;
 
 
 private:
@@ -668,6 +666,8 @@ private:
 
     default_error_checker< value_type, algebra_type , operations_type > m_error_checker;
     modified_midpoint_dense_out< state_type , value_type , deriv_type , time_type , algebra_type , operations_type , resizer_type > m_midpoint;
+
+    time_type m_max_dt;
 
     bool m_control_interpolation;
 

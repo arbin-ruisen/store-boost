@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2015-2016 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -26,20 +26,19 @@ namespace beast {
 */
 class file_stdio
 {
-    std::FILE* f_ = nullptr;
+    FILE* f_ = nullptr;
 
 public:
     /** The type of the underlying file handle.
 
         This is platform-specific.
     */
-    using native_handle_type = std::FILE*;
+    using native_handle_type = FILE*;
 
     /** Destructor
 
         If the file is open it is first closed.
     */
-    BOOST_BEAST_DECL
     ~file_stdio();
 
     /** Constructor
@@ -52,18 +51,16 @@ public:
 
         The moved-from object behaves as if default constructed.
     */
-    BOOST_BEAST_DECL
     file_stdio(file_stdio&& other);
 
     /** Assignment
 
         The moved-from object behaves as if default constructed.
     */
-    BOOST_BEAST_DECL
     file_stdio& operator=(file_stdio&& other);
 
     /// Returns the native handle associated with the file.
-    std::FILE*
+    FILE*
     native_handle() const
     {
         return f_;
@@ -75,9 +72,8 @@ public:
 
         @param f The native file handle to assign.
     */
-    BOOST_BEAST_DECL
     void
-    native_handle(std::FILE* f);
+    native_handle(FILE* f);
 
     /// Returns `true` if the file is open
     bool
@@ -90,7 +86,6 @@ public:
 
         @param ec Set to the error, if any occurred.
     */
-    BOOST_BEAST_DECL
     void
     close(error_code& ec);
 
@@ -102,7 +97,6 @@ public:
 
         @param ec Set to the error, if any occurred
     */
-    BOOST_BEAST_DECL
     void
     open(char const* path, file_mode mode, error_code& ec);
 
@@ -112,7 +106,6 @@ public:
 
         @return The size in bytes
     */
-    BOOST_BEAST_DECL
     std::uint64_t
     size(error_code& ec) const;
 
@@ -122,7 +115,6 @@ public:
 
         @return The offset in bytes from the beginning of the file
     */
-    BOOST_BEAST_DECL
     std::uint64_t
     pos(error_code& ec) const;
 
@@ -132,7 +124,6 @@ public:
 
         @param ec Set to the error, if any occurred
     */
-    BOOST_BEAST_DECL
     void
     seek(std::uint64_t offset, error_code& ec);
 
@@ -144,7 +135,6 @@ public:
 
         @param ec Set to the error, if any occurred
     */
-    BOOST_BEAST_DECL
     std::size_t
     read(void* buffer, std::size_t n, error_code& ec) const;
 
@@ -156,7 +146,6 @@ public:
 
         @param ec Set to the error, if any occurred
     */
-    BOOST_BEAST_DECL
     std::size_t
     write(void const* buffer, std::size_t n, error_code& ec);
 };
@@ -164,8 +153,6 @@ public:
 } // beast
 } // boost
 
-#ifdef BOOST_BEAST_HEADER_ONLY
 #include <boost/beast/core/impl/file_stdio.ipp>
-#endif
 
 #endif

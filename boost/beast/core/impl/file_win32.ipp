@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2015-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2015-2016 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,14 +10,10 @@
 #ifndef BOOST_BEAST_CORE_IMPL_FILE_WIN32_IPP
 #define BOOST_BEAST_CORE_IMPL_FILE_WIN32_IPP
 
-#include <boost/beast/core/file_win32.hpp>
-
-#if BOOST_BEAST_USE_WIN32_FILE
-
-#include <boost/beast/core/detail/win32_unicode_path.hpp>
 #include <boost/core/exchange.hpp>
 #include <boost/winapi/access_rights.hpp>
 #include <boost/winapi/error_codes.hpp>
+#include <boost/winapi/file_management.hpp>
 #include <boost/winapi/get_last_error.hpp>
 #include <limits>
 #include <utility>
@@ -29,7 +25,7 @@ namespace detail {
 
 // VFALCO Can't seem to get boost/detail/winapi to work with
 //        this so use the non-Ex version for now.
-BOOST_BEAST_DECL
+inline
 boost::winapi::BOOL_
 set_file_pointer_ex(
     boost::winapi::HANDLE_ hFile,
@@ -55,6 +51,7 @@ set_file_pointer_ex(
 
 } // detail
 
+inline
 file_win32::
 ~file_win32()
 {
@@ -62,13 +59,14 @@ file_win32::
         boost::winapi::CloseHandle(h_);
 }
 
+inline
 file_win32::
 file_win32(file_win32&& other)
-    : h_(boost::exchange(other.h_,
-        boost::winapi::INVALID_HANDLE_VALUE_))
+    : h_(boost::exchange(other.h_, boost::winapi::INVALID_HANDLE_VALUE_))
 {
 }
 
+inline
 file_win32&
 file_win32::
 operator=(file_win32&& other)
@@ -82,6 +80,7 @@ operator=(file_win32&& other)
     return *this;
 }
 
+inline
 void
 file_win32::
 native_handle(native_handle_type h)
@@ -91,6 +90,7 @@ native_handle(native_handle_type h)
     h_ = h;
 }
 
+inline
 void
 file_win32::
 close(error_code& ec)
@@ -101,15 +101,16 @@ close(error_code& ec)
             ec.assign(boost::winapi::GetLastError(),
                 system_category());
         else
-            ec = {};
+            ec.assign(0, ec.category());
         h_ = boost::winapi::INVALID_HANDLE_VALUE_;
     }
     else
     {
-        ec = {};
+        ec.assign(0, ec.category());
     }
 }
 
+inline
 void
 file_win32::
 open(char const* path, file_mode mode, error_code& ec)
@@ -175,7 +176,14 @@ open(char const* path, file_mode mode, error_code& ec)
         desired_access = boost::winapi::GENERIC_READ_ |
                          boost::winapi::GENERIC_WRITE_;
 
-        creation_disposition = boost::winapi::OPEN_ALWAYS_;
+        creation_disposition = boost::winapi::CREATE_ALWAYS_;
+        flags_and_attributes = 0x08000000; // FILE_FLAG_SEQUENTIAL_SCAN
+        break;
+
+    case file_mode::append_new:     
+        desired_access = boost::winapi::GENERIC_READ_ |
+                         boost::winapi::GENERIC_WRITE_;
+        creation_disposition = boost::winapi::CREATE_NEW_;
         flags_and_attributes = 0x08000000; // FILE_FLAG_SEQUENTIAL_SCAN
         break;
 
@@ -186,49 +194,29 @@ open(char const* path, file_mode mode, error_code& ec)
         flags_and_attributes = 0x08000000; // FILE_FLAG_SEQUENTIAL_SCAN
         break;
     }
-    
-    detail::win32_unicode_path unicode_path(path, ec);
-    if (ec)
-        return;
-    h_ = ::CreateFileW(
-        unicode_path.c_str(),
+    h_ = ::CreateFileA(
+        path,
         desired_access,
         share_mode,
         NULL,
         creation_disposition,
         flags_and_attributes,
         NULL);
-    if (h_ == boost::winapi::INVALID_HANDLE_VALUE_)
-    {
+    if(h_ == boost::winapi::INVALID_HANDLE_VALUE_)
         ec.assign(boost::winapi::GetLastError(),
             system_category());
-        return;
-    }
-    if (mode == file_mode::append ||
-        mode == file_mode::append_existing)
-    {
-        boost::winapi::LARGE_INTEGER_ in;
-        in.QuadPart = 0;
-        if (!detail::set_file_pointer_ex(h_, in, 0,
-            boost::winapi::FILE_END_))
-        {
-            ec.assign(boost::winapi::GetLastError(),
-                system_category());
-            boost::winapi::CloseHandle(h_);
-            h_ = boost::winapi::INVALID_HANDLE_VALUE_;
-            return;
-        }
-    }
-    ec = {};
+    else
+        ec.assign(0, ec.category());
 }
 
+inline
 std::uint64_t
 file_win32::
 size(error_code& ec) const
 {
     if(h_ == boost::winapi::INVALID_HANDLE_VALUE_)
     {
-        ec = make_error_code(errc::bad_file_descriptor);
+        ec = make_error_code(errc::invalid_argument);
         return 0;
     }
     boost::winapi::LARGE_INTEGER_ fileSize;
@@ -238,17 +226,18 @@ size(error_code& ec) const
             system_category());
         return 0;
     }
-    ec = {};
+    ec.assign(0, ec.category());
     return fileSize.QuadPart;
 }
 
+inline
 std::uint64_t
 file_win32::
 pos(error_code& ec)
 {
     if(h_ == boost::winapi::INVALID_HANDLE_VALUE_)
     {
-        ec = make_error_code(errc::bad_file_descriptor);
+        ec = make_error_code(errc::invalid_argument);
         return 0;
     }
     boost::winapi::LARGE_INTEGER_ in;
@@ -261,17 +250,18 @@ pos(error_code& ec)
             system_category());
         return 0;
     }
-    ec = {};
+    ec.assign(0, ec.category());
     return out.QuadPart;
 }
 
+inline
 void
 file_win32::
 seek(std::uint64_t offset, error_code& ec)
 {
     if(h_ == boost::winapi::INVALID_HANDLE_VALUE_)
     {
-        ec = make_error_code(errc::bad_file_descriptor);
+        ec = make_error_code(errc::invalid_argument);
         return;
     }
     boost::winapi::LARGE_INTEGER_ in;
@@ -283,16 +273,17 @@ seek(std::uint64_t offset, error_code& ec)
             system_category());
         return;
     }
-    ec = {};
+    ec.assign(0, ec.category());
 }
 
+inline
 std::size_t
 file_win32::
 read(void* buffer, std::size_t n, error_code& ec)
 {
     if(h_ == boost::winapi::INVALID_HANDLE_VALUE_)
     {
-        ec = make_error_code(errc::bad_file_descriptor);
+        ec = make_error_code(errc::invalid_argument);
         return 0;
     }
     std::size_t nread = 0;
@@ -313,7 +304,7 @@ read(void* buffer, std::size_t n, error_code& ec)
             if(dwError != boost::winapi::ERROR_HANDLE_EOF_)
                 ec.assign(dwError, system_category());
             else
-                ec = {};
+                ec.assign(0, ec.category());
             return nread;
         }
         if(bytesRead == 0)
@@ -322,17 +313,18 @@ read(void* buffer, std::size_t n, error_code& ec)
         nread += bytesRead;
         buffer = static_cast<char*>(buffer) + bytesRead;
     }
-    ec = {};
+    ec.assign(0, ec.category());
     return nread;
 }
 
+inline
 std::size_t
 file_win32::
 write(void const* buffer, std::size_t n, error_code& ec)
 {
     if(h_ == boost::winapi::INVALID_HANDLE_VALUE_)
     {
-        ec = make_error_code(errc::bad_file_descriptor);
+        ec = make_error_code(errc::invalid_argument);
         return 0;
     }
     std::size_t nwritten = 0;
@@ -353,7 +345,7 @@ write(void const* buffer, std::size_t n, error_code& ec)
             if(dwError != boost::winapi::ERROR_HANDLE_EOF_)
                 ec.assign(dwError, system_category());
             else
-                ec = {};
+                ec.assign(0, ec.category());
             return nwritten;
         }
         if(bytesWritten == 0)
@@ -362,13 +354,11 @@ write(void const* buffer, std::size_t n, error_code& ec)
         nwritten += bytesWritten;
         buffer = static_cast<char const*>(buffer) + bytesWritten;
     }
-    ec = {};
+    ec.assign(0, ec.category());
     return nwritten;
 }
 
 } // beast
 } // boost
-
-#endif
 
 #endif

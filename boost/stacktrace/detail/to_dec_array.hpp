@@ -1,4 +1,4 @@
-// Copyright Antony Polukhin, 2016-2025.
+// Copyright Antony Polukhin, 2016-2018.
 //
 // Distributed under the Boost Software License, Version 1.0. (See
 // accompanying file LICENSE_1_0.txt or copy at
@@ -12,14 +12,13 @@
 #   pragma once
 #endif
 
-#include <array>
-#include <cstddef>  // std::size_t
+#include <boost/array.hpp>
 
 namespace boost { namespace stacktrace { namespace detail {
 
 // We do not use boost::lexical_cast in this function to reduce module dependencies
-inline std::array<char, 40> to_dec_array(std::size_t value) noexcept {
-    std::array<char, 40> ret;
+inline boost::array<char, 40> to_dec_array(std::size_t value) BOOST_NOEXCEPT {
+    boost::array<char, 40> ret;
     if (!value) {
         ret[0] = '0';
         ret[1] = '\0';
@@ -32,7 +31,7 @@ inline std::array<char, 40> to_dec_array(std::size_t value) noexcept {
     }
 
     for (std::size_t i = 1; i <= digits; ++i) {
-        ret[digits - i] = static_cast<char>('0' + (value % 10));
+        ret[digits - i] = '0' + (value % 10);
         value /= 10;
     }
 

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -19,34 +19,22 @@
 namespace boost {
 namespace beast {
 
-/** A dynamic buffer using a fixed size internal buffer using no memory allocations.
+/** A flat @b DynamicBuffer with a fixed size internal buffer.
 
-    A dynamic buffer encapsulates memory storage that may be
-    automatically resized as required, where the memory is
-    divided into two regions: readable bytes followed by
-    writable bytes. These memory regions are internal to
-    the dynamic buffer, but direct access to the elements
-    is provided to permit them to be efficiently used with
-    I/O operations.
-
-    Objects of this type meet the requirements of <em>DynamicBuffer</em>
-    and have the following additional properties:
-
-    @li A mutable buffer sequence representing the readable
-    bytes is returned by @ref data when `this` is non-const.
-
-    @li Buffer sequences representing the readable and writable
-    bytes, returned by @ref data and @ref prepare, will have
-    a type of net::const_buffer or net::mutable_buffer.
-
-    @li Ownership of the underlying storage belongs to the
-    derived class.
+    Buffer sequences returned by @ref data and @ref prepare
+    will always be of length one.
+    Ownership of the underlying storage belongs to the derived class.
 
     @note Variables are usually declared using the template class
-    @ref flat_static_buffer; however, to reduce the number of template
-    instantiations, objects should be passed `flat_static_buffer_base&`.
+    @ref flat_static_buffer; however, to reduce the number of instantiations
+    of template functions receiving static stream buffer arguments in a
+    deduced context, the signature of the receiving function should use
+    @ref flat_static_buffer_base.
 
-    @see flat_static_buffer
+    When used with @ref flat_static_buffer this implements a dynamic
+    buffer using no memory allocations.
+
+    @see @ref flat_static_buffer
 */
 class flat_static_buffer_base
 {
@@ -56,12 +44,22 @@ class flat_static_buffer_base
     char* last_;
     char* end_;
 
-    flat_static_buffer_base(
-        flat_static_buffer_base const& other) = delete;
-    flat_static_buffer_base& operator=(
-        flat_static_buffer_base const&) = delete;
+    flat_static_buffer_base(flat_static_buffer_base const& other) = delete;
+    flat_static_buffer_base& operator=(flat_static_buffer_base const&) = delete;
 
 public:
+    /** The type used to represent the input sequence as a list of buffers.
+
+        This buffer sequence is guaranteed to have length 1.
+    */
+    using const_buffers_type = boost::asio::const_buffer;
+
+    /** The type used to represent the output sequence as a list of buffers.
+
+        This buffer sequence is guaranteed to have length 1.
+    */
+    using mutable_buffers_type = boost::asio::mutable_buffer;
+
     /** Constructor
 
         This creates a dynamic buffer using the provided storage area.
@@ -70,141 +68,71 @@ public:
 
         @param n The number of valid bytes pointed to by `p`.
     */
-    flat_static_buffer_base(
-        void* p, std::size_t n) noexcept
+    flat_static_buffer_base(void* p, std::size_t n)
     {
-        reset(p, n);
+        reset_impl(p, n);
     }
 
-    /** Clear the readable and writable bytes to zero.
-
-        This function causes the readable and writable bytes
-        to become empty. The capacity is not changed.
-
-        Buffer sequences previously obtained using @ref data or
-        @ref prepare become invalid.
-
-        @esafe
-
-        No-throw guarantee.
-    */
-    BOOST_BEAST_DECL
-    void
-    clear() noexcept;
-
-    //--------------------------------------------------------------------------
-
-    /// The ConstBufferSequence used to represent the readable bytes.
-    using const_buffers_type = net::const_buffer;
-
-    /// The MutableBufferSequence used to represent the writable bytes.
-    using mutable_buffers_type = net::mutable_buffer;
-
-    /// Returns the number of readable bytes.
+    /// Return the size of the input sequence.
     std::size_t
-    size() const noexcept
+    size() const
     {
         return out_ - in_;
     }
 
-    /// Return the maximum number of bytes, both readable and writable, that can ever be held.
+    /// Return the maximum sum of the input and output sequence sizes.
     std::size_t
-    max_size() const noexcept
+    max_size() const
     {
         return dist(begin_, end_);
     }
 
-    /// Return the maximum number of bytes, both readable and writable, that can be held without requiring an allocation.
+    /// Return the maximum sum of input and output sizes that can be held without an allocation.
     std::size_t
-    capacity() const noexcept
+    capacity() const
     {
         return max_size();
     }
 
-    /// Returns a constant buffer sequence representing the readable bytes
-    const_buffers_type
-    data() const noexcept
-    {
-        return {in_, dist(in_, out_)};
-    }
+    /** Get a list of buffers that represent the input sequence.
 
-    /// Returns a constant buffer sequence representing the readable bytes
-    const_buffers_type
-    cdata() const noexcept
-    {
-        return data();
-    }
-
-    /// Returns a mutable buffer sequence representing the readable bytes
-    mutable_buffers_type
-    data() noexcept
-    {
-        return {in_, dist(in_, out_)};
-    }
-
-    /** Returns a mutable buffer sequence representing writable bytes.
-    
-        Returns a mutable buffer sequence representing the writable
-        bytes containing exactly `n` bytes of storage.
-
-        All buffers sequences previously obtained using
-        @ref data or @ref prepare are invalidated.
-
-        @param n The desired number of bytes in the returned buffer
-        sequence.
-
-        @throws std::length_error if `size() + n` exceeds `max_size()`.
-
-        @esafe
-
-        Strong guarantee.
+        @note These buffers remain valid across subsequent calls to `prepare`.
     */
-    BOOST_BEAST_DECL
+    const_buffers_type
+    data() const;
+
+    /// Set the input and output sequences to size 0
+    void
+    reset();
+
+    /** Get a list of buffers that represent the output sequence, with the given size.
+
+        @throws std::length_error if the size would exceed the limit
+        imposed by the underlying mutable buffer sequence.
+
+        @note Buffers representing the input sequence acquired prior to
+        this call remain valid.
+    */
     mutable_buffers_type
     prepare(std::size_t n);
 
-    /** Append writable bytes to the readable bytes.
+    /** Move bytes from the output sequence to the input sequence.
 
-        Appends n bytes from the start of the writable bytes to the
-        end of the readable bytes. The remainder of the writable bytes
-        are discarded. If n is greater than the number of writable
-        bytes, all writable bytes are appended to the readable bytes.
-
-        All buffers sequences previously obtained using
-        @ref data or @ref prepare are invalidated.
-
-        @param n The number of bytes to append. If this number
-        is greater than the number of writable bytes, all
-        writable bytes are appended.
-
-        @esafe
-
-        No-throw guarantee.
+        @note Buffers representing the input sequence acquired prior to
+        this call remain valid.
     */
     void
-    commit(std::size_t n) noexcept
+    commit(std::size_t n)
     {
         out_ += (std::min<std::size_t>)(n, last_ - out_);
     }
 
-    /** Remove bytes from beginning of the readable bytes.
-
-        Removes n bytes from the beginning of the readable bytes.
-
-        All buffers sequences previously obtained using
-        @ref data or @ref prepare are invalidated.
-
-        @param n The number of bytes to remove. If this number
-        is greater than the number of readable bytes, all
-        readable bytes are removed.
-
-        @esafe
-
-        No-throw guarantee.
-    */
-    BOOST_BEAST_DECL
+    /// Remove bytes from the input sequence.
     void
-    consume(std::size_t n) noexcept;
+    consume(std::size_t n)
+    {
+        consume_impl(n);
+    }
 
 protected:
     /** Constructor
@@ -225,31 +153,43 @@ protected:
         @param p A pointer to valid storage of at least `n` bytes.
 
         @param n The number of valid bytes pointed to by `p`.
-
-        @esafe
-
-        No-throw guarantee.
     */
-    BOOST_BEAST_DECL
     void
-    reset(void* p, std::size_t n) noexcept;
+    reset(void* p, std::size_t n);
 
 private:
     static
+    inline
     std::size_t
-    dist(char const* first, char const* last) noexcept
+    dist(char const* first, char const* last)
     {
         return static_cast<std::size_t>(last - first);
     }
+
+    template<class = void>
+    void
+    reset_impl();
+
+    template<class = void>
+    void
+    reset_impl(void* p, std::size_t n);
+
+    template<class = void>
+    mutable_buffers_type
+    prepare_impl(std::size_t n);
+
+    template<class = void>
+    void
+    consume_impl(std::size_t n);
 };
 
 //------------------------------------------------------------------------------
 
-/** A <em>DynamicBuffer</em> with a fixed size internal buffer using no memory allocations.
+/** A @b DynamicBuffer with a fixed size internal buffer.
 
-    Buffer sequences representing the readable and writable
-    bytes, returned by @ref data and @ref prepare, will have
-    a type of net::const_buffer or net::mutable_buffer.
+    Buffer sequences returned by @ref data and @ref prepare
+    will always be of length one.
+    This implements a dynamic buffer using no memory allocations.
 
     @tparam N The number of bytes in the internal buffer.
 
@@ -257,7 +197,7 @@ private:
     objects of this type in a deduced context, the signature of the
     receiving function should use @ref flat_static_buffer_base instead.
 
-    @see flat_static_buffer_base
+    @see @ref flat_static_buffer_base
 */
 template<std::size_t N>
 class flat_static_buffer : public flat_static_buffer_base
@@ -309,9 +249,6 @@ public:
 } // beast
 } // boost
 
-#include <boost/beast/core/impl/flat_static_buffer.hpp>
-#ifdef BOOST_BEAST_HEADER_ONLY
 #include <boost/beast/core/impl/flat_static_buffer.ipp>
-#endif
 
 #endif

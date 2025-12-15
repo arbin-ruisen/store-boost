@@ -48,7 +48,7 @@ class zip {
     typedef typename dataset2_decay::iterator       dataset2_iter;
 
 public:
-    static const int arity = dataset1_decay::arity + dataset2_decay::arity;
+    enum { arity = dataset1_decay::arity + dataset2_decay::arity };
 
     struct iterator {
         // Constructor

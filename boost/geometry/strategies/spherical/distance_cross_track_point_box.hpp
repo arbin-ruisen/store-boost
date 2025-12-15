@@ -4,8 +4,8 @@
 // Copyright (c) 2008-2015 Barend Gehrels, Amsterdam, the Netherlands.
 // Copyright (c) 2009-2015 Mateusz Loskot, London, UK.
 
-// This file was modified by Oracle on 2014-2020.
-// Modifications copyright (c) 2014-2020, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2014-2017.
+// Modifications copyright (c) 2014-2017, Oracle and/or its affiliates.
 
 // Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
@@ -18,11 +18,10 @@
 #ifndef BOOST_GEOMETRY_STRATEGIES_SPHERICAL_DISTANCE_CROSS_TRACK_POINT_BOX_HPP
 #define BOOST_GEOMETRY_STRATEGIES_SPHERICAL_DISTANCE_CROSS_TRACK_POINT_BOX_HPP
 
-
-#include <type_traits>
-
 #include <boost/config.hpp>
 #include <boost/concept_check.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_void.hpp>
 
 #include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/assert.hpp>
@@ -65,7 +64,7 @@ public :
         // this method assumes that the coordinates of the point and
         // the box are normalized
 
-        using box_point_type = point_type_t<Box>;
+        typedef typename point_type<Box>::type box_point_type;
 
         box_point_type bottom_left, bottom_right, top_left, top_right;
         geometry::detail::assign_box_corners(box,
@@ -83,7 +82,7 @@ public :
         ReturnType const pi = math::pi<ReturnType>();
         ReturnType const two_pi = math::two_pi<ReturnType>();
 
-        using box_point_type = point_type_t<Box>;
+        typedef typename point_type<Box>::type box_point_type;
 
         // First check if the point is within the band defined by the
         // minimum and maximum longitude of the box; if yes, determine
@@ -205,7 +204,7 @@ class cross_track_point_box
 public:
     template <typename Point, typename Box>
     struct return_type
-        : services::return_type<Strategy, Point, point_type_t<Box>>
+        : services::return_type<Strategy, Point, typename point_type<Box>::type>
     {};
 
     typedef typename Strategy::radius_type radius_type;
@@ -223,19 +222,19 @@ public:
             Strategy
         >::type pp_comparable_strategy;
 
-    typedef std::conditional_t
+    typedef typename boost::mpl::if_
         <
-            std::is_same
+            boost::is_same
                 <
                     pp_comparable_strategy,
                     Strategy
-                >::value,
+                >,
             typename strategy::distance::services::comparable_type
                 <
                     typename distance_ps_strategy::type
                 >::type,
             typename distance_ps_strategy::type
-        > ps_strategy_type;
+        >::type ps_strategy_type;
 
     // constructors
 
@@ -266,7 +265,7 @@ public:
             (
                 (concepts::PointDistanceStrategy
                     <
-                        Strategy, Point, point_type_t<Box>
+                        Strategy, Point, typename point_type<Box>::type
                     >)
             );
 #endif
@@ -354,7 +353,7 @@ public:
 
         return result_from_distance
             <
-                Strategy, P, point_type_t<Box>
+                Strategy, P, typename point_type<Box>::type
             >::apply(s, distance);
     }
 };
@@ -373,17 +372,17 @@ struct default_strategy
     typedef cross_track_point_box
         <
             void,
-            std::conditional_t
+            typename boost::mpl::if_
                 <
-                    std::is_void<Strategy>::value,
+                    boost::is_void<Strategy>,
                     typename default_strategy
                         <
                             point_tag, point_tag,
-                            Point, point_type_t<Box>,
+                            Point, typename point_type<Box>::type,
                             spherical_equatorial_tag, spherical_equatorial_tag
                         >::type,
                     Strategy
-                >
+                >::type
         > type;
 };
 

@@ -29,9 +29,13 @@
 #include <cstddef>
 #include <queue>
 #include <vector>
-#include <chrono>
-#include <mutex>
-#include <condition_variable>
+#include <boost/cstdint.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/thread_time.hpp>
+#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/log/detail/timestamp.hpp>
 #include <boost/log/detail/enqueued_record.hpp>
 #include <boost/log/keywords/order.hpp>
 #include <boost/log/keywords/ordering_window.hpp>
@@ -69,7 +73,7 @@ class bounded_ordering_queue :
 {
 private:
     typedef OverflowStrategyT overflow_strategy;
-    typedef std::mutex mutex_type;
+    typedef boost::mutex mutex_type;
     typedef sinks::aux::enqueued_record enqueued_record;
 
     typedef std::priority_queue<
@@ -79,12 +83,12 @@ private:
     > queue_type;
 
 private:
-    //! Ordering window duration
-    const std::chrono::steady_clock::duration m_ordering_window;
+    //! Ordering window duration, in milliseconds
+    const uint64_t m_ordering_window;
     //! Synchronization primitive
     mutex_type m_mutex;
     //! Condition to block the consuming thread on
-    std::condition_variable m_cond;
+    condition_variable m_cond;
     //! Log record queue
     queue_type m_queue;
     //! Interruption flag
@@ -94,16 +98,16 @@ public:
     /*!
      * Returns ordering window size specified during initialization
      */
-    std::chrono::steady_clock::duration get_ordering_window() const
+    posix_time::time_duration get_ordering_window() const
     {
-        return m_ordering_window;
+        return posix_time::milliseconds(m_ordering_window);
     }
 
     /*!
      * Returns default ordering window size.
      * The default window size is specific to the operating system thread scheduling mechanism.
      */
-    static BOOST_CONSTEXPR std::chrono::steady_clock::duration get_default_ordering_window() BOOST_NOEXCEPT
+    static posix_time::time_duration get_default_ordering_window()
     {
         // The main idea behind this parameter is that the ordering window should be large enough
         // to allow the frontend to order records from different threads on an attribute
@@ -112,14 +116,14 @@ public:
         //   For instance, on Windows it defaults to around 15-16 ms.
         // * No less than thread switching quant on the current OS. For now 30 ms is large enough window size to
         //   switch threads on any known OS. It can be tuned for other platforms as needed.
-        return std::chrono::milliseconds(30);
+        return posix_time::milliseconds(30);
     }
 
 protected:
     //! Initializing constructor
     template< typename ArgsT >
     explicit bounded_ordering_queue(ArgsT const& args) :
-        m_ordering_window(std::chrono::duration_cast< std::chrono::steady_clock::duration >(args[keywords::ordering_window || &bounded_ordering_queue::get_default_ordering_window])),
+        m_ordering_window(args[keywords::ordering_window || &bounded_ordering_queue::get_default_ordering_window].total_milliseconds()),
         m_queue(args[keywords::order]),
         m_interruption_requested(false)
     {
@@ -128,7 +132,7 @@ protected:
     //! Enqueues log record to the queue
     void enqueue(record_view const& rec)
     {
-        std::unique_lock< mutex_type > lock(m_mutex);
+        unique_lock< mutex_type > lock(m_mutex);
         std::size_t size = m_queue.size();
         for (; size >= MaxQueueSizeV; size = m_queue.size())
         {
@@ -144,7 +148,7 @@ protected:
     //! Attempts to enqueue log record to the queue
     bool try_enqueue(record_view const& rec)
     {
-        std::unique_lock< mutex_type > lock(m_mutex, std::try_to_lock);
+        unique_lock< mutex_type > lock(m_mutex, try_to_lock);
         if (lock.owns_lock())
         {
             const std::size_t size = m_queue.size();
@@ -165,13 +169,13 @@ protected:
     //! Attempts to dequeue a log record ready for processing from the queue, does not block if the queue is empty
     bool try_dequeue_ready(record_view& rec)
     {
-        std::lock_guard< mutex_type > lock(m_mutex);
+        lock_guard< mutex_type > lock(m_mutex);
         const std::size_t size = m_queue.size();
         if (size > 0)
         {
-            const auto now = std::chrono::steady_clock::now();
+            const boost::log::aux::timestamp now = boost::log::aux::get_timestamp();
             enqueued_record const& elem = m_queue.top();
-            if ((now - elem.m_timestamp) >= m_ordering_window)
+            if (static_cast< uint64_t >((now - elem.m_timestamp).milliseconds()) >= m_ordering_window)
             {
                 // We got a new element
                 rec = elem.m_record;
@@ -187,7 +191,7 @@ protected:
     //! Attempts to dequeue log record from the queue, does not block if the queue is empty
     bool try_dequeue(record_view& rec)
     {
-        std::lock_guard< mutex_type > lock(m_mutex);
+        lock_guard< mutex_type > lock(m_mutex);
         const std::size_t size = m_queue.size();
         if (size > 0)
         {
@@ -204,16 +208,16 @@ protected:
     //! Dequeues log record from the queue, blocks if the queue is empty
     bool dequeue_ready(record_view& rec)
     {
-        std::unique_lock< mutex_type > lock(m_mutex);
+        unique_lock< mutex_type > lock(m_mutex);
 
         while (!m_interruption_requested)
         {
             const std::size_t size = m_queue.size();
             if (size > 0)
             {
-                const auto now = std::chrono::steady_clock::now();
+                const boost::log::aux::timestamp now = boost::log::aux::get_timestamp();
                 enqueued_record const& elem = m_queue.top();
-                const auto difference = now - elem.m_timestamp;
+                const uint64_t difference = (now - elem.m_timestamp).milliseconds();
                 if (difference >= m_ordering_window)
                 {
                     rec = elem.m_record;
@@ -224,7 +228,7 @@ protected:
                 else
                 {
                     // Wait until the element becomes ready to be processed
-                    m_cond.wait_for(lock, m_ordering_window - difference);
+                    m_cond.timed_wait(lock, posix_time::milliseconds(m_ordering_window - difference));
                 }
             }
             else
@@ -240,7 +244,7 @@ protected:
     //! Wakes a thread possibly blocked in the \c dequeue method
     void interrupt_dequeue()
     {
-        std::lock_guard< mutex_type > lock(m_mutex);
+        lock_guard< mutex_type > lock(m_mutex);
         m_interruption_requested = true;
         overflow_strategy::interrupt();
         m_cond.notify_one();

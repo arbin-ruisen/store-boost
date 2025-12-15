@@ -16,7 +16,7 @@
 #include <boost/move/algo/detail/basic_op.hpp>
 #include <boost/move/detail/iterator_traits.hpp>
 #include <boost/move/detail/destruct_n.hpp>
-#include <cassert>
+#include <boost/assert.hpp>
 
 namespace boost {
 namespace movelib {
@@ -24,47 +24,32 @@ namespace movelib {
 template<class Comp>
 struct antistable
 {
-   inline explicit antistable(Comp &comp)
+   explicit antistable(Comp &comp)
       : m_comp(comp)
    {}
 
-   inline antistable(const antistable & other)
-      : m_comp(other.m_comp)
-   {}
-
    template<class U, class V>
-   inline bool operator()(const U &u, const V & v)
+   bool operator()(const U &u, const V & v)
    {  return !m_comp(v, u);  }
-
-   inline const Comp &get() const
-   {  return m_comp; }
 
    private:
    antistable & operator=(const antistable &);
    Comp &m_comp;
 };
 
-template<class Comp>
-Comp unantistable(Comp comp)
-{   return comp;  }
-
-template<class Comp>
-Comp unantistable(antistable<Comp> comp)
-{   return comp.get();  }
-
 template <class Comp>
 class negate
 {
    public:
-   inline negate()
+   negate()
    {}
 
-   inline explicit negate(Comp comp)
+   explicit negate(Comp comp)
       : m_comp(comp)
    {}
 
    template <class T1, class T2>
-   inline bool operator()(const T1& l, const T2& r)
+   bool operator()(const T1& l, const T2& r)
    {
       return !m_comp(l, r);
    }
@@ -78,15 +63,15 @@ template <class Comp>
 class inverse
 {
    public:
-   inline inverse()
+   inverse()
    {}
 
-   inline explicit inverse(Comp comp)
+   explicit inverse(Comp comp)
       : m_comp(comp)
    {}
 
    template <class T1, class T2>
-   inline bool operator()(const T1& l, const T2& r)
+   bool operator()(const T1& l, const T2& r)
    {
       return m_comp(r, l);
    }

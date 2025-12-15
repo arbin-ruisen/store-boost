@@ -59,7 +59,12 @@ BOOST_FORCEINLINE bool is_name_character(char c)
 //! The function checks if there is 'operator' keyword at the specified position
 BOOST_FORCEINLINE bool is_operator_keyword(const char* p)
 {
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_IX86)
+    // Intel architecture allows unaligned accesses, so just compare with the whole keyword at once
+    return *reinterpret_cast< const uint64_t* >(p) == UINT64_C(0x726f74617265706f);
+#else
     return std::memcmp(p, "operator", 8) == 0;
+#endif
 }
 
 //! The function tries to parse operator signature
@@ -124,13 +129,12 @@ bool detect_operator(const char* begin, const char* end, const char* operator_ke
             return true;
         }
         // Fall through to other cases involving '-'
-        BOOST_FALLTHROUGH;
 
     case '=':
     case '|':
     case '&':
     case '+':
-        // Handle operator=, operator==, operator+=, operator++, operator||, operator&&, etc.
+        // Handle operator=, operator==, operator+=, operator++, operator||, opeartor&&, etc.
         if (end - p >= 2 && (p[0] == p[1] || p[1] == '='))
             operator_end = p + 2;
         else
@@ -296,7 +300,6 @@ inline const char* find_opening_parenthesis(const char* begin, const char* end, 
                 }
             }
             // Fall through to process this character as other characters
-            BOOST_FALLTHROUGH;
 
         default:
             if (state != operator_detected)
@@ -360,7 +363,6 @@ inline const char* find_closing_parenthesis(const char* begin, const char* end, 
                 }
             }
             // Fall through to process this character as other characters
-            BOOST_FALLTHROUGH;
 
         default:
             if (!found_first_meaningful_char && c != ' ')
@@ -595,9 +597,9 @@ private:
 public:
     BOOST_DEFAULTED_FUNCTION(named_scope_formatter(), {})
     named_scope_formatter(named_scope_formatter const& that) : m_formatters(that.m_formatters) {}
-    named_scope_formatter(BOOST_RV_REF(named_scope_formatter) that) BOOST_NOEXCEPT { m_formatters.swap(that.m_formatters); }
+    named_scope_formatter(BOOST_RV_REF(named_scope_formatter) that) { m_formatters.swap(that.m_formatters); }
 
-    named_scope_formatter& operator= (named_scope_formatter that) BOOST_NOEXCEPT
+    named_scope_formatter& operator= (named_scope_formatter that)
     {
         this->swap(that);
         return *this;

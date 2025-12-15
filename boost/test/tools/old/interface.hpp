@@ -20,8 +20,6 @@
 #include <boost/preprocessor/seq/size.hpp>
 #include <boost/preprocessor/seq/to_tuple.hpp>
 
-#include <boost/core/ignore_unused.hpp>
-
 #include <boost/test/detail/suppress_warnings.hpp>
 
 //____________________________________________________________________________//
@@ -72,7 +70,7 @@ do {                                                                            
         ::boost::test_tools::tt_detail::TL,                                     \
         ::boost::test_tools::tt_detail::CT                                      \
         BOOST_JOIN( BOOST_TEST_TOOL_PASS_ARGS, frwd_type )( ARGS ) );           \
-} while( 0 )                                                                    \
+} while( ::boost::test_tools::tt_detail::dummy_cond() )                         \
 /**/
 
 //____________________________________________________________________________//
@@ -97,7 +95,7 @@ do {                                                                            
 
 //____________________________________________________________________________//
 
-#define BOOST_CHECK_THROW_IMPL( S, E, P, postfix, TL )                                  \
+#define BOOST_CHECK_THROW_IMPL( S, E, P, postfix, TL )                                   \
 do {                                                                                    \
     try {                                                                               \
         BOOST_TEST_PASSPOINT();                                                         \
@@ -105,12 +103,12 @@ do {                                                                            
         BOOST_TEST_TOOL_IMPL( 2, false, "exception " BOOST_STRINGIZE(E) " expected but not raised", \
                               TL, CHECK_MSG, _ );                                       \
     } catch( E const& ex ) {                                                            \
-        boost::ignore_unused( ex );                                                     \
-        BOOST_TEST_TOOL_IMPL( 2, P,                                                     \
-                              "exception \"" BOOST_STRINGIZE( E )"\" raised as expected" postfix,   \
+        ::boost::unit_test::ut_detail::ignore_unused_variable_warning( ex );            \
+        BOOST_TEST_TOOL_IMPL( 2, P, \
+                              "exception \"" BOOST_STRINGIZE( E )"\" raised as expected" postfix,           \
                               TL, CHECK_MSG, _  );                                      \
     }                                                                                   \
-} while( 0 )                                                                            \
+} while( ::boost::test_tools::tt_detail::dummy_cond() )                                 \
 /**/
 
 //____________________________________________________________________________//
@@ -140,7 +138,7 @@ do {                                                                            
         BOOST_TEST_TOOL_IMPL( 2, false, "unexpected exception thrown by " BOOST_STRINGIZE( S ),    \
                               TL, CHECK_MSG, _ );                                       \
     }                                                                                   \
-} while( 0 )                                                                            \
+} while( ::boost::test_tools::tt_detail::dummy_cond() )                                 \
 /**/
 
 #define BOOST_WARN_NO_THROW( S )            BOOST_CHECK_NO_THROW_IMPL( S, WARN )

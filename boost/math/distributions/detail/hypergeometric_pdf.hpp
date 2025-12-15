@@ -15,8 +15,6 @@
 #include <boost/math/special_functions/pow.hpp>
 #include <boost/math/special_functions/prime.hpp>
 #include <boost/math/policies/error_handling.hpp>
-#include <algorithm>
-#include <cstdint>
 
 #ifdef BOOST_MATH_INSTRUMENT
 #include <typeinfo>
@@ -42,7 +40,7 @@ template <class T>
 struct sort_functor
 {
    sort_functor(const T* exponents) : m_exponents(exponents){}
-   bool operator()(std::size_t i, std::size_t j)
+   bool operator()(int i, int j)
    {
       return m_exponents[i] > m_exponents[j];
    }
@@ -51,7 +49,7 @@ private:
 };
 
 template <class T, class Lanczos, class Policy>
-T hypergeometric_pdf_lanczos_imp(T /*dummy*/, std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, const Lanczos&, const Policy&)
+T hypergeometric_pdf_lanczos_imp(T /*dummy*/, unsigned x, unsigned r, unsigned n, unsigned N, const Lanczos&, const Policy&)
 {
    BOOST_MATH_STD_USING
 
@@ -139,7 +137,7 @@ T hypergeometric_pdf_lanczos_imp(T /*dummy*/, std::uint64_t x, std::uint64_t r, 
    //
    // Combine equal powers:
    //
-   std::size_t j = 8;
+   int j = 8;
    while(exponents[sorted_indexes[j]] == 0) --j;
    while(j)
    {
@@ -186,7 +184,7 @@ T hypergeometric_pdf_lanczos_imp(T /*dummy*/, std::uint64_t x, std::uint64_t r, 
       result = pow(bases[sorted_indexes[0]] * exp(static_cast<T>(base_e_factors[sorted_indexes[0]])), exponents[sorted_indexes[0]]);
    }
    BOOST_MATH_INSTRUMENT_VARIABLE(result);
-   for(std::size_t i = 1; (i < 9) && (exponents[sorted_indexes[i]] > 0); ++i)
+   for(unsigned i = 1; (i < 9) && (exponents[sorted_indexes[i]] > 0); ++i)
    {
       BOOST_FPU_EXCEPTION_GUARD
       if(result < tools::min_value<T>())
@@ -217,7 +215,7 @@ T hypergeometric_pdf_lanczos_imp(T /*dummy*/, std::uint64_t x, std::uint64_t r, 
 }
 
 template <class T, class Policy>
-T hypergeometric_pdf_lanczos_imp(T /*dummy*/, std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, const boost::math::lanczos::undefined_lanczos&, const Policy& pol)
+T hypergeometric_pdf_lanczos_imp(T /*dummy*/, unsigned x, unsigned r, unsigned n, unsigned N, const boost::math::lanczos::undefined_lanczos&, const Policy& pol)
 {
    BOOST_MATH_STD_USING
    return exp(
@@ -262,7 +260,7 @@ inline T integer_power(const T& x, int ex)
 #ifdef __SUNPRO_CC
    return pow(x, T(ex));
 #else
-   return static_cast<T>(pow(x, ex));
+   return pow(x, ex);
 #endif
 }
 template <class T>
@@ -272,22 +270,22 @@ struct hypergeometric_pdf_prime_loop_result_entry
    const hypergeometric_pdf_prime_loop_result_entry* next;
 };
 
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(push)
 #pragma warning(disable:4510 4512 4610)
 #endif
 
 struct hypergeometric_pdf_prime_loop_data
 {
-   const std::uint64_t x;
-   const std::uint64_t r;
-   const std::uint64_t n;
-   const std::uint64_t N;
-   std::size_t prime_index;
-   std::uint64_t current_prime;
+   const unsigned x;
+   const unsigned r;
+   const unsigned n;
+   const unsigned N;
+   unsigned prime_index;
+   unsigned current_prime;
 };
 
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #pragma warning(pop)
 #endif
 
@@ -296,8 +294,8 @@ T hypergeometric_pdf_prime_loop_imp(hypergeometric_pdf_prime_loop_data& data, hy
 {
    while(data.current_prime <= data.N)
    {
-      std::uint64_t base = data.current_prime;
-      std::uint64_t prime_powers = 0;
+      unsigned base = data.current_prime;
+      int prime_powers = 0;
       while(base <= data.N)
       {
          prime_powers += data.n / base;
@@ -313,7 +311,7 @@ T hypergeometric_pdf_prime_loop_imp(hypergeometric_pdf_prime_loop_data& data, hy
       }
       if(prime_powers)
       {
-         T p = integer_power<T>(static_cast<T>(data.current_prime), static_cast<int>(prime_powers));
+         T p = integer_power<T>(static_cast<T>(data.current_prime), prime_powers);
          if((p > 1) && (tools::max_value<T>() / p < result.value))
          {
             //
@@ -321,7 +319,7 @@ T hypergeometric_pdf_prime_loop_imp(hypergeometric_pdf_prime_loop_data& data, hy
             // to sidestep the issue:
             //
             hypergeometric_pdf_prime_loop_result_entry<T> t = { p, &result };
-            data.current_prime = prime(static_cast<unsigned>(++data.prime_index));
+            data.current_prime = prime(++data.prime_index);
             return hypergeometric_pdf_prime_loop_imp<T>(data, t);
          }
          if((p < 1) && (tools::min_value<T>() / p > result.value))
@@ -331,12 +329,12 @@ T hypergeometric_pdf_prime_loop_imp(hypergeometric_pdf_prime_loop_data& data, hy
             // to sidestep the issue:
             //
             hypergeometric_pdf_prime_loop_result_entry<T> t = { p, &result };
-            data.current_prime = prime(static_cast<unsigned>(++data.prime_index));
+            data.current_prime = prime(++data.prime_index);
             return hypergeometric_pdf_prime_loop_imp<T>(data, t);
          }
          result.value *= p;
       }
-      data.current_prime = prime(static_cast<unsigned>(++data.prime_index));
+      data.current_prime = prime(++data.prime_index);
    }
    //
    // When we get to here we have run out of prime factors,
@@ -383,7 +381,7 @@ T hypergeometric_pdf_prime_loop_imp(hypergeometric_pdf_prime_loop_data& data, hy
 }
 
 template <class T, class Policy>
-inline T hypergeometric_pdf_prime_imp(std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, const Policy&)
+inline T hypergeometric_pdf_prime_imp(unsigned x, unsigned r, unsigned n, unsigned N, const Policy&)
 {
    hypergeometric_pdf_prime_loop_result_entry<T> result = { 1, 0 };
    hypergeometric_pdf_prime_loop_data data = { x, r, n, N, 0, prime(0) };
@@ -391,25 +389,25 @@ inline T hypergeometric_pdf_prime_imp(std::uint64_t x, std::uint64_t r, std::uin
 }
 
 template <class T, class Policy>
-T hypergeometric_pdf_factorial_imp(std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, const Policy&)
+T hypergeometric_pdf_factorial_imp(unsigned x, unsigned r, unsigned n, unsigned N, const Policy&)
 {
    BOOST_MATH_STD_USING
-   BOOST_MATH_ASSERT(N <= boost::math::max_factorial<T>::value);
-   T result = boost::math::unchecked_factorial<T>(static_cast<unsigned>(n));
+   BOOST_ASSERT(N <= boost::math::max_factorial<T>::value);
+   T result = boost::math::unchecked_factorial<T>(n);
    T num[3] = {
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(r)),
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(N - n)),
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(N - r))
+      boost::math::unchecked_factorial<T>(r),
+      boost::math::unchecked_factorial<T>(N - n),
+      boost::math::unchecked_factorial<T>(N - r)
    };
    T denom[5] = {
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(N)),
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(x)),
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(n - x)),
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(r - x)),
-      boost::math::unchecked_factorial<T>(static_cast<unsigned>(N - n - r + x))
+      boost::math::unchecked_factorial<T>(N),
+      boost::math::unchecked_factorial<T>(x),
+      boost::math::unchecked_factorial<T>(n - x),
+      boost::math::unchecked_factorial<T>(r - x),
+      boost::math::unchecked_factorial<T>(N - n - r + x)
    };
-   std::size_t i = 0;
-   std::size_t j = 0;
+   int i = 0;
+   int j = 0;
    while((i < 3) || (j < 5))
    {
       while((j < 5) && ((result >= 1) || (i >= 3)))
@@ -429,7 +427,7 @@ T hypergeometric_pdf_factorial_imp(std::uint64_t x, std::uint64_t r, std::uint64
 
 template <class T, class Policy>
 inline typename tools::promote_args<T>::type 
-   hypergeometric_pdf(std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, const Policy&)
+   hypergeometric_pdf(unsigned x, unsigned r, unsigned n, unsigned N, const Policy&)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename tools::promote_args<T>::type result_type;

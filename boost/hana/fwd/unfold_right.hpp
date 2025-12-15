@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::unfold_right`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Dual operation to `fold_right` for sequences.
     //! @ingroup group-Sequence
     //!
@@ -78,8 +78,8 @@ namespace boost { namespace hana {
     struct unfold_right_t;
 
     template <typename S>
-    BOOST_HANA_INLINE_VARIABLE constexpr unfold_right_t<S> unfold_right{};
+    constexpr unfold_right_t<S> unfold_right{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_UNFOLD_RIGHT_HPP

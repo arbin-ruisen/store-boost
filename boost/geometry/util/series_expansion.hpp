@@ -1,14 +1,8 @@
 // Boost.Geometry
 
 // Copyright (c) 2018 Adeel Ahmad, Islamabad, Pakistan.
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
 
 // Contributed and/or modified by Adeel Ahmad, as part of Google Summer of Code 2018 program.
-
-// This file was modified by Oracle on 2019.
-// Modifications copyright (c) 2019 Oracle and/or its affiliates.
-
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
 // Version 1.0. (See accompanying file LICENSE_1_0.txt or copy at
@@ -30,7 +24,6 @@
 #ifndef BOOST_GEOMETRY_UTIL_SERIES_EXPANSION_HPP
 #define BOOST_GEOMETRY_UTIL_SERIES_EXPANSION_HPP
 
-#include <boost/array.hpp>
 #include <boost/geometry/core/assert.hpp>
 #include <boost/geometry/util/math.hpp>
 
@@ -62,12 +55,11 @@ namespace boost { namespace geometry { namespace series_expansion {
                s/case\sCT(/case /g; s/):/:/g; s/epsCT(2)/eps2/g;'
     */
     template <size_t SeriesOrder, typename CT>
-    inline CT evaluate_A1(CT const& eps)
+    inline CT evaluate_A1(CT eps)
     {
-        CT const eps2 = math::sqr(eps);
+        CT eps2 = math::sqr(eps);
         CT t;
-        switch (SeriesOrder/2)
-        {
+        switch (SeriesOrder/2) {
         case 0:
             t = CT(0);
             break;
@@ -80,7 +72,7 @@ namespace boost { namespace geometry { namespace series_expansion {
         case 3:
             t = eps2*(eps2*(eps2+CT(4))+CT(64))/CT(256);
             break;
-        default:
+        case 4:
             t = eps2*(eps2*(eps2*(CT(25)*eps2+CT(64))+CT(256))+CT(4096))/CT(16384);
             break;
         }
@@ -112,8 +104,7 @@ namespace boost { namespace geometry { namespace series_expansion {
     {
         CT const eps2 = math::sqr(eps);
         CT t;
-        switch (SeriesOrder/2)
-        {
+        switch (SeriesOrder/2) {
         case 0:
             t = CT(0);
             break;
@@ -156,8 +147,7 @@ namespace boost { namespace geometry { namespace series_expansion {
     template <typename Coeffs, typename CT>
     inline void evaluate_coeffs_A3(Coeffs &c, CT const& n)
     {
-        switch (int(Coeffs::static_size))
-        {
+        switch (int(Coeffs::static_size)) {
         case 0:
             break;
         case 1:
@@ -226,10 +216,9 @@ namespace boost { namespace geometry { namespace series_expansion {
     template <typename Coeffs, typename CT>
     inline void evaluate_coeffs_C1(Coeffs &c, CT const& eps)
     {
-        CT const eps2 = math::sqr(eps);
+        CT eps2 = math::sqr(eps);
         CT d = eps;
-        switch (int(Coeffs::static_size) - 1)
-        {
+        switch (int(Coeffs::static_size) - 1) {
         case 0:
             break;
         case 1:
@@ -328,8 +317,7 @@ namespace boost { namespace geometry { namespace series_expansion {
     {
         CT const eps2 = math::sqr(eps);
         CT d = eps;
-        switch (int(Coeffs::static_size) - 1)
-        {
+        switch (int(Coeffs::static_size) - 1) {
         case 0:
             break;
         case 1:
@@ -428,8 +416,7 @@ namespace boost { namespace geometry { namespace series_expansion {
     {
         CT const eps2 = math::sqr(eps);
         CT d = eps;
-        switch (int(Coeffs::static_size) - 1)
-        {
+        switch (int(Coeffs::static_size) - 1) {
         case 0:
             break;
         case 1:
@@ -525,11 +512,12 @@ namespace boost { namespace geometry { namespace series_expansion {
     */
     template <size_t SeriesOrder, typename Coeffs, typename CT>
     inline void evaluate_coeffs_C3x(Coeffs &c, CT const& n) {
-        BOOST_GEOMETRY_ASSERT((Coeffs::static_size == (SeriesOrder * (SeriesOrder - 1)) / 2));
+        size_t const coeff_size = Coeffs::static_size;
+        size_t const expected_size = (SeriesOrder * (SeriesOrder - 1)) / 2;
+        BOOST_GEOMETRY_ASSERT((coeff_size == expected_size));
 
-        CT const n2 = math::sqr(n);
-        switch (SeriesOrder)
-        {
+        const CT n2 = math::sqr(n);
+        switch (SeriesOrder) {
         case 0:
             break;
         case 1:
@@ -645,19 +633,18 @@ namespace boost { namespace geometry { namespace series_expansion {
     inline void evaluate_coeffs_C3(Coeffs1 &coeffs1, Coeffs2 &coeffs2, CT const& eps)
     {
         CT mult = 1;
-        size_t offset = 0;
+        int offset = 1;
 
-        // i is the index of C3[i].
-        for (size_t i = 1; i < Coeffs1::static_size; ++i)
+        // l is the index of C3[l].
+        for (size_t l = 1; l < Coeffs1::static_size; ++l)
         {
             // Order of polynomial in eps.
-            size_t m = Coeffs1::static_size - i;
+            int m = Coeffs1::static_size - l - 1;
             mult *= eps;
 
-            coeffs1[i] = mult * math::horner_evaluate(eps, coeffs2.begin() + offset,
-                                                           coeffs2.begin() + offset + m);
+            coeffs1[l] = mult * math::polyval(coeffs2.begin(), coeffs2.begin() + offset, eps);
 
-            offset += m;
+            offset += m + 1;
         }
         // Post condition: offset == coeffs_C3_size
     }

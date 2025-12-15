@@ -2,7 +2,7 @@
 // detail/winrt_timer_scheduler.hpp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -28,13 +28,7 @@
 #include <boost/asio/detail/timer_queue_base.hpp>
 #include <boost/asio/detail/timer_queue_set.hpp>
 #include <boost/asio/detail/wait_op.hpp>
-#include <boost/asio/execution_context.hpp>
-
-#if defined(BOOST_ASIO_HAS_IOCP)
-# include <boost/asio/detail/win_iocp_io_context.hpp>
-#else // defined(BOOST_ASIO_HAS_IOCP)
-# include <boost/asio/detail/scheduler.hpp>
-#endif // defined(BOOST_ASIO_HAS_IOCP)
+#include <boost/asio/io_context.hpp>
 
 #if defined(BOOST_ASIO_HAS_IOCP)
 # include <boost/asio/detail/thread.hpp>
@@ -47,11 +41,11 @@ namespace asio {
 namespace detail {
 
 class winrt_timer_scheduler
-  : public execution_context_service_base<winrt_timer_scheduler>
+  : public boost::asio::detail::service_base<winrt_timer_scheduler>
 {
 public:
   // Constructor.
-  BOOST_ASIO_DECL winrt_timer_scheduler(execution_context& context);
+  BOOST_ASIO_DECL winrt_timer_scheduler(boost::asio::io_context& io_context);
 
   // Destructor.
   BOOST_ASIO_DECL ~winrt_timer_scheduler();
@@ -60,39 +54,39 @@ public:
   BOOST_ASIO_DECL void shutdown();
 
   // Recreate internal descriptors following a fork.
-  BOOST_ASIO_DECL void notify_fork(execution_context::fork_event fork_ev);
+  BOOST_ASIO_DECL void notify_fork(
+      boost::asio::io_context::fork_event fork_ev);
 
   // Initialise the task. No effect as this class uses its own thread.
   BOOST_ASIO_DECL void init_task();
 
   // Add a new timer queue to the reactor.
-  template <typename TimeTraits, typename Allocator>
-  void add_timer_queue(timer_queue<TimeTraits, Allocator>& queue);
+  template <typename Time_Traits>
+  void add_timer_queue(timer_queue<Time_Traits>& queue);
 
   // Remove a timer queue from the reactor.
-  template <typename TimeTraits, typename Allocator>
-  void remove_timer_queue(timer_queue<TimeTraits, Allocator>& queue);
+  template <typename Time_Traits>
+  void remove_timer_queue(timer_queue<Time_Traits>& queue);
 
   // Schedule a new operation in the given timer queue to expire at the
   // specified absolute time.
-  template <typename TimeTraits, typename Allocator>
-  void schedule_timer(timer_queue<TimeTraits, Allocator>& queue,
-      const typename TimeTraits::time_type& time,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& timer,
-      wait_op* op);
+  template <typename Time_Traits>
+  void schedule_timer(timer_queue<Time_Traits>& queue,
+      const typename Time_Traits::time_type& time,
+      typename timer_queue<Time_Traits>::per_timer_data& timer, wait_op* op);
 
   // Cancel the timer operations associated with the given token. Returns the
   // number of operations that have been posted or dispatched.
-  template <typename TimeTraits, typename Allocator>
-  std::size_t cancel_timer(timer_queue<TimeTraits, Allocator>& queue,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& timer,
+  template <typename Time_Traits>
+  std::size_t cancel_timer(timer_queue<Time_Traits>& queue,
+      typename timer_queue<Time_Traits>::per_timer_data& timer,
       std::size_t max_cancelled = (std::numeric_limits<std::size_t>::max)());
 
   // Move the timer operations associated with the given timer.
-  template <typename TimeTraits, typename Allocator>
-  void move_timer(timer_queue<TimeTraits, Allocator>& queue,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& to,
-      typename timer_queue<TimeTraits, Allocator>::per_timer_data& from);
+  template <typename Time_Traits>
+  void move_timer(timer_queue<Time_Traits>& queue,
+      typename timer_queue<Time_Traits>::per_timer_data& to,
+      typename timer_queue<Time_Traits>::per_timer_data& from);
 
 private:
   // Run the select loop in the thread.
@@ -107,13 +101,8 @@ private:
   // Helper function to remove a timer queue.
   BOOST_ASIO_DECL void do_remove_timer_queue(timer_queue_base& queue);
 
-  // The scheduler implementation used to post completions.
-#if defined(BOOST_ASIO_HAS_IOCP)
-  typedef class win_iocp_io_context scheduler_impl;
-#else
-  typedef class scheduler scheduler_impl;
-#endif
-  scheduler_impl& scheduler_;
+  // The io_context implementation used to post completions.
+  io_context_impl& io_context_;
 
   // Mutex used to protect internal variables.
   boost::asio::detail::mutex mutex_;
@@ -125,7 +114,7 @@ private:
   timer_queue_set timer_queues_;
 
   // The background thread that is waiting for timers to expire.
-  boost::asio::detail::thread thread_;
+  boost::asio::detail::thread* thread_;
 
   // Does the background thread need to stop.
   bool stop_thread_;

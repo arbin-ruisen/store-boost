@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::keys`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -14,7 +14,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/when.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     // Note: This function is documented per datatype/concept only.
     //! @cond
     template <typename T, typename = void>
@@ -26,7 +26,7 @@ namespace boost { namespace hana {
         constexpr auto operator()(Map&& map) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr keys_t keys{};
+    constexpr keys_t keys{};
 
     //! Returns a `Sequence` containing the name of the members of
     //! the data structure.
@@ -45,6 +45,6 @@ namespace boost { namespace hana {
         return implementation_defined;
     };
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_KEYS_HPP

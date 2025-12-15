@@ -10,14 +10,13 @@
 
 #include <boost/math/policies/error_handling.hpp>
 #include <boost/math/distributions/detail/hypergeometric_pdf.hpp>
-#include <cstdint>
 
 namespace boost{ namespace math{ namespace detail{
 
    template <class T, class Policy>
-   T hypergeometric_cdf_imp(std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, bool invert, const Policy& pol)
+   T hypergeometric_cdf_imp(unsigned x, unsigned r, unsigned n, unsigned N, bool invert, const Policy& pol)
    {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #  pragma warning(push)
 #  pragma warning(disable:4267)
 #endif
@@ -28,7 +27,7 @@ namespace boost{ namespace math{ namespace detail{
       {
          result = hypergeometric_pdf<T>(x, r, n, N, pol);
          T diff = result;
-         const auto lower_limit = static_cast<std::uint64_t>((std::max)(INT64_C(0), static_cast<std::int64_t>(n + r) - static_cast<std::int64_t>(N)));
+         unsigned lower_limit = static_cast<unsigned>((std::max)(0, (int)(n + r) - (int)(N)));
          while(diff > (invert ? T(1) : result) * tools::epsilon<T>())
          {
             diff = T(x) * T((N + x) - n - r) * diff / (T(1 + n - x) * T(1 + r - x));
@@ -44,7 +43,7 @@ namespace boost{ namespace math{ namespace detail{
       else
       {
          invert = !invert;
-         const auto upper_limit = (std::min)(r, n);
+         unsigned upper_limit = (std::min)(r, n);
          if(x != upper_limit)
          {
             ++x;
@@ -64,21 +63,21 @@ namespace boost{ namespace math{ namespace detail{
       if(invert)
          result = 1 - result;
       return result;
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #  pragma warning(pop)
 #endif
    }
 
    template <class T, class Policy>
-   inline T hypergeometric_cdf(std::uint64_t x, std::uint64_t r, std::uint64_t n, std::uint64_t N, bool invert, const Policy&)
+   inline T hypergeometric_cdf(unsigned x, unsigned r, unsigned n, unsigned N, bool invert, const Policy&)
    {
       BOOST_FPU_EXCEPTION_GUARD
       typedef typename tools::promote_args<T>::type result_type;
       typedef typename policies::evaluation<result_type, Policy>::type value_type;
       typedef typename policies::normalise<
-         Policy,
-         policies::promote_float<false>,
-         policies::promote_double<false>,
+         Policy, 
+         policies::promote_float<false>, 
+         policies::promote_double<false>, 
          policies::discrete_quantile<>,
          policies::assert_undefined<> >::type forwarding_policy;
 

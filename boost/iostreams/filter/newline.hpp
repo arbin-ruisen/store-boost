@@ -48,8 +48,8 @@ const char LF                   = 0x0A;
 
 // Exactly one of the following three flags must be present.
 
-const int posix             = 1;    // Use LF as line separator.
-const int mac               = 2;    // Use CR as line separator.
+const int posix             = 1;    // Use CR as line separator.
+const int mac               = 2;    // Use LF as line separator.
 const int dos               = 4;    // Use CRLF as line separator.
 const int mixed             = 8;    // Mixed line endings.
 const int final_newline     = 16;
@@ -156,8 +156,8 @@ public:
         if (c == CR) {
             flags_ |= f_has_CR;
 
-            int d = iostreams::get(src);
-            if (d == WOULD_BLOCK)
+            int d;
+            if ((d = iostreams::get(src)) == WOULD_BLOCK)
                 return WOULD_BLOCK;
 
             if (d == LF) {
@@ -260,12 +260,10 @@ private:
             break;
         case iostreams::newline::dos:
             if ((flags_ & f_has_LF) != 0) {
-                success = boost::iostreams::put(dest, LF);
-                if (success)
+                if ((success = boost::iostreams::put(dest, LF)))
                     flags_ &= ~f_has_LF;
             } else if (boost::iostreams::put(dest, CR)) {
-                success = boost::iostreams::put(dest, LF);
-                if (!success)
+                if (!(success = boost::iostreams::put(dest, LF)))
                     flags_ |= f_has_LF;
             }
             break;

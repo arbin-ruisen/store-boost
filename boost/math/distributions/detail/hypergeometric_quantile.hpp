@@ -14,7 +14,7 @@
 namespace boost{ namespace math{ namespace detail{
 
 template <class T>
-inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor, std::uint64_t lbound, std::uint64_t /*ubound*/, const policies::discrete_quantile<policies::integer_round_down>&)
+inline unsigned round_x_from_p(unsigned x, T p, T cum, T fudge_factor, unsigned lbound, unsigned /*ubound*/, const policies::discrete_quantile<policies::integer_round_down>&)
 {
    if((p < cum * fudge_factor) && (x != lbound))
    {
@@ -25,7 +25,7 @@ inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor, std::uint64_t /*lbound*/, std::uint64_t ubound, const policies::discrete_quantile<policies::integer_round_up>&)
+inline unsigned round_x_from_p(unsigned x, T p, T cum, T fudge_factor, unsigned /*lbound*/, unsigned ubound, const policies::discrete_quantile<policies::integer_round_up>&)
 {
    if((cum < p * fudge_factor) && (x != ubound))
    {
@@ -36,7 +36,7 @@ inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor, std::uint64_t lbound, std::uint64_t ubound, const policies::discrete_quantile<policies::integer_round_inwards>&)
+inline unsigned round_x_from_p(unsigned x, T p, T cum, T fudge_factor, unsigned lbound, unsigned ubound, const policies::discrete_quantile<policies::integer_round_inwards>&)
 {
    if(p >= 0.5)
       return round_x_from_p(x, p, cum, fudge_factor, lbound, ubound, policies::discrete_quantile<policies::integer_round_down>());
@@ -44,7 +44,7 @@ inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor, std::uint64_t lbound, std::uint64_t ubound, const policies::discrete_quantile<policies::integer_round_outwards>&)
+inline unsigned round_x_from_p(unsigned x, T p, T cum, T fudge_factor, unsigned lbound, unsigned ubound, const policies::discrete_quantile<policies::integer_round_outwards>&)
 {
    if(p >= 0.5)
       return round_x_from_p(x, p, cum, fudge_factor, lbound, ubound, policies::discrete_quantile<policies::integer_round_up>());
@@ -52,13 +52,13 @@ inline std::uint64_t round_x_from_p(std::uint64_t x, T p, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_p(std::uint64_t x, T /*p*/, T /*cum*/, T /*fudge_factor*/, std::uint64_t /*lbound*/, std::uint64_t /*ubound*/, const policies::discrete_quantile<policies::integer_round_nearest>&)
+inline unsigned round_x_from_p(unsigned x, T /*p*/, T /*cum*/, T /*fudge_factor*/, unsigned /*lbound*/, unsigned /*ubound*/, const policies::discrete_quantile<policies::integer_round_nearest>&)
 {
    return x;
 }
 
 template <class T>
-inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor, std::uint64_t lbound, std::uint64_t /*ubound*/, const policies::discrete_quantile<policies::integer_round_down>&)
+inline unsigned round_x_from_q(unsigned x, T q, T cum, T fudge_factor, unsigned lbound, unsigned /*ubound*/, const policies::discrete_quantile<policies::integer_round_down>&)
 {
    if((q * fudge_factor > cum) && (x != lbound))
    {
@@ -69,7 +69,7 @@ inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor, std::uint64_t /*lbound*/, std::uint64_t ubound, const policies::discrete_quantile<policies::integer_round_up>&)
+inline unsigned round_x_from_q(unsigned x, T q, T cum, T fudge_factor, unsigned /*lbound*/, unsigned ubound, const policies::discrete_quantile<policies::integer_round_up>&)
 {
    if((q < cum * fudge_factor) && (x != ubound))
    {
@@ -80,7 +80,7 @@ inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor, std::uint64_t lbound, std::uint64_t ubound, const policies::discrete_quantile<policies::integer_round_inwards>&)
+inline unsigned round_x_from_q(unsigned x, T q, T cum, T fudge_factor, unsigned lbound, unsigned ubound, const policies::discrete_quantile<policies::integer_round_inwards>&)
 {
    if(q < 0.5)
       return round_x_from_q(x, q, cum, fudge_factor, lbound, ubound, policies::discrete_quantile<policies::integer_round_down>());
@@ -88,7 +88,7 @@ inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor, std::uint64_t lbound, std::uint64_t ubound, const policies::discrete_quantile<policies::integer_round_outwards>&)
+inline unsigned round_x_from_q(unsigned x, T q, T cum, T fudge_factor, unsigned lbound, unsigned ubound, const policies::discrete_quantile<policies::integer_round_outwards>&)
 {
    if(q >= 0.5)
       return round_x_from_q(x, q, cum, fudge_factor, lbound, ubound, policies::discrete_quantile<policies::integer_round_down>());
@@ -96,15 +96,15 @@ inline std::uint64_t round_x_from_q(std::uint64_t x, T q, T cum, T fudge_factor,
 }
 
 template <class T>
-inline std::uint64_t round_x_from_q(std::uint64_t x, T /*q*/, T /*cum*/, T /*fudge_factor*/, std::uint64_t /*lbound*/, std::uint64_t /*ubound*/, const policies::discrete_quantile<policies::integer_round_nearest>&)
+inline unsigned round_x_from_q(unsigned x, T /*q*/, T /*cum*/, T /*fudge_factor*/, unsigned /*lbound*/, unsigned /*ubound*/, const policies::discrete_quantile<policies::integer_round_nearest>&)
 {
    return x;
 }
 
 template <class T, class Policy>
-std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64_t n, std::uint64_t N, const Policy& pol)
+unsigned hypergeometric_quantile_imp(T p, T q, unsigned r, unsigned n, unsigned N, const Policy& pol)
 {
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #  pragma warning(push)
 #  pragma warning(disable:4267)
 #endif
@@ -113,8 +113,8 @@ std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64
    BOOST_FPU_EXCEPTION_GUARD
    T result;
    T fudge_factor = 1 + tools::epsilon<T>() * ((N <= boost::math::prime(boost::math::max_prime - 1)) ? 50 : 2 * N);
-   std::uint64_t base = static_cast<std::uint64_t>((std::max)(0, static_cast<int>(n + r) - static_cast<int>(N)));
-   std::uint64_t lim = (std::min)(r, n);
+   unsigned base = static_cast<unsigned>((std::max)(0, (int)(n + r) - (int)(N)));
+   unsigned lim = (std::min)(r, n);
 
    BOOST_MATH_INSTRUMENT_VARIABLE(p);
    BOOST_MATH_INSTRUMENT_VARIABLE(q);
@@ -127,7 +127,7 @@ std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64
 
    if(p <= 0.5)
    {
-      std::uint64_t x = base;
+      unsigned x = base;
       result = hypergeometric_pdf<T>(x, r, n, N, pol);
       T diff = result;
       if (diff == 0)
@@ -150,12 +150,12 @@ std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64
             ++x;
          }
          // By the time we get here, log_pdf may be fairly inaccurate due to
-         // roundoff errors, get a fresh PDF calculation before proceeding:
+         // roundoff errors, get a fresh PDF calculation before proceding:
          diff = hypergeometric_pdf<T>(x, r, n, N, pol);
       }
       while(result < p)
       {
-         diff = (diff > tools::min_value<T>() * 8)
+         diff = (diff > tools::min_value<T>() * 8) 
             ? T(n - x) * T(r - x) * diff / (T(x + 1) * T(N + x + 1 - n - r))
             : hypergeometric_pdf<T>(x + 1, r, n, N, pol);
          if(result + diff / 2 > p)
@@ -175,7 +175,7 @@ std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64
    }
    else
    {
-      std::uint64_t x = lim;
+      unsigned x = lim;
       result = 0;
       T diff = hypergeometric_pdf<T>(x, r, n, N, pol);
       if (diff == 0)
@@ -198,7 +198,7 @@ std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64
             --x;
          }
          // By the time we get here, log_pdf may be fairly inaccurate due to
-         // roundoff errors, get a fresh PDF calculation before proceeding:
+         // roundoff errors, get a fresh PDF calculation before proceding:
          diff = hypergeometric_pdf<T>(x, r, n, N, pol);
       }
       while(result + diff / 2 < q)
@@ -219,21 +219,21 @@ std::uint64_t hypergeometric_quantile_imp(T p, T q, std::uint64_t r, std::uint64
       }
       return round_x_from_q(x, q, result, fudge_factor, base, lim, discrete_quantile_type());
    }
-#ifdef _MSC_VER
+#ifdef BOOST_MSVC
 #  pragma warning(pop)
 #endif
 }
 
 template <class T, class Policy>
-inline std::uint64_t hypergeometric_quantile(T p, T q, std::uint64_t r, std::uint64_t n, std::uint64_t N, const Policy&)
+inline unsigned hypergeometric_quantile(T p, T q, unsigned r, unsigned n, unsigned N, const Policy&)
 {
    BOOST_FPU_EXCEPTION_GUARD
    typedef typename tools::promote_args<T>::type result_type;
    typedef typename policies::evaluation<result_type, Policy>::type value_type;
    typedef typename policies::normalise<
-      Policy,
-      policies::promote_float<false>,
-      policies::promote_double<false>,
+      Policy, 
+      policies::promote_float<false>, 
+      policies::promote_double<false>, 
       policies::assert_undefined<> >::type forwarding_policy;
 
    return detail::hypergeometric_quantile_imp<value_type>(p, q, r, n, N, forwarding_policy());

@@ -26,10 +26,6 @@
 // STL
 #include <string>
 
-#if defined(BOOST_TEST_STRING_VIEW)
-#include <string_view>
-#endif
-
 #include <boost/test/detail/suppress_warnings.hpp>
 
 //____________________________________________________________________________//
@@ -43,7 +39,7 @@ namespace unit_test {
 // ************************************************************************** //
 
 template<typename CharT>
-class BOOST_SYMBOL_VISIBLE basic_cstring {
+class basic_cstring {
     typedef basic_cstring<CharT>                        self_type;
 public:
     // Subtypes
@@ -167,37 +163,7 @@ private:
     // Data members
     iterator        m_begin;
     iterator        m_end;
-    static CharT null;
 };
-
-// ************************************************************************** //
-// **************         cstring_string_view_helper           ************** //
-// ************************************************************************** //
-
-
-#if defined(BOOST_TEST_STRING_VIEW)
-// Helper for instanciating a subclass of cstring using a string_view. We do not
-// change the API of cstring using BOOST_TEST_STRING_VIEW as the code should remain
-// compatible between boost.test and test module using different compiler options.
-//! @internal
-template <class CharT, class string_view_t = std::basic_string_view<CharT>>
-class BOOST_SYMBOL_VISIBLE stringview_cstring_helper : public basic_cstring<CharT> {
-public:
-  stringview_cstring_helper(string_view_t const& sv)
-  : basic_cstring<CharT>(const_cast<CharT*>(sv.data()), sv.size())
-  {}
-};
-#endif
-
-
-// ************************************************************************** //
-// **************            basic_cstring::impl               ************** //
-// ************************************************************************** //
-
-//____________________________________________________________________________//
-
-template<typename CharT>
-CharT basic_cstring<CharT>::null = 0;
 
 //____________________________________________________________________________//
 
@@ -205,6 +171,7 @@ template<typename CharT>
 inline typename basic_cstring<CharT>::pointer
 basic_cstring<CharT>::null_str()
 {
+    static CharT null = 0;
     return &null;
 }
 
@@ -401,22 +368,17 @@ template<typename CharT>
 inline basic_cstring<CharT>&
 basic_cstring<CharT>::trim_right( basic_cstring exclusions )
 {
-    if(!size()) {
-        return *this;
-    }
-
     if( exclusions.is_empty() )
         exclusions = default_trim_ex();
 
-    iterator it = end();
+    iterator it;
 
-    do {
-        --it;
+    for( it = end()-1; it != begin()-1; --it ) {
         if( self_type::traits_type::find( exclusions.begin(),  exclusions.size(), *it ) == reinterpret_cast<pointer>(0) )
             break;
-    } while(it != begin());
+    }
 
-    return trim_right( it + 1 );
+    return trim_right( it+1 );
 }
 
 //____________________________________________________________________________//
@@ -548,16 +510,19 @@ inline typename basic_cstring<CharT>::size_type
 basic_cstring<CharT>::find( basic_cstring<CharT> str ) const
 {
     if( str.is_empty() || str.size() > size() )
-        return npos;
+        return static_cast<size_type>(npos);
 
+    const_iterator it   = begin();
     const_iterator last = end() - str.size() + 1;
 
-    for( const_iterator it = begin(); it != last; ++it ) {
+    while( it != last ) {
         if( traits_type::compare( it, str.begin(), str.size() ) == 0 )
-            return static_cast<size_type>(it - begin());
+            break;
+
+        ++it;
     }
 
-    return npos;
+    return it == last ? npos : static_cast<size_type>(it - begin());
 }
 
 //____________________________________________________________________________//
@@ -567,18 +532,19 @@ inline typename basic_cstring<CharT>::size_type
 basic_cstring<CharT>::rfind( basic_cstring<CharT> str ) const
 {
     if( str.is_empty() || str.size() > size() )
-        return npos;
+        return static_cast<size_type>(npos);
 
-    const_iterator first = begin();
+    const_iterator it   = end() - str.size();
+    const_iterator last = begin()-1;
 
-    for( const_iterator it = end() - str.size(); it != first; --it ) {
+    while( it != last ) {
         if( traits_type::compare( it, str.begin(), str.size() ) == 0 )
-            return static_cast<size_type>(it - begin());
+            break;
+
+        --it;
     }
-    if( traits_type::compare( first, str.begin(), str.size() ) == 0 )
-        return static_cast<size_type>(0);
-    else
-        return npos;
+
+    return it == last ? static_cast<size_type>(npos) : static_cast<size_type>(it - begin());
 }
 
 //____________________________________________________________________________//

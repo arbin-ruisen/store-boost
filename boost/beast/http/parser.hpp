@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -10,15 +10,12 @@
 #ifndef BOOST_BEAST_HTTP_PARSER_HPP
 #define BOOST_BEAST_HTTP_PARSER_HPP
 
-#include <boost/beast/http/parser_fwd.hpp>
-
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/http/basic_parser.hpp>
 #include <boost/beast/http/message.hpp>
 #include <boost/beast/http/type_traits.hpp>
 #include <boost/optional.hpp>
 #include <boost/throw_exception.hpp>
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <type_traits>
@@ -38,40 +35,36 @@ namespace http {
     will be parsed.
 
     @tparam Body The type used to represent the body. This must
-    meet the requirements of <em>Body</em>.
+    meet the requirements of @b Body.
 
     @tparam Allocator The type of allocator used with the
     @ref basic_fields container.
 
     @note A new instance of the parser is required for each message.
 */
-#if BOOST_BEAST_DOXYGEN
 template<
     bool isRequest,
     class Body,
     class Allocator = std::allocator<char>>
-#else
-template<
-    bool isRequest,
-    class Body,
-    class Allocator>
-#endif
 class parser
-    : public basic_parser<isRequest>
+    : public basic_parser<isRequest,
+        parser<isRequest, Body, Allocator>>
 {
     static_assert(is_body<Body>::value,
-        "Body type requirements not met");
+        "Body requirements not met");
 
     static_assert(is_body_reader<Body>::value,
-        "BodyReader type requirements not met");
+        "BodyReader requirements not met");
 
     template<bool, class, class>
     friend class parser;
 
+    using base_type = basic_parser<isRequest,
+        parser<isRequest, Body, Allocator>>;
+
     message<isRequest, Body, basic_fields<Allocator>> m_;
     typename Body::reader rd_;
     bool rd_inited_ = false;
-    bool used_ = false;
 
     std::function<void(
         std::uint64_t,
@@ -130,7 +123,7 @@ public:
         This constructs a new parser by move constructing the
         header from another parser with a different body type. The
         constructed-from parser must not have any parsed body octets or
-        initialized <em>BodyReader</em>, otherwise an exception is generated.
+        initialized @b BodyReader, otherwise an exception is generated.
 
         @par Example
         @code
@@ -304,6 +297,8 @@ public:
     }
 
 private:
+    friend class basic_parser<isRequest, parser>;
+
     parser(std::true_type);
     parser(std::false_type);
 
@@ -343,49 +338,22 @@ private:
         string_view method_str,
         string_view target,
         int version,
-        error_code& ec,
-        std::true_type)
+        error_code& ec)
     {
-        // If this assert goes off, it means you tried to re-use a
-        // parser after it was done reading a message. This is not
-        // allowed, you need to create a new parser for each message.
-        // The easiest way to do that is to store the parser in
-        // an optional object.
-
-        BOOST_ASSERT(! used_);
-        if(used_)
+        try
         {
-            BOOST_BEAST_ASSIGN_EC(ec, error::stale_parser);
-            return;
+            m_.target(target);
+            if(method != verb::unknown)
+                m_.method(method);
+            else
+                m_.method_string(method_str);
+            ec.assign(0, ec.category());
         }
-        used_ = true;
-
-        m_.target(target);
-        if(method != verb::unknown)
-            m_.method(method);
-        else
-            m_.method_string(method_str);
+        catch(std::bad_alloc const&)
+        {
+            ec = error::bad_alloc;
+        }
         m_.version(version);
-    }
-
-    void
-    on_request_impl(
-        verb, string_view, string_view,
-        int, error_code&, std::false_type)
-    {
-    }
-
-    void
-    on_request_impl(
-        verb method,
-        string_view method_str,
-        string_view target,
-        int version,
-        error_code& ec) override
-    {
-        this->on_request_impl(
-            method, method_str, target, version, ec,
-            std::integral_constant<bool, isRequest>{});
     }
 
     void
@@ -393,45 +361,19 @@ private:
         int code,
         string_view reason,
         int version,
-        error_code& ec,
-        std::true_type)
+        error_code& ec)
     {
-        // If this assert goes off, it means you tried to re-use a
-        // parser after it was done reading a message. This is not
-        // allowed, you need to create a new parser for each message.
-        // The easiest way to do that is to store the parser in
-        // an optional object.
-
-        BOOST_ASSERT(! used_);
-        if(used_)
-        {
-            BOOST_BEAST_ASSIGN_EC(ec, error::stale_parser);
-            return;
-        }
-        used_ = true;
-
         m_.result(code);
         m_.version(version);
-        m_.reason(reason);
-    }
-
-    void
-    on_response_impl(
-        int, string_view, int,
-        error_code&, std::false_type)
-    {
-    }
-
-    void
-    on_response_impl(
-        int code,
-        string_view reason,
-        int version,
-        error_code& ec) override
-    {
-        this->on_response_impl(
-            code, reason, version, ec,
-            std::integral_constant<bool, ! isRequest>{});
+        try
+        {
+            m_.reason(reason);
+            ec.assign(0, ec.category());
+        }
+        catch(std::bad_alloc const&)
+        {
+            ec = error::bad_alloc;
+        }
     }
 
     void
@@ -439,21 +381,29 @@ private:
         field name,
         string_view name_string,
         string_view value,
-        error_code& ec) override
+        error_code& ec)
     {
-        m_.insert(name, name_string, value, ec);
+        try
+        {
+            m_.insert(name, name_string, value);
+            ec.assign(0, ec.category());
+        }
+        catch(std::bad_alloc const&)
+        {
+            ec = error::bad_alloc;
+        }
     }
 
     void
-    on_header_impl(error_code& ec) override
+    on_header_impl(error_code& ec)
     {
-        ec = {};
+        ec.assign(0, ec.category());
     }
 
     void
     on_body_init_impl(
         boost::optional<std::uint64_t> const& content_length,
-        error_code& ec) override
+        error_code& ec)
     {
         rd_.init(content_length, ec);
         rd_inited_ = true;
@@ -462,9 +412,9 @@ private:
     std::size_t
     on_body_impl(
         string_view body,
-        error_code& ec) override
+        error_code& ec)
     {
-        return rd_.put(net::buffer(
+        return rd_.put(boost::asio::buffer(
             body.data(), body.size()), ec);
     }
 
@@ -472,33 +422,32 @@ private:
     on_chunk_header_impl(
         std::uint64_t size,
         string_view extensions,
-        error_code& ec) override
+        error_code& ec)
     {
         if(cb_h_)
             return cb_h_(size, extensions, ec);
+        ec.assign(0, ec.category());
     }
 
     std::size_t
     on_chunk_body_impl(
         std::uint64_t remain,
         string_view body,
-        error_code& ec) override
+        error_code& ec)
     {
         if(cb_b_)
             return cb_b_(remain, body, ec);
-        return rd_.put(net::buffer(
+        return rd_.put(boost::asio::buffer(
             body.data(), body.size()), ec);
     }
 
     void
-    on_finish_impl(
-        error_code& ec) override
+    on_finish_impl(error_code& ec)
     {
         rd_.finish(ec);
     }
 };
 
-#if BOOST_BEAST_DOXYGEN
 /// An HTTP/1 parser for producing a request message.
 template<class Body, class Allocator = std::allocator<char>>
 using request_parser = parser<true, Body, Allocator>;
@@ -506,12 +455,11 @@ using request_parser = parser<true, Body, Allocator>;
 /// An HTTP/1 parser for producing a response message.
 template<class Body, class Allocator = std::allocator<char>>
 using response_parser = parser<false, Body, Allocator>;
-#endif
 
 } // http
 } // beast
 } // boost
 
-#include <boost/beast/http/impl/parser.hpp>
+#include <boost/beast/http/impl/parser.ipp>
 
 #endif

@@ -17,19 +17,16 @@
 #pragma once
 #endif
 
-#include <boost/math/tools/config.hpp>
 #include <boost/math/tools/toms748_solve.hpp>
-#include <boost/math/tools/precision.hpp>
-#include <boost/math/tools/tuple.hpp>
-#include <boost/math/policies/error_handling.hpp>
+#include <boost/cstdint.hpp>
 
 namespace boost{ namespace math{ namespace detail{
 
 template <class T, class Policy>
 struct beta_inv_ab_t
 {
-   BOOST_MATH_GPU_ENABLED beta_inv_ab_t(T b_, T z_, T p_, bool invert_, bool swap_ab_) : b(b_), z(z_), p(p_), invert(invert_), swap_ab(swap_ab_) {}
-   BOOST_MATH_GPU_ENABLED T operator()(T a)
+   beta_inv_ab_t(T b_, T z_, T p_, bool invert_, bool swap_ab_) : b(b_), z(z_), p(p_), invert(invert_), swap_ab(swap_ab_) {}
+   T operator()(T a)
    {
       return invert ? 
          p - boost::math::ibetac(swap_ab ? b : a, swap_ab ? a : b, z, Policy()) 
@@ -41,7 +38,7 @@ private:
 };
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T inverse_negative_binomial_cornish_fisher(T n, T sf, T sfc, T p, T q, const Policy& pol)
+T inverse_negative_binomial_cornish_fisher(T n, T sf, T sfc, T p, T q, const Policy& pol)
 {
    BOOST_MATH_STD_USING
    // mean:
@@ -74,7 +71,7 @@ BOOST_MATH_GPU_ENABLED T inverse_negative_binomial_cornish_fisher(T n, T sf, T s
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T ibeta_inv_ab_imp(const T& b, const T& z, const T& p, const T& q, bool swap_ab, const Policy& pol)
+T ibeta_inv_ab_imp(const T& b, const T& z, const T& p, const T& q, bool swap_ab, const Policy& pol)
 {
    BOOST_MATH_STD_USING  // for ADL of std lib math functions
    //
@@ -123,11 +120,11 @@ BOOST_MATH_GPU_ENABLED T ibeta_inv_ab_imp(const T& b, const T& z, const T& p, co
       //
       if((p < q) != swap_ab)
       {
-         guess = BOOST_MATH_GPU_SAFE_MIN(T(b * 2), T(1));
+         guess = (std::min)(T(b * 2), T(1));
       }
       else
       {
-         guess = BOOST_MATH_GPU_SAFE_MIN(T(b / 2), T(1));
+         guess = (std::min)(T(b / 2), T(1));
       }
    }
    if(n * n * n * u * sf > 0.005)
@@ -140,11 +137,11 @@ BOOST_MATH_GPU_ENABLED T ibeta_inv_ab_imp(const T& b, const T& z, const T& p, co
       //
       if((p < q) != swap_ab)
       {
-         guess = BOOST_MATH_GPU_SAFE_MIN(T(b * 2), T(10));
+         guess = (std::min)(T(b * 2), T(10));
       }
       else
       {
-         guess = BOOST_MATH_GPU_SAFE_MIN(T(b / 2), T(10));
+         guess = (std::min)(T(b / 2), T(10));
       }
    }
    else
@@ -153,8 +150,8 @@ BOOST_MATH_GPU_ENABLED T ibeta_inv_ab_imp(const T& b, const T& z, const T& p, co
    //
    // Max iterations permitted:
    //
-   boost::math::uintmax_t max_iter = policies::get_max_root_iterations<Policy>();
-   boost::math::pair<T, T> r = bracket_and_solve_root(f, guess, factor, swap_ab ? true : false, tol, max_iter, pol);
+   boost::uintmax_t max_iter = policies::get_max_root_iterations<Policy>();
+   std::pair<T, T> r = bracket_and_solve_root(f, guess, factor, swap_ab ? true : false, tol, max_iter, pol);
    if(max_iter >= policies::get_max_root_iterations<Policy>())
       return policies::raise_evaluation_error<T>("boost::math::ibeta_invab_imp<%1%>(%1%,%1%,%1%)", "Unable to locate the root within a reasonable number of iterations, closest approximation so far was %1%", r.first, pol);
    return (r.first + r.second) / 2;
@@ -163,7 +160,7 @@ BOOST_MATH_GPU_ENABLED T ibeta_inv_ab_imp(const T& b, const T& z, const T& p, co
 } // namespace detail
 
 template <class RT1, class RT2, class RT3, class Policy>
-BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type 
+typename tools::promote_args<RT1, RT2, RT3>::type 
       ibeta_inva(RT1 b, RT2 x, RT3 p, const Policy& pol)
 {
    typedef typename tools::promote_args<RT1, RT2, RT3>::type result_type;
@@ -175,7 +172,7 @@ BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
       policies::discrete_quantile<>,
       policies::assert_undefined<> >::type forwarding_policy;
 
-   constexpr auto function = "boost::math::ibeta_inva<%1%>(%1%,%1%,%1%)";
+   static const char* function = "boost::math::ibeta_inva<%1%>(%1%,%1%,%1%)";
    if(p == 0)
    {
       return policies::raise_overflow_error<result_type>(function, 0, Policy());
@@ -187,28 +184,28 @@ BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
 
    return policies::checked_narrowing_cast<result_type, forwarding_policy>(
       detail::ibeta_inv_ab_imp(
-         static_cast<value_type>(b),
-         static_cast<value_type>(x),
-         static_cast<value_type>(p),
-         static_cast<value_type>(1 - static_cast<value_type>(p)),
-         false, pol),
+         static_cast<value_type>(b), 
+         static_cast<value_type>(x), 
+         static_cast<value_type>(p), 
+         static_cast<value_type>(1 - static_cast<value_type>(p)), 
+         false, pol), 
       function);
 }
 
 template <class RT1, class RT2, class RT3, class Policy>
-BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
+typename tools::promote_args<RT1, RT2, RT3>::type 
       ibetac_inva(RT1 b, RT2 x, RT3 q, const Policy& pol)
 {
    typedef typename tools::promote_args<RT1, RT2, RT3>::type result_type;
    typedef typename policies::evaluation<result_type, Policy>::type value_type;
    typedef typename policies::normalise<
-      Policy,
-      policies::promote_float<false>,
-      policies::promote_double<false>,
+      Policy, 
+      policies::promote_float<false>, 
+      policies::promote_double<false>, 
       policies::discrete_quantile<>,
       policies::assert_undefined<> >::type forwarding_policy;
 
-   constexpr auto function = "boost::math::ibetac_inva<%1%>(%1%,%1%,%1%)";
+   static const char* function = "boost::math::ibetac_inva<%1%>(%1%,%1%,%1%)";
    if(q == 1)
    {
       return policies::raise_overflow_error<result_type>(function, 0, Policy());
@@ -220,28 +217,28 @@ BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
 
    return policies::checked_narrowing_cast<result_type, forwarding_policy>(
       detail::ibeta_inv_ab_imp(
-         static_cast<value_type>(b),
-         static_cast<value_type>(x),
-         static_cast<value_type>(1 - static_cast<value_type>(q)),
-         static_cast<value_type>(q),
+         static_cast<value_type>(b), 
+         static_cast<value_type>(x), 
+         static_cast<value_type>(1 - static_cast<value_type>(q)), 
+         static_cast<value_type>(q), 
          false, pol),
       function);
 }
 
 template <class RT1, class RT2, class RT3, class Policy>
-BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
+typename tools::promote_args<RT1, RT2, RT3>::type 
       ibeta_invb(RT1 a, RT2 x, RT3 p, const Policy& pol)
 {
    typedef typename tools::promote_args<RT1, RT2, RT3>::type result_type;
    typedef typename policies::evaluation<result_type, Policy>::type value_type;
    typedef typename policies::normalise<
-      Policy,
-      policies::promote_float<false>,
-      policies::promote_double<false>,
+      Policy, 
+      policies::promote_float<false>, 
+      policies::promote_double<false>, 
       policies::discrete_quantile<>,
       policies::assert_undefined<> >::type forwarding_policy;
 
-   constexpr auto function = "boost::math::ibeta_invb<%1%>(%1%,%1%,%1%)";
+   static const char* function = "boost::math::ibeta_invb<%1%>(%1%,%1%,%1%)";
    if(p == 0)
    {
       return tools::min_value<result_type>();
@@ -253,19 +250,19 @@ BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
 
    return policies::checked_narrowing_cast<result_type, forwarding_policy>(
       detail::ibeta_inv_ab_imp(
-         static_cast<value_type>(a),
-         static_cast<value_type>(x),
-         static_cast<value_type>(p),
-         static_cast<value_type>(1 - static_cast<value_type>(p)),
+         static_cast<value_type>(a), 
+         static_cast<value_type>(x), 
+         static_cast<value_type>(p), 
+         static_cast<value_type>(1 - static_cast<value_type>(p)), 
          true, pol),
       function);
 }
 
 template <class RT1, class RT2, class RT3, class Policy>
-BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
+typename tools::promote_args<RT1, RT2, RT3>::type 
       ibetac_invb(RT1 a, RT2 x, RT3 q, const Policy& pol)
 {
-   constexpr auto function = "boost::math::ibeta_invb<%1%>(%1%, %1%, %1%)";
+   static const char* function = "boost::math::ibeta_invb<%1%>(%1%, %1%, %1%)";
    typedef typename tools::promote_args<RT1, RT2, RT3>::type result_type;
    typedef typename policies::evaluation<result_type, Policy>::type value_type;
    typedef typename policies::normalise<
@@ -295,28 +292,28 @@ BOOST_MATH_GPU_ENABLED typename tools::promote_args<RT1, RT2, RT3>::type
 }
 
 template <class RT1, class RT2, class RT3>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<RT1, RT2, RT3>::type 
+inline typename tools::promote_args<RT1, RT2, RT3>::type 
          ibeta_inva(RT1 b, RT2 x, RT3 p)
 {
    return boost::math::ibeta_inva(b, x, p, policies::policy<>());
 }
 
 template <class RT1, class RT2, class RT3>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<RT1, RT2, RT3>::type 
+inline typename tools::promote_args<RT1, RT2, RT3>::type 
          ibetac_inva(RT1 b, RT2 x, RT3 q)
 {
    return boost::math::ibetac_inva(b, x, q, policies::policy<>());
 }
 
 template <class RT1, class RT2, class RT3>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<RT1, RT2, RT3>::type 
+inline typename tools::promote_args<RT1, RT2, RT3>::type 
          ibeta_invb(RT1 a, RT2 x, RT3 p)
 {
    return boost::math::ibeta_invb(a, x, p, policies::policy<>());
 }
 
 template <class RT1, class RT2, class RT3>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<RT1, RT2, RT3>::type 
+inline typename tools::promote_args<RT1, RT2, RT3>::type 
          ibetac_invb(RT1 a, RT2 x, RT3 q)
 {
    return boost::math::ibetac_invb(a, x, q, policies::policy<>());

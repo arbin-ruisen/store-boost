@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::comparing`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -17,7 +17,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/equal.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     namespace detail {
         template <typename F>
         struct equal_by {
@@ -39,6 +39,6 @@ namespace boost { namespace hana {
         return detail::equal_by<typename detail::decay<F>::type>{static_cast<F&&>(f)};
     }
     //! @endcond
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_COMPARING_HPP

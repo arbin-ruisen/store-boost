@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::detail::variadic::reverse_apply_flat`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -16,7 +16,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana { namespace detail { namespace variadic {
+BOOST_HANA_NAMESPACE_BEGIN namespace detail { namespace variadic {
     template <int ...i, typename F, typename ...X>
     constexpr decltype(auto)
     reverse_apply_flat_helper(std::integer_sequence<int, i...>, F&& f, X&& ...x)
@@ -36,6 +36,6 @@ namespace boost { namespace hana { namespace detail { namespace variadic {
             static_cast<X&&>(x)...
         );
     }
-}} }} // end namespace boost::hana
+}} BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DETAIL_VARIADIC_REVERSE_APPLY_FLAT_HPP

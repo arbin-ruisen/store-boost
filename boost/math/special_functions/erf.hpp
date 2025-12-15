@@ -1,5 +1,4 @@
 //  (C) Copyright John Maddock 2006.
-//  (C) Copyright Matt Borland 2024.
 //  Use, modification and distribution are subject to the
 //  Boost Software License, Version 1.0. (See accompanying file
 //  LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -11,25 +10,12 @@
 #pragma once
 #endif
 
-#include <boost/math/tools/config.hpp>
-
-#ifndef BOOST_MATH_HAS_NVRTC
-
 #include <boost/math/special_functions/math_fwd.hpp>
+#include <boost/math/tools/config.hpp>
 #include <boost/math/special_functions/gamma.hpp>
 #include <boost/math/tools/roots.hpp>
 #include <boost/math/policies/error_handling.hpp>
 #include <boost/math/tools/big_constant.hpp>
-
-#if defined(__GNUC__) && defined(BOOST_MATH_USE_FLOAT128)
-//
-// This is the only way we can avoid
-// warning: non-standard suffix on floating constant [-Wpedantic]
-// when building with -Wall -pedantic.  Neither __extension__
-// nor #pragma diagnostic ignored work :(
-//
-#pragma GCC system_header
-#endif
 
 namespace boost{ namespace math{
 
@@ -42,8 +28,7 @@ namespace detail
 template <class T>
 struct erf_asympt_series_t
 {
-   // LCOV_EXCL_START multiprecision case only, excluded from coverage analysis
-   BOOST_MATH_GPU_ENABLED erf_asympt_series_t(T z) : xx(2 * -z * z), tk(1)
+   erf_asympt_series_t(T z) : xx(2 * -z * z), tk(1)
    {
       BOOST_MATH_STD_USING
       result = -exp(-z * z) / sqrt(boost::math::constants::pi<T>());
@@ -52,7 +37,7 @@ struct erf_asympt_series_t
 
    typedef T result_type;
 
-   BOOST_MATH_GPU_ENABLED T operator()()
+   T operator()()
    {
       BOOST_MATH_STD_USING
       T r = result;
@@ -62,7 +47,6 @@ struct erf_asympt_series_t
          result = 0;
       return r;
    }
-   // LCOV_EXCL_STOP
 private:
    T result;
    T xx;
@@ -72,75 +56,61 @@ private:
 // How large z has to be in order to ensure that the series converges:
 //
 template <class T>
-BOOST_MATH_GPU_ENABLED inline float erf_asymptotic_limit_N(const T&)
+inline float erf_asymptotic_limit_N(const T&)
 {
    return (std::numeric_limits<float>::max)();
 }
-BOOST_MATH_GPU_ENABLED inline float erf_asymptotic_limit_N(const std::integral_constant<int, 24>&)
+inline float erf_asymptotic_limit_N(const mpl::int_<24>&)
 {
    return 2.8F;
 }
-BOOST_MATH_GPU_ENABLED inline float erf_asymptotic_limit_N(const std::integral_constant<int, 53>&)
+inline float erf_asymptotic_limit_N(const mpl::int_<53>&)
 {
    return 4.3F;
 }
-BOOST_MATH_GPU_ENABLED inline float erf_asymptotic_limit_N(const std::integral_constant<int, 64>&)
+inline float erf_asymptotic_limit_N(const mpl::int_<64>&)
 {
    return 4.8F;
 }
-BOOST_MATH_GPU_ENABLED inline float erf_asymptotic_limit_N(const std::integral_constant<int, 106>&)
+inline float erf_asymptotic_limit_N(const mpl::int_<106>&)
 {
    return 6.5F;
 }
-BOOST_MATH_GPU_ENABLED inline float erf_asymptotic_limit_N(const std::integral_constant<int, 113>&)
+inline float erf_asymptotic_limit_N(const mpl::int_<113>&)
 {
    return 6.8F;
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline T erf_asymptotic_limit()
+inline T erf_asymptotic_limit()
 {
    typedef typename policies::precision<T, Policy>::type precision_type;
-   typedef std::integral_constant<int,
-      precision_type::value <= 0 ? 0 :
-      precision_type::value <= 24 ? 24 :
-      precision_type::value <= 53 ? 53 :
-      precision_type::value <= 64 ? 64 :
-      precision_type::value <= 113 ? 113 : 0
-   > tag_type;
+   typedef typename mpl::if_<
+      mpl::less_equal<precision_type, mpl::int_<24> >,
+      typename mpl::if_<
+         mpl::less_equal<precision_type, mpl::int_<0> >,
+         mpl::int_<0>,
+         mpl::int_<24>
+      >::type,
+      typename mpl::if_<
+         mpl::less_equal<precision_type, mpl::int_<53> >,
+         mpl::int_<53>,
+         typename mpl::if_<
+            mpl::less_equal<precision_type, mpl::int_<64> >,
+            mpl::int_<64>,
+            typename mpl::if_<
+               mpl::less_equal<precision_type, mpl::int_<106> >,
+               mpl::int_<106>,
+               typename mpl::if_<
+                  mpl::less_equal<precision_type, mpl::int_<113> >,
+                  mpl::int_<113>,
+                  mpl::int_<0>
+               >::type
+            >::type
+         >::type
+      >::type
+   >::type tag_type;
    return erf_asymptotic_limit_N(tag_type());
-}
-
-// LCOV_EXCL_START multiprecision case only, excluded from coverage analysis
-template <class T>
-struct erf_series_near_zero
-{
-   typedef T result_type;
-   T         term;
-   T         zz;
-   int       k;
-   erf_series_near_zero(const T& z) : term(z), zz(-z * z), k(0) {}
-
-   T operator()()
-   {
-      T result = term / (2 * k + 1);
-      term *= zz / ++k;
-      return result;
-   }
-};
-
-template <class T, class Policy>
-T erf_series_near_zero_sum(const T& x, const Policy& pol)
-{
-   //
-   // We need Kahan summation here, otherwise the errors grow fairly quickly.
-   // This method is *much* faster than the alternatives even so.
-   //
-   erf_series_near_zero<T> sum(x);
-   std::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
-   T result = constants::two_div_root_pi<T>() * tools::kahan_sum_series(sum, tools::digits<T>(), max_iter);
-   policies::check_series_iterations<T>("boost::math::erf<%1%>(%1%, %1%)", max_iter, pol);
-   return result;
 }
 
 template <class T, class Policy, class Tag>
@@ -149,9 +119,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const Tag& t)
    BOOST_MATH_STD_USING
 
    BOOST_MATH_INSTRUMENT_CODE("Generic erf_imp called");
-
-   if ((boost::math::isnan)(z))
-      return policies::raise_domain_error("boost::math::erf<%1%>(%1%)", "Expected a finite argument but got %1%", z, pol);
 
    if(z < 0)
    {
@@ -166,19 +133,27 @@ T erf_imp(T z, bool invert, const Policy& pol, const Tag& t)
    if(!invert && (z > detail::erf_asymptotic_limit<T, Policy>()))
    {
       detail::erf_asympt_series_t<T> s(z);
-      std::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
+      boost::uintmax_t max_iter = policies::get_max_series_iterations<Policy>();
       result = boost::math::tools::sum_series(s, policies::get_epsilon<T, Policy>(), max_iter, 1);
       policies::check_series_iterations<T>("boost::math::erf<%1%>(%1%, %1%)", max_iter, pol);
    }
    else
    {
       T x = z * z;
-      if(z < 1.3f)
+      if(x < 0.6)
       {
          // Compute P:
-         // This is actually good for z p to 2 or so, but the cutoff given seems
-         // to be the best compromise.  Performance wise, this is way quicker than anything else...
-         result = erf_series_near_zero_sum(z, pol);
+         result = z * exp(-x);
+         result /= sqrt(boost::math::constants::pi<T>());
+         if(result != 0)
+            result *= 2 * detail::lower_gamma_series(T(0.5f), x, pol);
+      }
+      else if(x < 1.1f)
+      {
+         // Compute Q:
+         invert = !invert;
+         result = tgamma_small_upper_part(T(0.5f), x, pol);
+         result /= sqrt(boost::math::constants::pi<T>());
       }
       else if(x > 1 / tools::epsilon<T>())
       {
@@ -199,43 +174,25 @@ T erf_imp(T z, bool invert, const Policy& pol, const Tag& t)
       result = 1 - result;
    return result;
 }
-// LCOV_EXCL_STOP
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int, 53>&)
+T erf_imp(T z, bool invert, const Policy& pol, const mpl::int_<53>& t)
 {
    BOOST_MATH_STD_USING
 
    BOOST_MATH_INSTRUMENT_CODE("53-bit precision erf_imp called");
 
    if ((boost::math::isnan)(z))
-      return policies::raise_domain_error("boost::math::erf<%1%>(%1%)", "Expected a finite argument but got %1%", z, pol);
-
-   int prefix_multiplier = 1;
-   int prefix_adder = 0;
+      return policies::raise_denorm_error("boost::math::erf<%1%>(%1%)", "Expected a finite argument but got %1%", z, pol);
 
    if(z < 0)
    {
-      // Recursion is logically simpler here, but confuses static analyzers that need to be
-      // able to calculate the maximimum program stack size at compile time (ie CUDA).
-      z = -z;
       if(!invert)
-      {
-         prefix_multiplier = -1;
-         // return -erf_imp(T(-z), invert, pol, t);
-      }
-      else if (z > T(0.5))
-      {
-         prefix_adder = 2;
-         prefix_multiplier = -1;
-         // return 2 - erf_imp(T(-z), invert, pol, t);
-      }
+         return -erf_imp(T(-z), invert, pol, t);
+      else if(z < -0.5)
+         return 2 - erf_imp(T(-z), invert, pol, t);
       else
-      {
-         invert = false;
-         prefix_adder = 1;
-         // return 1 + erf_imp(T(-z), false, pol, t);
-      }
+         return 1 + erf_imp(T(-z), false, pol, t);
    }
 
    T result;
@@ -245,12 +202,12 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
    // which implementation to use,
    // try to put most likely options first:
    //
-   if(z < T(0.5))
+   if(z < 0.5)
    {
       //
       // We're going to calculate erf:
       //
-      if(z < T(1e-10))
+      if(z < 1e-10)
       {
          if(z == 0)
          {
@@ -258,7 +215,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
          }
          else
          {
-            BOOST_MATH_STATIC_LOCAL_VARIABLE const T c = BOOST_MATH_BIG_CONSTANT(T, 53, 0.003379167095512573896158903121545171688);  // LCOV_EXCL_LINE
+            static const T c = BOOST_MATH_BIG_CONSTANT(T, 53, 0.003379167095512573896158903121545171688);
             result = static_cast<T>(z * 1.125f + z * c);
          }
       }
@@ -268,28 +225,27 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
          // Expected Error Term:                         1.561e-17
          // Maximum Relative Change in Control Points:   1.155e-04
          // Max Error found at double precision =        2.961182e-17
-         // LCOV_EXCL_START
-         BOOST_MATH_STATIC_LOCAL_VARIABLE const T Y = 1.044948577880859375f;
-         BOOST_MATH_STATIC const T P[] = {    
+
+         static const T Y = 1.044948577880859375f;
+         static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0834305892146531832907),
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.338165134459360935041),
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.0509990735146777432841),
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.00772758345802133288487),
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.000322780120964605683831),
          };
-         BOOST_MATH_STATIC const T Q[] = {    
+         static const T Q[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.0),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.455004033050794024546),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0875222600142252549554),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00858571925074406212772),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.000370900071787748000569),
          };
-         // LCOV_EXCL_STOP
          T zz = z * z;
          result = z * (Y + tools::evaluate_polynomial(P, zz) / tools::evaluate_polynomial(Q, zz));
       }
    }
-   else if(invert ? (z < 28) : (z < 5.93f))
+   else if(invert ? (z < 28) : (z < 5.8f))
    {
       //
       // We'll be calculating erfc:
@@ -301,9 +257,8 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
          // Expected Error Term:                         3.702e-17
          // Maximum Relative Change in Control Points:   2.845e-04
          // Max Error found at double precision =        4.841816e-17
-         // LCOV_EXCL_START
-         BOOST_MATH_STATIC_LOCAL_VARIABLE const T Y = 0.405935764312744140625f;
-         BOOST_MATH_STATIC const T P[] = {    
+         static const T Y = 0.405935764312744140625f;
+         static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.098090592216281240205),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.178114665841120341155),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.191003695796775433986),
@@ -311,7 +266,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0195049001251218801359),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00180424538297014223957),
          };
-         BOOST_MATH_STATIC const T Q[] = {    
+         static const T Q[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.0),
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.84759070983002217845),
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.42628004845511324508),
@@ -320,12 +275,11 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0113385233577001411017),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.337511472483094676155e-5),
          };
-         // LCOV_EXCL_STOP
          BOOST_MATH_INSTRUMENT_VARIABLE(Y);
          BOOST_MATH_INSTRUMENT_VARIABLE(P[0]);
          BOOST_MATH_INSTRUMENT_VARIABLE(Q[0]);
          BOOST_MATH_INSTRUMENT_VARIABLE(z);
-         result = Y + tools::evaluate_polynomial(P, T(z - T(0.5))) / tools::evaluate_polynomial(Q, T(z - T(0.5)));
+         result = Y + tools::evaluate_polynomial(P, T(z - 0.5)) / tools::evaluate_polynomial(Q, T(z - 0.5));
          BOOST_MATH_INSTRUMENT_VARIABLE(result);
          result *= exp(-z * z) / z;
          BOOST_MATH_INSTRUMENT_VARIABLE(result);
@@ -336,9 +290,8 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
          // Maximum Deviation Found:                     3.909e-18
          // Expected Error Term:                         3.909e-18
          // Maximum Relative Change in Control Points:   9.886e-05
-         // LCOV_EXCL_START
-         BOOST_MATH_STATIC_LOCAL_VARIABLE const T Y = 0.50672817230224609375f;
-         BOOST_MATH_STATIC const T P[] = {    
+         static const T Y = 0.50672817230224609375f;
+         static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.0243500476207698441272),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0386540375035707201728),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.04394818964209516296),
@@ -346,7 +299,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00323962406290842133584),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.000235839115596880717416),
          };
-         BOOST_MATH_STATIC const T Q[] = {    
+         static const T Q[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.0),
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.53991494948552447182),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.982403709157920235114),
@@ -354,8 +307,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0563921837420478160373),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00410369723978904575884),
          };
-         // LCOV_EXCL_STOP
-         result = Y + tools::evaluate_polynomial(P, T(z - T(1.5))) / tools::evaluate_polynomial(Q, z - T(1.5));
+         result = Y + tools::evaluate_polynomial(P, T(z - 1.5)) / tools::evaluate_polynomial(Q, T(z - 1.5));
          T hi, lo;
          int expon;
          hi = floor(ldexp(frexp(z, &expon), 26));
@@ -371,9 +323,8 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
          // Expected Error Term:                         1.512e-17
          // Maximum Relative Change in Control Points:   2.222e-04
          // Max Error found at double precision =        2.062515e-17
-         // LCOV_EXCL_START
-         BOOST_MATH_STATIC_LOCAL_VARIABLE const T Y = 0.5405750274658203125f;
-         BOOST_MATH_STATIC const T P[] = {    
+         static const T Y = 0.5405750274658203125f;
+         static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00295276716530971662634),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0137384425896355332126),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00840807615555585383007),
@@ -381,7 +332,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.000250269961544794627958),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.113212406648847561139e-4),
          };
-         BOOST_MATH_STATIC const T Q[] = {    
+         static const T Q[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.0),
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.04217814166938418171),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.442597659481563127003),
@@ -389,8 +340,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0105982906484876531489),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.000479411269521714493907),
          };
-         // LCOV_EXCL_STOP
-         result = Y + tools::evaluate_polynomial(P, T(z - T(3.5))) / tools::evaluate_polynomial(Q, z - T(3.5));
+         result = Y + tools::evaluate_polynomial(P, T(z - 3.5)) / tools::evaluate_polynomial(Q, T(z - 3.5));
          T hi, lo;
          int expon;
          hi = floor(ldexp(frexp(z, &expon), 26));
@@ -406,9 +356,8 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
          // Maximum Deviation Found:                     2.860e-17
          // Expected Error Term:                         2.859e-17
          // Maximum Relative Change in Control Points:   1.357e-05
-         // LCOV_EXCL_START
-         BOOST_MATH_STATIC_LOCAL_VARIABLE const T Y = 0.5579090118408203125f;
-         BOOST_MATH_STATIC const T P[] = {    
+         static const T Y = 0.5579090118408203125f;
+         static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.00628057170626964891937),
             BOOST_MATH_BIG_CONSTANT(T, 53, 0.0175389834052493308818),
             BOOST_MATH_BIG_CONSTANT(T, 53, -0.212652252872804219852),
@@ -417,7 +366,7 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, -3.22729451764143718517),
             BOOST_MATH_BIG_CONSTANT(T, 53, -2.8175401114513378771),
          };
-         BOOST_MATH_STATIC const T Q[] = {    
+         static const T Q[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 53, 1.0),
             BOOST_MATH_BIG_CONSTANT(T, 53, 2.79257750980575282228),
             BOOST_MATH_BIG_CONSTANT(T, 53, 11.0567237927800161565),
@@ -426,7 +375,6 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
             BOOST_MATH_BIG_CONSTANT(T, 53, 13.5064170191802889145),
             BOOST_MATH_BIG_CONSTANT(T, 53, 5.48409182238641741584),
          };
-         // LCOV_EXCL_STOP
          result = Y + tools::evaluate_polynomial(P, T(1 / z)) / tools::evaluate_polynomial(Q, T(1 / z));
          T hi, lo;
          int expon;
@@ -449,23 +397,19 @@ BOOST_MATH_GPU_ENABLED T erf_imp(T z, bool invert, const Policy& pol, const std:
 
    if(invert)
    {
-      prefix_adder += prefix_multiplier * 1;
-      prefix_multiplier = -prefix_multiplier;
+      result = 1 - result;
    }
 
-   return prefix_adder + prefix_multiplier * result;
-} // template <class T, class Lanczos>T erf_imp(T z, bool invert, const Lanczos& l, const std::integral_constant<int, 53>& t)
+   return result;
+} // template <class T, class Lanczos>T erf_imp(T z, bool invert, const Lanczos& l, const mpl::int_<53>& t)
 
 
 template <class T, class Policy>
-T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int, 64>& t)
+T erf_imp(T z, bool invert, const Policy& pol, const mpl::int_<64>& t)
 {
    BOOST_MATH_STD_USING
 
    BOOST_MATH_INSTRUMENT_CODE("64-bit precision erf_imp called");
-
-   if ((boost::math::isnan)(z))
-      return policies::raise_domain_error("boost::math::erf<%1%>(%1%)", "Expected a finite argument but got %1%", z, pol);
 
    if(z < 0)
    {
@@ -495,7 +439,7 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
       }
       else if(z < 1e-10)
       {
-         static const T c = BOOST_MATH_BIG_CONSTANT(T, 64, 0.003379167095512573896158903121545171688); // LCOV_EXCL_LINE
+         static const T c = BOOST_MATH_BIG_CONSTANT(T, 64, 0.003379167095512573896158903121545171688);
          result = z * 1.125 + z * c;
       }
       else
@@ -504,7 +448,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
          // Maximum Deviation Found:                     4.326e-22
          // Expected Error Term:                         -4.326e-22
          // Maximum Relative Change in Control Points:   1.474e-04
-         // LCOV_EXCL_START
          static const T Y = 1.044948577880859375f;
          static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.0834305892146531988966),
@@ -522,11 +465,10 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.000650511752687851548735),
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.189532519105655496778e-4),
          };
-         // LCOV_EXCL_STOP
          result = z * (Y + tools::evaluate_polynomial(P, T(z * z)) / tools::evaluate_polynomial(Q, T(z * z)));
       }
    }
-   else if(invert ? (z < 110) : (z < 6.6f))
+   else if(invert ? (z < 110) : (z < 6.4f))
    {
       //
       // We'll be calculating erfc:
@@ -538,7 +480,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
          // Maximum Deviation Found:                     2.241e-20
          // Expected Error Term:                         -2.241e-20
          // Maximum Relative Change in Control Points:   5.110e-03
-         // LCOV_EXCL_START
          static const T Y = 0.405935764312744140625f;
          static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 64, -0.0980905922162812031672),
@@ -559,7 +500,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.0396649631833002269861),
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.00279220237309449026796),
          };
-         // LCOV_EXCL_STOP
          result = Y + tools::evaluate_polynomial(P, T(z - 0.5f)) / tools::evaluate_polynomial(Q, T(z - 0.5f));
          T hi, lo;
          int expon;
@@ -576,7 +516,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
          // Maximum Deviation Found:                     1.495e-21
          // Expected Error Term:                         -1.494e-21
          // Maximum Relative Change in Control Points:   1.793e-04
-         // LCOV_EXCL_START
          static const T Y = 0.50672817230224609375f;
          static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 64, -0.024350047620769840217),
@@ -596,7 +535,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.0158027197831887485261),
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.000897871370778031611439),
          };
-         // LCOV_EXCL_STOP
          result = Y + tools::evaluate_polynomial(P, T(z - 1.5f)) / tools::evaluate_polynomial(Q, T(z - 1.5f));
          T hi, lo;
          int expon;
@@ -613,7 +551,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
          // Expected Error Term:                         -1.106e-20
          // Maximum Relative Change in Control Points:   1.709e-04
          // Max Error found at long double precision =   1.446908e-20
-         // LCOV_EXCL_START
          static const T Y  = 0.5405750274658203125f;
          static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.0029527671653097284033),
@@ -633,7 +570,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.00221657568292893699158),
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.804149464190309799804e-4),
          };
-         // LCOV_EXCL_STOP
          result = Y + tools::evaluate_polynomial(P, T(z - 3.5f)) / tools::evaluate_polynomial(Q, T(z - 3.5f));
          T hi, lo;
          int expon;
@@ -650,7 +586,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
          // Maximum Deviation Found:                     6.677e-21
          // Expected Error Term:                         6.676e-21
          // Maximum Relative Change in Control Points:   2.319e-05
-         // LCOV_EXCL_START
          static const T Y = 0.55825519561767578125f;
          static const T P[] = {    
             BOOST_MATH_BIG_CONSTANT(T, 64, 0.00593438793008050214106),
@@ -674,7 +609,6 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
             BOOST_MATH_BIG_CONSTANT(T, 64, 104.365251479578577989),
             BOOST_MATH_BIG_CONSTANT(T, 64, 30.8365511891224291717),
          };
-         // LCOV_EXCL_STOP
          result = Y + tools::evaluate_polynomial(P, T(1 / z)) / tools::evaluate_polynomial(Q, T(1 / z));
          T hi, lo;
          int expon;
@@ -701,23 +635,19 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
    }
 
    return result;
-} // template <class T, class Lanczos>T erf_imp(T z, bool invert, const Lanczos& l, const std::integral_constant<int, 64>& t)
+} // template <class T, class Lanczos>T erf_imp(T z, bool invert, const Lanczos& l, const mpl::int_<64>& t)
 
 
-// LCOV_EXCL_START multiprecision case only, excluded from coverage analysis
 template <class T, class Policy>
-T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int, 113>& t)
+T erf_imp(T z, bool invert, const Policy& pol, const mpl::int_<113>& t)
 {
    BOOST_MATH_STD_USING
 
    BOOST_MATH_INSTRUMENT_CODE("113-bit precision erf_imp called");
 
-   if ((boost::math::isnan)(z))
-      return policies::raise_domain_error("boost::math::erf<%1%>(%1%)", "Expected a finite argument but got %1%", z, pol);
-
    if(z < 0)
    {
-      if (!invert)
+      if(!invert)
          return -erf_imp(T(-z), invert, pol, t);
       else if(z < -0.5)
          return 2 - erf_imp(T(-z), invert, pol, t);
@@ -1173,13 +1103,65 @@ T erf_imp(T z, bool invert, const Policy& pol, const std::integral_constant<int,
    }
 
    return result;
-} // template <class T, class Lanczos>T erf_imp(T z, bool invert, const Lanczos& l, const std::integral_constant<int, 113>& t)
-// LCOV_EXCL_STOP
+} // template <class T, class Lanczos>T erf_imp(T z, bool invert, const Lanczos& l, const mpl::int_<113>& t)
+
+template <class T, class Policy, class tag>
+struct erf_initializer
+{
+   struct init
+   {
+      init()
+      {
+         do_init(tag());
+      }
+      static void do_init(const mpl::int_<0>&){}
+      static void do_init(const mpl::int_<53>&)
+      {
+         boost::math::erf(static_cast<T>(1e-12), Policy());
+         boost::math::erf(static_cast<T>(0.25), Policy());
+         boost::math::erf(static_cast<T>(1.25), Policy());
+         boost::math::erf(static_cast<T>(2.25), Policy());
+         boost::math::erf(static_cast<T>(4.25), Policy());
+         boost::math::erf(static_cast<T>(5.25), Policy());
+      }
+      static void do_init(const mpl::int_<64>&)
+      {
+         boost::math::erf(static_cast<T>(1e-12), Policy());
+         boost::math::erf(static_cast<T>(0.25), Policy());
+         boost::math::erf(static_cast<T>(1.25), Policy());
+         boost::math::erf(static_cast<T>(2.25), Policy());
+         boost::math::erf(static_cast<T>(4.25), Policy());
+         boost::math::erf(static_cast<T>(5.25), Policy());
+      }
+      static void do_init(const mpl::int_<113>&)
+      {
+         boost::math::erf(static_cast<T>(1e-22), Policy());
+         boost::math::erf(static_cast<T>(0.25), Policy());
+         boost::math::erf(static_cast<T>(1.25), Policy());
+         boost::math::erf(static_cast<T>(2.125), Policy());
+         boost::math::erf(static_cast<T>(2.75), Policy());
+         boost::math::erf(static_cast<T>(3.25), Policy());
+         boost::math::erf(static_cast<T>(5.25), Policy());
+         boost::math::erf(static_cast<T>(7.25), Policy());
+         boost::math::erf(static_cast<T>(11.25), Policy());
+         boost::math::erf(static_cast<T>(12.5), Policy());
+      }
+      void force_instantiate()const{}
+   };
+   static const init initializer;
+   static void force_instantiate()
+   {
+      initializer.force_instantiate();
+   }
+};
+
+template <class T, class Policy, class tag>
+const typename erf_initializer<T, Policy, tag>::init erf_initializer<T, Policy, tag>::initializer;
 
 } // namespace detail
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erf(T z, const Policy& /* pol */)
+inline typename tools::promote_args<T>::type erf(T z, const Policy& /* pol */)
 {
    typedef typename tools::promote_args<T>::type result_type;
    typedef typename policies::evaluation<result_type, Policy>::type value_type;
@@ -1195,14 +1177,27 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erf(T z, con
    BOOST_MATH_INSTRUMENT_CODE("value_type = " << typeid(value_type).name());
    BOOST_MATH_INSTRUMENT_CODE("precision_type = " << typeid(precision_type).name());
 
-   typedef std::integral_constant<int,
-      precision_type::value <= 0 ? 0 :
-      precision_type::value <= 53 ? 53 :
-      precision_type::value <= 64 ? 64 :
-      precision_type::value <= 113 ? 113 : 0
-   > tag_type;
+   typedef typename mpl::if_<
+      mpl::less_equal<precision_type, mpl::int_<0> >,
+      mpl::int_<0>,
+      typename mpl::if_<
+         mpl::less_equal<precision_type, mpl::int_<53> >,
+         mpl::int_<53>,  // double
+         typename mpl::if_<
+            mpl::less_equal<precision_type, mpl::int_<64> >,
+            mpl::int_<64>, // 80-bit long double
+            typename mpl::if_<
+               mpl::less_equal<precision_type, mpl::int_<113> >,
+               mpl::int_<113>, // 128-bit long double
+               mpl::int_<0> // too many bits, use generic version.
+            >::type
+         >::type
+      >::type
+   >::type tag_type;
 
    BOOST_MATH_INSTRUMENT_CODE("tag_type = " << typeid(tag_type).name());
+
+   detail::erf_initializer<value_type, forwarding_policy, tag_type>::force_instantiate(); // Force constants to be initialized before main
 
    return policies::checked_narrowing_cast<result_type, forwarding_policy>(detail::erf_imp(
       static_cast<value_type>(z),
@@ -1212,7 +1207,7 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erf(T z, con
 }
 
 template <class T, class Policy>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erfc(T z, const Policy& /* pol */)
+inline typename tools::promote_args<T>::type erfc(T z, const Policy& /* pol */)
 {
    typedef typename tools::promote_args<T>::type result_type;
    typedef typename policies::evaluation<result_type, Policy>::type value_type;
@@ -1228,14 +1223,27 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erfc(T z, co
    BOOST_MATH_INSTRUMENT_CODE("value_type = " << typeid(value_type).name());
    BOOST_MATH_INSTRUMENT_CODE("precision_type = " << typeid(precision_type).name());
 
-   typedef std::integral_constant<int,
-      precision_type::value <= 0 ? 0 :
-      precision_type::value <= 53 ? 53 :
-      precision_type::value <= 64 ? 64 :
-      precision_type::value <= 113 ? 113 : 0
-   > tag_type;
+   typedef typename mpl::if_<
+      mpl::less_equal<precision_type, mpl::int_<0> >,
+      mpl::int_<0>,
+      typename mpl::if_<
+         mpl::less_equal<precision_type, mpl::int_<53> >,
+         mpl::int_<53>,  // double
+         typename mpl::if_<
+            mpl::less_equal<precision_type, mpl::int_<64> >,
+            mpl::int_<64>, // 80-bit long double
+            typename mpl::if_<
+               mpl::less_equal<precision_type, mpl::int_<113> >,
+               mpl::int_<113>, // 128-bit long double
+               mpl::int_<0> // too many bits, use generic version.
+            >::type
+         >::type
+      >::type
+   >::type tag_type;
 
    BOOST_MATH_INSTRUMENT_CODE("tag_type = " << typeid(tag_type).name());
+
+   detail::erf_initializer<value_type, forwarding_policy, tag_type>::force_instantiate(); // Force constants to be initialized before main
 
    return policies::checked_narrowing_cast<result_type, forwarding_policy>(detail::erf_imp(
       static_cast<value_type>(z),
@@ -1245,13 +1253,13 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erfc(T z, co
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erf(T z)
+inline typename tools::promote_args<T>::type erf(T z)
 {
    return boost::math::erf(z, policies::policy<>());
 }
 
 template <class T>
-BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erfc(T z)
+inline typename tools::promote_args<T>::type erfc(T z)
 {
    return boost::math::erfc(z, policies::policy<>());
 }
@@ -1259,64 +1267,10 @@ BOOST_MATH_GPU_ENABLED inline typename tools::promote_args<T>::type erfc(T z)
 } // namespace math
 } // namespace boost
 
-#else // Special handling for NVRTC platform
-
-namespace boost {
-namespace math {
-
-template <typename T>
-BOOST_MATH_GPU_ENABLED auto erf(T x)
-{
-   return ::erf(x);
-}
-
-template <>
-BOOST_MATH_GPU_ENABLED auto erf(float x)
-{
-   return ::erff(x);
-}
-
-template <typename T, typename Policy>
-BOOST_MATH_GPU_ENABLED auto erf(T x, const Policy&)
-{
-   return ::erf(x);
-}
-
-template <typename Policy>
-BOOST_MATH_GPU_ENABLED auto erf(float x, const Policy&)
-{
-   return ::erff(x);
-}
-
-template <typename T>
-BOOST_MATH_GPU_ENABLED auto erfc(T x)
-{
-   return ::erfc(x);
-}
-
-template <>
-BOOST_MATH_GPU_ENABLED auto erfc(float x)
-{
-   return ::erfcf(x);
-}
-
-template <typename T, typename Policy>
-BOOST_MATH_GPU_ENABLED auto erfc(T x, const Policy&)
-{
-   return ::erfc(x);
-}
-
-template <typename Policy>
-BOOST_MATH_GPU_ENABLED auto erfc(float x, const Policy&)
-{
-   return ::erfcf(x);
-}
-
-} // namespace math
-} // namespace boost
-
-#endif // BOOST_MATH_HAS_NVRTC
-
 #include <boost/math/special_functions/detail/erf_inv.hpp>
 
 #endif // BOOST_MATH_SPECIAL_ERF_HPP
+
+
+
+

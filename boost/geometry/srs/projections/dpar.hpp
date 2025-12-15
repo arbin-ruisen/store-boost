@@ -1,9 +1,6 @@
 // Boost.Geometry
 
-// Copyright (c) 2023 Adam Wulkiewicz, Lodz, Poland.
-
-// Copyright (c) 2017-2023, Oracle and/or its affiliates.
-// Contributed and/or modified by Vissarion Fysikopoulos, on behalf of Oracle
+// Copyright (c) 2017-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -14,10 +11,6 @@
 #define BOOST_GEOMETRY_SRS_PROJECTIONS_DPAR_HPP
 
 
-#include <string>
-#include <type_traits>
-#include <vector>
-
 #include <boost/geometry/core/radius.hpp>
 #include <boost/geometry/core/tag.hpp>
 #include <boost/geometry/core/tags.hpp>
@@ -27,16 +20,16 @@
 #include <boost/geometry/srs/sphere.hpp>
 #include <boost/geometry/srs/spheroid.hpp>
 
-#include <boost/geometry/util/range.hpp>
-
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/size.hpp>
-#include <boost/range/value_type.hpp>
-
-#include <boost/variant/get.hpp>
+#include <boost/mpl/assert.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/tuple/tuple.hpp>
 #include <boost/variant/variant.hpp>
+#include <boost/type_traits/integral_constant.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/is_void.hpp>
 
+#include <string>
+#include <vector>
 
 namespace boost { namespace geometry { namespace srs
 {
@@ -44,45 +37,51 @@ namespace boost { namespace geometry { namespace srs
 namespace detail
 {
 
-template <typename T, int I, typename ...>
-struct find_type_index_impl
-    : std::integral_constant<int, I>
-{};
+template
+<
+    typename Types,
+    typename T,
+    typename Iter = typename boost::mpl::begin<Types>::type,
+    typename End = typename boost::mpl::end<Types>::type,
+    int I = 0
+>
+struct find_type_index
+{
+    typedef typename boost::mpl::deref<Iter>::type type;
+    static const int value = boost::is_same<type, T>::value
+                           ? I
+                           : find_type_index
+                                <
+                                    Types,
+                                    T,
+                                    typename boost::mpl::next<Iter>::type,
+                                    End,
+                                    I + 1
+                                >::value;
+                            
+};
 
 template
 <
+    typename Types,
     typename T,
-    int I,
-    typename Type,
-    typename ...Types
+    typename End,
+    int I
 >
-struct find_type_index_impl<T, I, Type, Types...>
-    : std::conditional_t
-        <
-            std::is_same<T, Type>::value,
-            std::integral_constant<int, I>,
-            typename find_type_index_impl<T, I + 1, Types...>::type
-        >
-{};
-
-template <typename Variant, typename T>
-struct find_type_index
-{};
-
-template <BOOST_VARIANT_ENUM_PARAMS(typename T), typename T>
-struct find_type_index<boost::variant<BOOST_VARIANT_ENUM_PARAMS(T)>, T>
-    : find_type_index_impl<T, 0, BOOST_VARIANT_ENUM_PARAMS(T)>
-{};
+struct find_type_index<Types, T, End, End, I>
+{
+    static const int value = I;
+};
 
 
 template
 <
     typename Range,
     typename ToValue,
-    bool IsRange = range::detail::is_range<Range>::value
+    bool IsRange = boost::has_range_iterator<Range>::value
 >
 struct is_convertible_range
-    : std::is_convertible
+    : boost::is_convertible
         <
             typename boost::range_value<Range>::type,
             ToValue
@@ -95,7 +94,7 @@ template
     typename ToValue
 >
 struct is_convertible_range<Range, ToValue, false>
-    : std::false_type
+    : boost::false_type
 {};
 
 } // namespace detail
@@ -212,7 +211,6 @@ enum value_proj
     proj_cc,
     proj_cea,
     proj_chamb,
-    proj_col_urban,
     proj_collg,
     proj_crast,
     proj_denoy,
@@ -297,7 +295,6 @@ enum value_proj
     proj_wag2,
     proj_wag3,
     proj_wag7,
-    proj_webmerc,
     proj_wink1,
     proj_wink2
 };
@@ -340,7 +337,7 @@ enum name_f
     es,
     f,
     h,
-    h_0,
+    //h_0, // currently not used
     k = 7,
     k_0,
     m, // also used for M
@@ -417,10 +414,7 @@ enum name_be
     r_h, // originally R_h
     r_v, // originally R_V
     rescale, // 70
-    south,
-    variant_c, // BG specific
-    no_off,
-    hyperbolic
+    south
 };
 
 /*enum name_catalog
@@ -490,11 +484,6 @@ enum name_units
     vunits
 };
 
-enum name_axis
-{
-    axis = 86 // 3 element list of numbers
-};
-
 template <typename T>
 struct parameter
 {
@@ -540,30 +529,22 @@ struct parameter
         : m_id(ellps), m_value(int(v))
     {}
 
-    template
-    <
-        typename Sphere,
-        std::enable_if_t
-            <
-                std::is_same<geometry::tag_t<Sphere>, srs_sphere_tag>::value,
-                int
-            > = 0
-    >
-    parameter(name_ellps id, Sphere const& v)
+    template <typename Sphere>
+    parameter(name_ellps id, Sphere const& v,
+              typename boost::enable_if_c
+                <
+                    boost::is_same<typename geometry::tag<Sphere>::type, srs_sphere_tag>::value
+                >::type * = 0)
         : m_id(id)
         , m_value(T(get_radius<0>(v)))
     {}
 
-    template
-    <
-        typename Spheroid,
-        std::enable_if_t
-            <
-                std::is_same<geometry::tag_t<Spheroid>, srs_spheroid_tag>::value,
-                int
-            > = 0
-    >
-    parameter(name_ellps id, Spheroid const& v)
+    template <typename Spheroid>
+    parameter(name_ellps id, Spheroid const& v,
+              typename boost::enable_if_c
+                <
+                    boost::is_same<typename geometry::tag<Spheroid>::type, srs_spheroid_tag>::value
+                >::type * = 0)
         : m_id(id)
         , m_value(srs::spheroid<T>(get_radius<0>(v), get_radius<2>(v)))
     {}
@@ -576,24 +557,22 @@ struct parameter
         : m_id(mode), m_value(int(v))
     {}
 
-    template
-    <
-        typename Range,
-        std::enable_if_t
-            <
-                detail::is_convertible_range<Range const, std::string>::value,
-                int
-            > = 0
-    >
-    parameter(name_nadgrids id, Range const& v)
+    template <typename Range>
+    parameter(name_nadgrids id, Range const& v,
+              typename boost::enable_if_c
+                <
+                    detail::is_convertible_range<Range const, std::string>::value
+                >::type * = 0)
         : m_id(id)
         , m_value(srs::detail::nadgrids(boost::begin(v), boost::end(v)))
     {}
 
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
     parameter(name_nadgrids id, std::initializer_list<std::string> v)
         : m_id(id)
         , m_value(srs::detail::nadgrids(v))
     {}
+#endif
 
     parameter(name_orient id, value_orient v)
         : m_id(id), m_value(int(v))
@@ -633,16 +612,12 @@ struct parameter
         : m_id(sweep), m_value(int(v))
     {}
 
-    template
-    <
-        typename Range,
-        std::enable_if_t
-            <
-                detail::is_convertible_range<Range const, T>::value,
-                int
-            > = 0
-    >
-    parameter(name_towgs84 id, Range const& v)
+    template <typename Range>
+    parameter(name_towgs84 id, Range const& v,
+              typename boost::enable_if_c
+                <
+                    detail::is_convertible_range<Range const, T>::value
+                >::type * = 0)
         : m_id(id)
         , m_value(srs::detail::towgs84<T>(boost::begin(v), boost::end(v)))
     {
@@ -653,6 +628,7 @@ struct parameter
         }
     }
 
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
     parameter(name_towgs84 id, std::initializer_list<T> v)
         : m_id(id)
         , m_value(srs::detail::towgs84<T>(v))
@@ -663,17 +639,7 @@ struct parameter
             BOOST_THROW_EXCEPTION( projection_exception("Invalid number of towgs84 elements. Should be 3 or 7.") );
         }
     }
-
-    parameter(name_axis id, std::initializer_list<int> v)
-        : m_id(id)
-        , m_value(srs::detail::axis(v))
-    {
-        std::size_t n = v.size();
-        if (n != 3)
-        {
-            BOOST_THROW_EXCEPTION( projection_exception("Invalid number of axis elements. Should be 3.") );
-        }
-    }
+#endif
 
     parameter(name_units id, value_units v)
         : m_id(id), m_value(int(v))
@@ -682,7 +648,7 @@ struct parameter
     parameter(value_units v)
         : m_id(units), m_value(int(v))
     {}
-
+    
 private:
     typedef boost::variant
         <
@@ -709,7 +675,6 @@ public:
     bool is_id_equal(name_sweep const& id) const { return m_id == int(id); }
     bool is_id_equal(name_towgs84 const& id) const { return m_id == int(id); }
     bool is_id_equal(name_units const& id) const { return m_id == int(id); }
-    bool is_id_equal(name_axis const& id) const { return m_id == int(id); }
 
     template <typename V>
     V const& get_value() const
@@ -720,9 +685,13 @@ public:
     template <typename V>
     bool is_value_set() const
     {
-        return m_value.which() == srs::detail::find_type_index<variant_type, V>::value;
+        return m_value.which() == srs::detail::find_type_index
+            <
+                typename variant_type::types,
+                V
+            >::value;
     }
-
+    
 private:
     int m_id;
     variant_type m_value;
@@ -741,6 +710,66 @@ public:
 
     BOOST_DEFAULTED_FUNCTION(parameters(), {})
 
+#if defined(BOOST_NO_CXX11_RVALUE_REFERENCES) || defined(BOOST_NO_CXX11_VARIADIC_TEMPLATES)
+    template <typename Id>
+    explicit parameters(Id id)
+    {
+        add(id);
+    }
+
+    template <typename Id>
+    parameters & add(Id id)
+    {
+        m_params.push_back(parameter<T>(id));
+        return *this;
+    }
+
+    template <typename Id>
+    parameters & operator()(Id id)
+    {
+        return add(id);
+    }
+
+    template <typename Id, typename V>
+    parameters(Id id, V const& value)
+    {
+        add(id, value);
+    }
+
+    template <typename Id, typename V>
+    parameters & add(Id id, V const& value)
+    {
+        m_params.push_back(parameter<T>(id, value));
+        return *this;
+    }
+
+    template <typename Id, typename V>
+    parameters & operator()(Id id, V const& value)
+    {
+        return add(id, value);
+    }
+
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
+    template <typename Id, typename V>
+    parameters(Id id, std::initializer_list<V> value)
+    {
+        add(id, value);
+    }
+
+    template <typename Id, typename V>
+    parameters & add(Id id, std::initializer_list<V> value)
+    {
+        m_params.push_back(parameter<T>(id, value));
+        return *this;
+    }
+
+    template <typename Id, typename V>
+    parameters & operator()(Id id, std::initializer_list<V> value)
+    {
+        return add(id, value);
+    }
+#endif // BOOST_NO_CXX11_HDR_INITIALIZER_LIST
+#else // BOOST_NO_CXX11_RVALUE_REFERENCES || BOOST_NO_CXX11_RVALUE_REFERENCES
     template <typename Id>
     explicit parameters(Id id)
     {
@@ -779,6 +808,7 @@ public:
         return add(id, std::forward<V>(value));
     }
 
+#ifndef BOOST_NO_CXX11_HDR_INITIALIZER_LIST
     template <typename Id, typename V>
     parameters(Id id, std::initializer_list<V> value)
     {
@@ -797,6 +827,8 @@ public:
     {
         return add(id, value);
     }
+#endif // BOOST_NO_CXX11_HDR_INITIALIZER_LIST
+#endif // BOOST_NO_CXX11_RVALUE_REFERENCES || BOOST_NO_CXX11_RVALUE_REFERENCES
 
     const_iterator begin() const { return m_params.begin(); }
     const_iterator end() const { return m_params.end(); }

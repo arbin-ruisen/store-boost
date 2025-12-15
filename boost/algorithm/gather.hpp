@@ -1,4 +1,4 @@
-/*
+/* 
     Copyright 2008 Adobe Systems Incorporated
 
    Distributed under the Boost Software License, Version 1.0. (See accompanying
@@ -22,10 +22,8 @@
 
 #include <algorithm>                // for std::stable_partition
 #include <functional>
-#include <utility>                  // for std::make_pair
 
-#include <boost/config.hpp>
-#include <boost/bind/bind.hpp>      // for boost::bind
+#include <boost/bind.hpp>           // for boost::bind
 #include <boost/range/begin.hpp>    // for boost::begin(range)
 #include <boost/range/end.hpp>      // for boost::end(range)
 
@@ -82,14 +80,13 @@ namespace boost { namespace algorithm {
 */
 
 template <
-    typename BidirectionalIterator,  // models BidirectionalIterator
-    typename Pred>                   // models UnaryPredicate
-std::pair<BidirectionalIterator, BidirectionalIterator> gather
+    typename BidirectionalIterator,  // Iter models BidirectionalIterator
+    typename Pred>                   // Pred models UnaryPredicate
+std::pair<BidirectionalIterator, BidirectionalIterator> gather 
         ( BidirectionalIterator first, BidirectionalIterator last, BidirectionalIterator pivot, Pred pred )
 {
 //  The first call partitions everything up to (but not including) the pivot element,
 //  while the second call partitions the rest of the sequence.
-    using namespace boost::placeholders;
     return std::make_pair (
         std::stable_partition ( first, pivot, !boost::bind<bool> ( pred, _1 )),
         std::stable_partition ( pivot, last,   boost::bind<bool> ( pred, _1 )));
@@ -106,11 +103,11 @@ template <
     typename BidirectionalRange,    //
     typename Pred>                  // Pred models UnaryPredicate
 std::pair<
-    typename boost::range_iterator<BidirectionalRange>::type,
-    typename boost::range_iterator<BidirectionalRange>::type>
+    typename boost::range_iterator<const BidirectionalRange>::type,
+    typename boost::range_iterator<const BidirectionalRange>::type>
 gather (
-    BidirectionalRange &range,
-    typename boost::range_iterator<BidirectionalRange>::type pivot,
+    const BidirectionalRange &range,
+    typename boost::range_iterator<const BidirectionalRange>::type pivot,
     Pred pred )
 {
     return boost::algorithm::gather ( boost::begin ( range ), boost::end ( range ), pivot, pred );

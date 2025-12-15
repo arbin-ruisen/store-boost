@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::drop_front_exactly`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -22,7 +22,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/is_empty.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @cond
     template <typename Xs, typename N>
     constexpr auto drop_front_exactly_t::operator()(Xs&& xs, N const& n) const {
@@ -80,6 +80,6 @@ namespace boost { namespace hana {
             return result; // NRVO applied
         }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_DROP_FRONT_EXACTLY_HPP

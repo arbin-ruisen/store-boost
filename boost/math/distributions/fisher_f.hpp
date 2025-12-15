@@ -1,5 +1,5 @@
 // Copyright John Maddock 2006.
-// Copyright Matt Borland 2024.
+
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0.
 // (See accompanying file LICENSE_1_0.txt
@@ -8,14 +8,13 @@
 #ifndef BOOST_MATH_DISTRIBUTIONS_FISHER_F_HPP
 #define BOOST_MATH_DISTRIBUTIONS_FISHER_F_HPP
 
-#include <boost/math/tools/config.hpp>
-#include <boost/math/tools/tuple.hpp>
-#include <boost/math/tools/promotion.hpp>
 #include <boost/math/distributions/fwd.hpp>
 #include <boost/math/special_functions/beta.hpp> // for incomplete beta.
 #include <boost/math/distributions/complement.hpp> // complements
 #include <boost/math/distributions/detail/common_error_handling.hpp> // error checks
 #include <boost/math/special_functions/fpclassify.hpp>
+
+#include <utility>
 
 namespace boost{ namespace math{
 
@@ -26,9 +25,9 @@ public:
    typedef RealType value_type;
    typedef Policy policy_type;
 
-   BOOST_MATH_GPU_ENABLED fisher_f_distribution(const RealType& i, const RealType& j) : m_df1(i), m_df2(j)
+   fisher_f_distribution(const RealType& i, const RealType& j) : m_df1(i), m_df2(j)
    {
-      constexpr auto function = "fisher_f_distribution<%1%>::fisher_f_distribution";
+      static const char* function = "fisher_f_distribution<%1%>::fisher_f_distribution";
       RealType result;
       detail::check_df(
          function, m_df1, &result, Policy());
@@ -36,11 +35,11 @@ public:
          function, m_df2, &result, Policy());
    } // fisher_f_distribution
 
-   BOOST_MATH_GPU_ENABLED RealType degrees_of_freedom1()const
+   RealType degrees_of_freedom1()const
    {
       return m_df1;
    }
-   BOOST_MATH_GPU_ENABLED RealType degrees_of_freedom2()const
+   RealType degrees_of_freedom2()const
    {
       return m_df2;
    }
@@ -55,35 +54,30 @@ private:
 
 typedef fisher_f_distribution<double> fisher_f;
 
-#ifdef __cpp_deduction_guides
-template <class RealType>
-fisher_f_distribution(RealType,RealType)->fisher_f_distribution<typename boost::math::tools::promote_args<RealType>::type>;
-#endif
-
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline const boost::math::pair<RealType, RealType> range(const fisher_f_distribution<RealType, Policy>& /*dist*/)
+inline const std::pair<RealType, RealType> range(const fisher_f_distribution<RealType, Policy>& /*dist*/)
 { // Range of permissible values for random variable x.
    using boost::math::tools::max_value;
-   return boost::math::pair<RealType, RealType>(static_cast<RealType>(0), max_value<RealType>());
+   return std::pair<RealType, RealType>(static_cast<RealType>(0), max_value<RealType>());
 }
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline const boost::math::pair<RealType, RealType> support(const fisher_f_distribution<RealType, Policy>& /*dist*/)
+inline const std::pair<RealType, RealType> support(const fisher_f_distribution<RealType, Policy>& /*dist*/)
 { // Range of supported values for random variable x.
    // This is range where cdf rises from 0 to 1, and outside it, the pdf is zero.
    using boost::math::tools::max_value;
-   return boost::math::pair<RealType, RealType>(static_cast<RealType>(0),  max_value<RealType>());
+   return std::pair<RealType, RealType>(static_cast<RealType>(0),  max_value<RealType>());
 }
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED RealType pdf(const fisher_f_distribution<RealType, Policy>& dist, const RealType& x)
+RealType pdf(const fisher_f_distribution<RealType, Policy>& dist, const RealType& x)
 {
    BOOST_MATH_STD_USING  // for ADL of std functions
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
    // Error check:
    RealType error_result = 0;
-   constexpr auto function = "boost::math::pdf(fisher_f_distribution<%1%> const&, %1%)";
+   static const char* function = "boost::math::pdf(fisher_f_distribution<%1%> const&, %1%)";
    if(false == (detail::check_df(
          function, df1, &error_result, Policy())
          && detail::check_df(
@@ -133,9 +127,9 @@ BOOST_MATH_GPU_ENABLED RealType pdf(const fisher_f_distribution<RealType, Policy
 } // pdf
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType cdf(const fisher_f_distribution<RealType, Policy>& dist, const RealType& x)
+inline RealType cdf(const fisher_f_distribution<RealType, Policy>& dist, const RealType& x)
 {
-   constexpr auto function = "boost::math::cdf(fisher_f_distribution<%1%> const&, %1%)";
+   static const char* function = "boost::math::cdf(fisher_f_distribution<%1%> const&, %1%)";
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
    // Error check:
@@ -168,9 +162,9 @@ BOOST_MATH_GPU_ENABLED inline RealType cdf(const fisher_f_distribution<RealType,
 } // cdf
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType quantile(const fisher_f_distribution<RealType, Policy>& dist, const RealType& p)
+inline RealType quantile(const fisher_f_distribution<RealType, Policy>& dist, const RealType& p)
 {
-   constexpr auto function = "boost::math::quantile(fisher_f_distribution<%1%> const&, %1%)";
+   static const char* function = "boost::math::quantile(fisher_f_distribution<%1%> const&, %1%)";
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
    // Error check:
@@ -184,7 +178,7 @@ BOOST_MATH_GPU_ENABLED inline RealType quantile(const fisher_f_distribution<Real
       return error_result;
 
    // With optimizations turned on, gcc wrongly warns about y being used
-   // uninitialized unless we initialize it to something:
+   // uninitializated unless we initialize it to something:
    RealType x, y(0);
 
    x = boost::math::ibeta_inv(df1 / 2, df2 / 2, p, &y, Policy());
@@ -193,9 +187,9 @@ BOOST_MATH_GPU_ENABLED inline RealType quantile(const fisher_f_distribution<Real
 } // quantile
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType cdf(const complemented2_type<fisher_f_distribution<RealType, Policy>, RealType>& c)
+inline RealType cdf(const complemented2_type<fisher_f_distribution<RealType, Policy>, RealType>& c)
 {
-   constexpr auto function = "boost::math::cdf(fisher_f_distribution<%1%> const&, %1%)";
+   static const char* function = "boost::math::cdf(fisher_f_distribution<%1%> const&, %1%)";
    RealType df1 = c.dist.degrees_of_freedom1();
    RealType df2 = c.dist.degrees_of_freedom2();
    RealType x = c.param;
@@ -229,9 +223,9 @@ BOOST_MATH_GPU_ENABLED inline RealType cdf(const complemented2_type<fisher_f_dis
 }
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType quantile(const complemented2_type<fisher_f_distribution<RealType, Policy>, RealType>& c)
+inline RealType quantile(const complemented2_type<fisher_f_distribution<RealType, Policy>, RealType>& c)
 {
-   constexpr auto function = "boost::math::quantile(fisher_f_distribution<%1%> const&, %1%)";
+   static const char* function = "boost::math::quantile(fisher_f_distribution<%1%> const&, %1%)";
    RealType df1 = c.dist.degrees_of_freedom1();
    RealType df2 = c.dist.degrees_of_freedom2();
    RealType p = c.param;
@@ -253,9 +247,9 @@ BOOST_MATH_GPU_ENABLED inline RealType quantile(const complemented2_type<fisher_
 }
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType mean(const fisher_f_distribution<RealType, Policy>& dist)
+inline RealType mean(const fisher_f_distribution<RealType, Policy>& dist)
 { // Mean of F distribution = v.
-   constexpr auto function = "boost::math::mean(fisher_f_distribution<%1%> const&)";
+   static const char* function = "boost::math::mean(fisher_f_distribution<%1%> const&)";
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
    // Error check:
@@ -274,9 +268,9 @@ BOOST_MATH_GPU_ENABLED inline RealType mean(const fisher_f_distribution<RealType
 } // mean
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType variance(const fisher_f_distribution<RealType, Policy>& dist)
+inline RealType variance(const fisher_f_distribution<RealType, Policy>& dist)
 { // Variance of F distribution.
-   constexpr auto function = "boost::math::variance(fisher_f_distribution<%1%> const&)";
+   static const char* function = "boost::math::variance(fisher_f_distribution<%1%> const&)";
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
    // Error check:
@@ -295,9 +289,9 @@ BOOST_MATH_GPU_ENABLED inline RealType variance(const fisher_f_distribution<Real
 } // variance
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType mode(const fisher_f_distribution<RealType, Policy>& dist)
+inline RealType mode(const fisher_f_distribution<RealType, Policy>& dist)
 {
-   constexpr auto function = "boost::math::mode(fisher_f_distribution<%1%> const&)";
+   static const char* function = "boost::math::mode(fisher_f_distribution<%1%> const&)";
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
    // Error check:
@@ -307,10 +301,10 @@ BOOST_MATH_GPU_ENABLED inline RealType mode(const fisher_f_distribution<RealType
          && detail::check_df(
             function, df2, &error_result, Policy()))
       return error_result;
-   if(df1 <= 2)
+   if(df2 <= 2)
    {
       return policies::raise_domain_error<RealType>(
-         function, "First degree of freedom was %1% but must be > 2 in order for the distribution to have a mode.", df1, Policy());
+         function, "Second degree of freedom was %1% but must be > 2 in order for the distribution to have a mode.", df2, Policy());
    }
    return df2 * (df1 - 2) / (df1 * (df2 + 2));
 }
@@ -318,15 +312,15 @@ BOOST_MATH_GPU_ENABLED inline RealType mode(const fisher_f_distribution<RealType
 //template <class RealType, class Policy>
 //inline RealType median(const fisher_f_distribution<RealType, Policy>& dist)
 //{ // Median of Fisher F distribution is not defined.
-//  return tools::domain_error<RealType>(BOOST_CURRENT_FUNCTION, "Median is not implemented, result is %1%!", boost::math::numeric_limits<RealType>::quiet_NaN());
+//  return tools::domain_error<RealType>(BOOST_CURRENT_FUNCTION, "Median is not implemented, result is %1%!", std::numeric_limits<RealType>::quiet_NaN());
 //  } // median
 
 // Now implemented via quantile(half) in derived accessors.
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType skewness(const fisher_f_distribution<RealType, Policy>& dist)
+inline RealType skewness(const fisher_f_distribution<RealType, Policy>& dist)
 {
-   constexpr auto function = "boost::math::skewness(fisher_f_distribution<%1%> const&)";
+   static const char* function = "boost::math::skewness(fisher_f_distribution<%1%> const&)";
    BOOST_MATH_STD_USING // ADL of std names
    // See http://mathworld.wolfram.com/F-Distribution.html
    RealType df1 = dist.degrees_of_freedom1();
@@ -347,18 +341,18 @@ BOOST_MATH_GPU_ENABLED inline RealType skewness(const fisher_f_distribution<Real
 }
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED RealType kurtosis_excess(const fisher_f_distribution<RealType, Policy>& dist);
+RealType kurtosis_excess(const fisher_f_distribution<RealType, Policy>& dist);
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType kurtosis(const fisher_f_distribution<RealType, Policy>& dist)
+inline RealType kurtosis(const fisher_f_distribution<RealType, Policy>& dist)
 {
    return 3 + kurtosis_excess(dist);
 }
 
 template <class RealType, class Policy>
-BOOST_MATH_GPU_ENABLED inline RealType kurtosis_excess(const fisher_f_distribution<RealType, Policy>& dist)
+inline RealType kurtosis_excess(const fisher_f_distribution<RealType, Policy>& dist)
 {
-   constexpr auto function = "boost::math::kurtosis_excess(fisher_f_distribution<%1%> const&)";
+   static const char* function = "boost::math::kurtosis_excess(fisher_f_distribution<%1%> const&)";
    // See http://mathworld.wolfram.com/F-Distribution.html
    RealType df1 = dist.degrees_of_freedom1();
    RealType df2 = dist.degrees_of_freedom2();
@@ -372,7 +366,7 @@ BOOST_MATH_GPU_ENABLED inline RealType kurtosis_excess(const fisher_f_distributi
    if(df2 <= 8)
    {
       return policies::raise_domain_error<RealType>(
-         function, "Second degree of freedom was %1% but must be > 8 in order for the distribution to have a kurtosis.", df2, Policy());
+         function, "Second degree of freedom was %1% but must be > 8 in order for the distribution to have a kutosis.", df2, Policy());
    }
    RealType df2_2 = df2 * df2;
    RealType df1_2 = df1 * df1;

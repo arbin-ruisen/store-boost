@@ -1,6 +1,11 @@
 #ifndef BOOST_NUMERIC_AUTOMATIC_HPP
 #define BOOST_NUMERIC_AUTOMATIC_HPP
 
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 //  Copyright (c) 2012 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -78,17 +83,14 @@ public:
 
         constexpr static const r_interval_type r_interval = t_interval + u_interval;
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -113,17 +115,14 @@ public:
 
         constexpr static const r_interval_type r_interval = t_interval - u_interval;
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -155,17 +154,14 @@ public:
 
         constexpr static const r_interval_type r_interval = t_interval * u_interval;
 
-        constexpr static const auto rl = r_interval.l;
-        constexpr static const auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -195,37 +191,34 @@ public:
             checked::cast<temp_base_type>(base_value(std::numeric_limits<U>::max()))
         };
 
-        constexpr static r_interval_type rx(){
-            if(u_interval.u < r_type(0)
-            || u_interval.l > r_type(0))
-                return t_interval / u_interval;
-            return utility::minmax(
-                std::initializer_list<r_type> {
-                    t_interval.l / u_interval.l,
-                    t_interval.l / r_type(-1),
-                    t_interval.l / r_type(1),
-                    t_interval.l / u_interval.u,
-                    t_interval.u / u_interval.l,
-                    t_interval.u / r_type(-1),
-                    t_interval.u / r_type(1),
-                    t_interval.u / u_interval.u,
-                }
-            );
+        constexpr static const r_interval_type rx(){
+        if(u_interval.u < r_type(0)
+        || u_interval.l > r_type(0))
+            return t_interval / u_interval;
+        return utility::minmax(
+            std::initializer_list<r_type> {
+                t_interval.l / u_interval.l,
+                t_interval.l / r_type(-1),
+                t_interval.l / r_type(1),
+                t_interval.l / u_interval.u,
+                t_interval.u / u_interval.l,
+                t_interval.u / r_type(-1),
+                t_interval.u / r_type(1),
+                t_interval.u / u_interval.u,
+            }
+        );
         }
 
         constexpr static const r_interval_type r_interval = rx();
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -255,7 +248,7 @@ public:
             checked::cast<temp_base_type>(base_value(std::numeric_limits<U>::max()))
         };
 
-        constexpr static r_interval_type rx(){
+        constexpr static const r_interval_type rx(){
             if(u_interval.u < r_type(0)
             || u_interval.l > r_type(0))
                 return t_interval / u_interval;
@@ -275,17 +268,14 @@ public:
 
         constexpr static const r_interval_type r_interval = rx();
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -318,8 +308,6 @@ public:
             checked::cast<temp_base_type>(base_value(std::numeric_limits<U>::max()))
         };
 
-        // workaround some microsoft problem
-        #if 0
         constexpr static r_type min(const r_type & t, const r_type & u){
             // assert(! u.exception());
             // assert(! t.exception());
@@ -331,7 +319,6 @@ public:
             // assert(! t.exception());
             return static_cast<bool>(t < u) ? u : t;
         }
-        #endif
 
         // union of two intervals
         // note: we can't use t_interval | u_interval because it
@@ -341,27 +328,22 @@ public:
             const r_interval_type & t,
             const r_interval_type & u
         ){
-            //const r_type & rl = min(t.l, u.l);
-            const r_type & rmin = static_cast<bool>(t.l < u.l) ? t.l : u.l;
-            //const r_type & ru = max(t.u, u.u);
-            const r_type & rmax = static_cast<bool>(t.u < u.u) ? u.u : t.u;
-            return r_interval_type(rmin, rmax);
+            const r_type & rl = min(t.l, u.l);
+            const r_type & ru = max(t.u, u.u);
+            return r_interval_type(rl, ru);
         }
 
         constexpr static const r_interval_type r_interval =
             union_interval(t_interval, u_interval);
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -391,17 +373,14 @@ public:
         constexpr static const r_interval_type r_interval =
             t_interval << u_interval;
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
     };
 
@@ -434,17 +413,14 @@ public:
 
         constexpr static const r_interval_type r_interval = t_interval >> u_interval;
 
-        constexpr static auto rl = r_interval.l;
-        constexpr static auto ru = r_interval.u;
-
         using type = typename result_type<
             temp_base_type,
-            rl.exception()
+            r_interval.l.exception()
                 ? std::numeric_limits<temp_base_type>::min()
-                : static_cast<temp_base_type>(rl),
-            ru.exception()
+                : static_cast<temp_base_type>(r_interval.l),
+            r_interval.u.exception()
                 ? std::numeric_limits<temp_base_type>::max()
-                : static_cast<temp_base_type>(ru)
+                : static_cast<temp_base_type>(r_interval.u)
         >::type;
 
     };

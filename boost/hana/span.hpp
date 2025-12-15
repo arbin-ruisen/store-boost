@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::span`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -27,7 +27,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <utility>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @cond
     template <typename Xs, typename Pred>
     constexpr auto span_t::operator()(Xs&& xs, Pred&& pred) const {
@@ -70,6 +70,6 @@ namespace boost { namespace hana {
                                std::make_index_sequence<N - breakpoint>{});
         }
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_SPAN_HPP

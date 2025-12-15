@@ -39,7 +39,6 @@
  *******************************************************/
 
 .text
-.private_extern _ontop_fcontext
 .globl _ontop_fcontext
 .align 2
 _ontop_fcontext:
@@ -53,7 +52,7 @@ _ontop_fcontext:
     bic  v2, v2, #3
 
     @ load TLS[__PTK_LIBC_DYLD_Unwind_SjLj_Key]
-    ldr  v1, [v2, #72]
+    ldr  v1, [v2, #8]
     @ save SjLj handler
     push  {v1}
 
@@ -80,7 +79,7 @@ _ontop_fcontext:
     @ restore SjLj handler
     pop  {v1}
     @ store SjLj handler in TLS
-    str  v1, [v2, #72]
+    str  v1, [v2, #8]
 
     @ store parent context in A2
     mov  a2, a1

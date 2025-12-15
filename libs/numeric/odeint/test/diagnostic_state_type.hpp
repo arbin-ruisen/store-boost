@@ -18,9 +18,7 @@
 #ifndef LIBS_NUMERIC_ODEINT_TEST_DIAGNOSTIC_STATE_TYPE_HPP_DEFINED
 #define LIBS_NUMERIC_ODEINT_TEST_DIAGNOSTIC_STATE_TYPE_HPP_DEFINED
 
-#include <array>
-#include <type_traits>
-
+#include <boost/array.hpp>
 #include <boost/numeric/odeint/util/is_resizeable.hpp>
 #include <boost/numeric/odeint/util/same_size.hpp>
 #include <boost/numeric/odeint/util/resize.hpp>
@@ -64,7 +62,7 @@ struct counter
 };
 
 template< size_t N >
-class diagnostic_type : public std::array< double , 1 > { };
+class diagnostic_type : public boost::array< double , 1 > { };
 
 
 typedef diagnostic_type< 0 > diagnostic_state_type;
@@ -86,7 +84,7 @@ namespace odeint {
     template< size_t N >
     struct is_resizeable< diagnostic_type< N > >
     {
-        typedef std::true_type type;
+        typedef boost::true_type type;
         const static bool value = type::value;
     };
 

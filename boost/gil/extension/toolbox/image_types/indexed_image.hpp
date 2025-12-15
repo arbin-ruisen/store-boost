@@ -12,25 +12,21 @@
 
 #include <boost/gil/image.hpp>
 #include <boost/gil/point.hpp>
-#include <boost/gil/virtual_locator.hpp>
-#include <boost/gil/detail/is_channel_integral.hpp>
-#include <boost/gil/detail/mp11.hpp>
+
+#include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_integral.hpp>
+#include <boost/utility/enable_if.hpp>
 
 #include <cstddef>
 #include <memory>
 
-namespace boost { namespace gil {
+namespace boost{ namespace gil {
 
 template< typename Locator >
-struct get_pixel_type_locator
-{
-    using type = mp11::mp_if
-        <
-            typename is_bit_aligned<typename Locator::value_type>::type,
-            typename Locator::reference,
-            typename Locator::value_type
-        >;
-};
+struct get_pixel_type_locator : mpl::if_< typename is_bit_aligned< typename Locator::value_type >::type
+                                        , typename Locator::reference
+                                        , typename Locator::value_type
+                                        > {};
 
 // used for virtual locator
 template< typename IndicesLoc
@@ -38,16 +34,16 @@ template< typename IndicesLoc
         >
 struct indexed_image_deref_fn_base
 {
-    using indices_locator_t = IndicesLoc;
-    using palette_locator_t = PaletteLoc;
-    //using index_t = typename get_pixel_type_locator<indices_locator_t>::type;
+    typedef IndicesLoc indices_locator_t;
+    typedef PaletteLoc palette_locator_t;
+    //typedef typename get_pixel_type_locator< indices_locator_t >::type index_t;
 
-    using const_t = indexed_image_deref_fn_base<IndicesLoc, PaletteLoc>;
-    using value_type = typename PaletteLoc::value_type;
-    using reference = value_type;
-    using const_reference = value_type;
-    using argument_type = point_t;
-    using result_type = reference;
+    typedef indexed_image_deref_fn_base     const_t;
+    typedef typename PaletteLoc::value_type value_type;
+    typedef value_type                      reference;
+    typedef value_type                      const_reference;
+    typedef point_t                         argument_type;
+    typedef reference                       result_type;
 
     static const bool is_mutable = false;
 
@@ -82,11 +78,10 @@ struct indexed_image_deref_fn : indexed_image_deref_fn_base< IndicesLoc
                                                            , PaletteLoc
                                                            >
 {
-    using base_t = indexed_image_deref_fn_base
-        <
-            IndicesLoc,
-            PaletteLoc
-        >;
+    typedef indexed_image_deref_fn_base< IndicesLoc
+                                       , PaletteLoc
+                                       > base_t;
+
 
     indexed_image_deref_fn()
     : base_t()
@@ -100,38 +95,42 @@ struct indexed_image_deref_fn : indexed_image_deref_fn_base< IndicesLoc
             )
     {}
 
-    typename base_t::result_type operator()( point_t const& p ) const
+    typename base_t::result_type operator()( const point_t& p ) const
     {
         return * this->_palette_loc.xy_at( at_c<0>( *this->_indices_loc.xy_at( p )), 0 );
     }
 };
 
 
-template <typename IndicesLoc, typename PaletteLoc>
-struct indexed_image_deref_fn
-<
-    IndicesLoc,
-    PaletteLoc,
-    typename std::enable_if
-    <
-        detail::is_channel_integral<typename IndicesLoc::value_type>::value
-    >::type
-> : indexed_image_deref_fn_base<IndicesLoc, PaletteLoc>
+template< typename IndicesLoc
+        , typename PaletteLoc
+        >
+struct indexed_image_deref_fn< IndicesLoc
+                             , PaletteLoc
+                             , typename boost::enable_if< boost::is_integral< typename IndicesLoc::value_type > >::type
+                             > : indexed_image_deref_fn_base< IndicesLoc
+                                                            , PaletteLoc
+                                                            >
 {
-    using base_t = indexed_image_deref_fn_base<IndicesLoc, PaletteLoc>;
+    typedef indexed_image_deref_fn_base< IndicesLoc
+                                       , PaletteLoc
+                                       > base_t;
 
-    indexed_image_deref_fn() : base_t() {}
+    indexed_image_deref_fn()
+    : base_t()
+    {}
 
-    indexed_image_deref_fn(
-        typename base_t::indices_locator_t const& indices_loc,
-        typename base_t::palette_locator_t const& palette_loc)
-        : base_t(indices_loc, palette_loc)
+    indexed_image_deref_fn( const typename base_t::indices_locator_t& indices_loc
+                          , const typename base_t::palette_locator_t& palette_loc
+                          )
+    : base_t( indices_loc
+            , palette_loc
+            )
+    {}
+
+    typename base_t::result_type operator()( const point_t& p ) const
     {
-    }
-
-    typename base_t::result_type operator()(point_t const& p) const
-    {
-        return *this->_palette_loc.xy_at(*this->_indices_loc.xy_at(p), 0);
+        return *this->_palette_loc.xy_at( *this->_indices_loc.xy_at( p ), 0 );
     }
 };
 
@@ -140,11 +139,11 @@ template< typename IndicesLoc
         >
 struct indexed_image_locator_type
 {
-    using type = virtual_2d_locator
-        <
-            indexed_image_deref_fn<IndicesLoc, PaletteLoc>,
-            false
-        >;
+    typedef virtual_2d_locator< indexed_image_deref_fn< IndicesLoc
+                                                      , PaletteLoc
+                                                      >
+                              , false
+                              > type;
 };
 
 template< typename Locator > // indexed_image_locator_type< ... >::type
@@ -152,21 +151,21 @@ class indexed_image_view : public image_view< Locator >
 {
 public:
 
-    using deref_fn_t = typename Locator::deref_fn_t;
-    using indices_locator_t = typename deref_fn_t::indices_locator_t;
-    using palette_locator_t = typename deref_fn_t::palette_locator_t;
+    typedef typename Locator::deref_fn_t deref_fn_t;
+    typedef typename deref_fn_t::indices_locator_t indices_locator_t;
+    typedef typename deref_fn_t::palette_locator_t palette_locator_t;
 
-    using const_t = indexed_image_view<Locator>;
+    typedef indexed_image_view< Locator > const_t;
 
-    using indices_view_t = image_view<indices_locator_t>;
-    using palette_view_t = image_view<palette_locator_t>;
+    typedef image_view< indices_locator_t > indices_view_t;
+    typedef image_view< palette_locator_t > palette_view_t;
 
     indexed_image_view()
     : image_view< Locator >()
     , _num_colors( 0 )
     {}
 
-    indexed_image_view( point_t const& dimensions
+    indexed_image_view( const point_t& dimensions
                       , std::size_t    num_colors
                       , const Locator& locator
                       )
@@ -212,20 +211,17 @@ indexed_image_view
 >
     view(Index_View iv, Palette_View pv)
 {
-    using view_t = indexed_image_view
-        <
-            typename indexed_image_locator_type
-                <
-                    typename Index_View::locator,
-                    typename Palette_View::locator
-                >::type
-        >;
+    typedef indexed_image_view<
+        typename indexed_image_locator_type<
+            typename Index_View::locator
+            , typename Palette_View::locator
+        >::type
+    > view_t;
 
-    using defer_fn_t = indexed_image_deref_fn
-        <
-            typename Index_View::locator,
-            typename Palette_View::locator
-        >;
+    typedef indexed_image_deref_fn<
+        typename Index_View::locator
+        , typename Palette_View::locator
+    > defer_fn_t;
 
     return view_t(
         iv.dimensions()
@@ -243,30 +239,28 @@ class indexed_image
 {
 public:
 
-    using indices_t = image<Index, false, IndicesAllocator>;
-    using palette_t = image<Pixel, false, PalleteAllocator>;
+    typedef image< Index, false, IndicesAllocator > indices_t;
+    typedef image< Pixel, false, PalleteAllocator > palette_t;
 
-    using indices_view_t = typename indices_t::view_t;
-    using palette_view_t = typename palette_t::view_t;
+    typedef typename indices_t::view_t indices_view_t;
+    typedef typename palette_t::view_t palette_view_t;
 
-    using indices_const_view_t = typename indices_t::const_view_t;
-    using palette_const_view_t = typename palette_t::const_view_t;
+    typedef typename indices_t::const_view_t indices_const_view_t;
+    typedef typename palette_t::const_view_t palette_const_view_t;
 
-    using indices_locator_t = typename indices_view_t::locator;
-    using palette_locator_t = typename palette_view_t::locator;
+    typedef typename indices_view_t::locator indices_locator_t;
+    typedef typename palette_view_t::locator palette_locator_t;
 
-    using locator_t = typename indexed_image_locator_type
-        <
-            indices_locator_t,
-            palette_locator_t
-        >::type;
+    typedef typename indexed_image_locator_type< indices_locator_t
+                                               , palette_locator_t
+                                               >::type locator_t;
 
-    using x_coord_t = typename indices_t::coord_t;
-    using y_coord_t = typename indices_t::coord_t;
+    typedef typename indices_t::coord_t x_coord_t;
+    typedef typename indices_t::coord_t y_coord_t;
 
 
-    using view_t = indexed_image_view<locator_t>;
-    using const_view_t = typename view_t::const_t;
+    typedef indexed_image_view< locator_t > view_t;
+    typedef typename view_t::const_t        const_view_t;
 
     indexed_image( const x_coord_t   width = 0
                  , const y_coord_t   height = 0
@@ -280,7 +274,7 @@ public:
         init( point_t( width, height ), num_colors );
     }
 
-    indexed_image( point_t const&    dimensions
+    indexed_image( const point_t&    dimensions
                  , const std::size_t num_colors = 1
                  , const std::size_t indices_alignment = 0
                  , const std::size_t palette_alignment = 0
@@ -323,15 +317,13 @@ public:
 
 private:
 
-    void init( point_t const&    dimensions
+    void init( const point_t&    dimensions
              , const std::size_t num_colors
              )
     {
-        using defer_fn_t = indexed_image_deref_fn
-            <
-                indices_locator_t,
-                palette_locator_t
-            >;
+        typedef indexed_image_deref_fn< indices_locator_t
+                                      , palette_locator_t
+                                      > defer_fn_t;
 
         defer_fn_t deref_fn( view( _indices ).xy_at( 0, 0 )
                            , view( _palette ).xy_at( 0, 0 )
@@ -380,7 +372,7 @@ void fill_pixels( const indexed_image_view< Locator >& view
                 , const Value&                         value
                 )
 {
-    using view_t = indexed_image_view<Locator>;
+    typedef indexed_image_view< Locator > view_t;
 
     fill_pixels( view.get_indices_view(), typename view_t::indices_view_t::value_type( 0 ));
     *view.get_palette_view().begin() = value;

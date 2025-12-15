@@ -1,4 +1,4 @@
-/* Copyright 2003-2023 Joaquin M Lopez Munoz.
+/* Copyright 2003-2014 Joaquin M Lopez Munoz.
  * Distributed under the Boost Software License, Version 1.0.
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
@@ -17,7 +17,8 @@
 #include <boost/operators.hpp>
 
 #if !defined(BOOST_MULTI_INDEX_DISABLE_SERIALIZATION)
-#include <boost/core/serialization.hpp>
+#include <boost/serialization/nvp.hpp>
+#include <boost/serialization/split_member.hpp>
 #endif
 
 namespace boost{
@@ -33,7 +34,7 @@ class rnd_node_iterator:
   public random_access_iterator_helper<
     rnd_node_iterator<Node>,
     typename Node::value_type,
-    typename Node::difference_type,
+    std::ptrdiff_t,
     const typename Node::value_type*,
     const typename Node::value_type&>
 {
@@ -59,13 +60,13 @@ public:
     return *this;
   }
 
-  rnd_node_iterator& operator+=(typename Node::difference_type n)
+  rnd_node_iterator& operator+=(std::ptrdiff_t n)
   {
     Node::advance(node,n);
     return *this;
   }
 
-  rnd_node_iterator& operator-=(typename Node::difference_type n)
+  rnd_node_iterator& operator-=(std::ptrdiff_t n)
   {
     Node::advance(node,-n);
     return *this;
@@ -76,11 +77,7 @@ public:
    * see explanation in safe_mode_iterator notes in safe_mode.hpp.
    */
 
-  template<class Archive>
-  void serialize(Archive& ar,const unsigned int version)
-  {
-    core::split_member(ar,*this,version);
-  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
 
   typedef typename Node::base_type node_base_type;
 
@@ -88,14 +85,14 @@ public:
   void save(Archive& ar,const unsigned int)const
   {
     node_base_type* bnode=node;
-    ar<<core::make_nvp("pointer",bnode);
+    ar<<serialization::make_nvp("pointer",bnode);
   }
 
   template<class Archive>
   void load(Archive& ar,const unsigned int)
   {
     node_base_type* bnode;
-    ar>>core::make_nvp("pointer",bnode);
+    ar>>serialization::make_nvp("pointer",bnode);
     node=static_cast<Node*>(bnode);
   }
 #endif
@@ -127,7 +124,7 @@ bool operator<(
 }
 
 template<typename Node>
-typename Node::difference_type operator-(
+std::ptrdiff_t operator-(
   const rnd_node_iterator<Node>& x,
   const rnd_node_iterator<Node>& y)
 {

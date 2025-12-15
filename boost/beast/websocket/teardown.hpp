@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -12,8 +12,8 @@
 
 #include <boost/beast/core/detail/config.hpp>
 #include <boost/beast/core/error.hpp>
-#include <boost/beast/core/role.hpp>
-#include <boost/asio/basic_stream_socket.hpp>
+#include <boost/beast/websocket/role.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <type_traits>
 
 namespace boost {
@@ -25,14 +25,9 @@ namespace websocket {
     This tears down a connection. The implementation will call
     the overload of this function based on the `Socket` parameter
     used to consruct the socket. When `Socket` is a user defined
-    type, and not a `net::ip::tcp::socket` or any
-    `net::ssl::stream`, callers are responsible for
+    type, and not a `boost::asio::ip::tcp::socket` or any
+    `boost::asio::ssl::stream`, callers are responsible for
     providing a suitable overload of this function.
-
-    @note
-
-    This function serves as a customization point and is not intended
-    to be called directly.
 
     @param role The role of the local endpoint
 
@@ -66,33 +61,25 @@ teardown(
     The implementation will call the overload of this function
     based on the `Socket` parameter used to consruct the socket.
     When `Stream` is a user defined type, and not a
-    `net::ip::tcp::socket` or any `net::ssl::stream`,
+    `boost::asio::ip::tcp::socket` or any `boost::asio::ssl::stream`,
     callers are responsible for providing a suitable overload
     of this function.
-
-    @note
-
-    This function serves as a customization point and is not intended
-    to be called directly.
 
     @param role The role of the local endpoint
 
     @param socket The socket to tear down.
 
-    @param handler The completion handler to invoke when the operation
-    completes. The implementation takes ownership of the handler by
-    performing a decay-copy. The equivalent function signature of
-    the handler must be:
-    @code
-    void handler(
+    @param handler Invoked when the operation completes.
+    The handler may be moved or copied as needed.
+    The equivalent function signature of the handler must be:
+    @code void handler(
         error_code const& error // result of operation
     );
     @endcode
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
-    manner equivalent to using `net::post`.
+    manner equivalent to using boost::asio::io_context::post().
 
 */
 template<
@@ -123,19 +110,14 @@ async_teardown(
 
 namespace websocket {
 
-/** Tear down a `net::ip::tcp::socket`.
+/** Tear down a `boost::asio::ip::tcp::socket`.
 
     This tears down a connection. The implementation will call
     the overload of this function based on the `Stream` parameter
     used to consruct the socket. When `Stream` is a user defined
-    type, and not a `net::ip::tcp::socket` or any
-    `net::ssl::stream`, callers are responsible for
+    type, and not a `boost::asio::ip::tcp::socket` or any
+    `boost::asio::ssl::stream`, callers are responsible for
     providing a suitable overload of this function.
-
-    @note
-
-    This function serves as a customization point and is not intended
-    to be called directly.
 
     @param role The role of the local endpoint
 
@@ -143,74 +125,50 @@ namespace websocket {
 
     @param ec Set to the error if any occurred.
 */
-template<class Protocol, class Executor>
 void
 teardown(
     role_type role,
-    net::basic_stream_socket<
-        Protocol, Executor>& socket,
+    boost::asio::ip::tcp::socket& socket,
     error_code& ec);
 
-/** Start tearing down a `net::ip::tcp::socket`.
+/** Start tearing down a `boost::asio::ip::tcp::socket`.
 
     This begins tearing down a connection asynchronously.
     The implementation will call the overload of this function
     based on the `Stream` parameter used to consruct the socket.
     When `Stream` is a user defined type, and not a
-    `net::ip::tcp::socket` or any `net::ssl::stream`,
+    `boost::asio::ip::tcp::socket` or any `boost::asio::ssl::stream`,
     callers are responsible for providing a suitable overload
     of this function.
-
-    @note
-
-    This function serves as a customization point and is not intended
-    to be called directly.
 
     @param role The role of the local endpoint
 
     @param socket The socket to tear down.
 
-    @param handler The completion handler to invoke when the operation
-    completes. The implementation takes ownership of the handler by
-    performing a decay-copy. The equivalent function signature of
-    the handler must be:
-    @code
-    void handler(
+    @param handler Invoked when the operation completes.
+    The handler may be moved or copied as needed.
+    The equivalent function signature of the handler must be:
+    @code void handler(
         error_code const& error // result of operation
     );
-    @endcode   
-    If the handler has an associated immediate executor,
-    an immediate completion will be dispatched to it.
-    Otherwise, the handler will not be invoked from within
+    @endcode
+    Regardless of whether the asynchronous operation completes
+    immediately or not, the handler will not be invoked from within
     this function. Invocation of the handler will be performed in a
-    manner equivalent to using `net::post`.
-
-    @par Per-Operation Cancellation
-
-    This asynchronous operation supports cancellation for the following
-    net::cancellation_type values:
-
-    @li @c net::cancellation_type::terminal
-    @li @c net::cancellation_type::partial
-    @li @c net::cancellation_type::total
-
-    if they are also supported by the socket's @c async_wait operation.
+    manner equivalent to using boost::asio::io_context::post().
 
 */
-template<
-    class Protocol, class Executor,
-    class TeardownHandler>
+template<class TeardownHandler>
 void
 async_teardown(
     role_type role,
-    net::basic_stream_socket<
-        Protocol, Executor>& socket,
+    boost::asio::ip::tcp::socket& socket,
     TeardownHandler&& handler);
 
 } // websocket
 } // beast
 } // boost
 
-#include <boost/beast/websocket/impl/teardown.hpp>
+#include <boost/beast/websocket/impl/teardown.ipp>
 
 #endif

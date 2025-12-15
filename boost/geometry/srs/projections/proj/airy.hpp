@@ -2,8 +2,8 @@
 
 // Copyright (c) 2008-2015 Barend Gehrels, Amsterdam, the Netherlands.
 
-// This file was modified by Oracle on 2017, 2018, 2019.
-// Modifications copyright (c) 2017-2019, Oracle and/or its affiliates.
+// This file was modified by Oracle on 2017, 2018.
+// Modifications copyright (c) 2017-2018, Oracle and/or its affiliates.
 // Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle.
 
 // Use, modification and distribution is subject to the Boost Software License,
@@ -45,13 +45,12 @@
 #ifndef BOOST_GEOMETRY_PROJECTIONS_AIRY_HPP
 #define BOOST_GEOMETRY_PROJECTIONS_AIRY_HPP
 
+#include <boost/geometry/util/math.hpp>
+
 #include <boost/geometry/srs/projections/impl/base_static.hpp>
 #include <boost/geometry/srs/projections/impl/base_dynamic.hpp>
-#include <boost/geometry/srs/projections/impl/factory_entry.hpp>
-#include <boost/geometry/srs/projections/impl/pj_param.hpp>
 #include <boost/geometry/srs/projections/impl/projects.hpp>
-
-#include <boost/geometry/util/math.hpp>
+#include <boost/geometry/srs/projections/impl/factory_entry.hpp>
 
 namespace boost { namespace geometry
 {
@@ -78,17 +77,23 @@ namespace projections
                 T    cosph0;
                 T    Cb;
                 mode_type mode;
-                bool no_cut;    /* do not cut at hemisphere limit */
+                int  no_cut;    /* do not cut at hemisphere limit */
             };
 
+            // template class, using CRTP to implement forward/inverse
             template <typename T, typename Parameters>
             struct base_airy_spheroid
+                : public base_t_f<base_airy_spheroid<T, Parameters>, T, Parameters>
             {
                 par_airy<T> m_proj_parm;
 
+                inline base_airy_spheroid(const Parameters& par)
+                    : base_t_f<base_airy_spheroid<T, Parameters>, T, Parameters>(*this, par)
+                {}
+
                 // FORWARD(s_forward)  spheroid
                 // Project coordinates from geographic (lon, lat) to cartesian (x, y)
-                inline void fwd(Parameters const& , T const& lp_lon, T lp_lat, T& xy_x, T& xy_y) const
+                inline void fwd(T const& lp_lon, T lp_lat, T& xy_x, T& xy_y) const
                 {
                     static const T half_pi = detail::half_pi<T>();
 
@@ -203,9 +208,10 @@ namespace projections
     struct airy_spheroid : public detail::airy::base_airy_spheroid<T, Parameters>
     {
         template <typename Params>
-        inline airy_spheroid(Params const& params, Parameters & par)
+        inline airy_spheroid(Params const& params, Parameters const& par)
+            : detail::airy::base_airy_spheroid<T, Parameters>(par)
         {
-            detail::airy::setup_airy(params, par, this->m_proj_parm);
+            detail::airy::setup_airy(params, this->m_par, this->m_proj_parm);
         }
     };
 
@@ -214,11 +220,11 @@ namespace projections
     {
 
         // Static projection
-        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION_F(srs::spar::proj_airy, airy_spheroid)
+        BOOST_GEOMETRY_PROJECTIONS_DETAIL_STATIC_PROJECTION(srs::spar::proj_airy, airy_spheroid, airy_spheroid)
 
         // Factory entry(s)
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_ENTRY_F(airy_entry, airy_spheroid)
-
+        
         BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_BEGIN(airy_init)
         {
             BOOST_GEOMETRY_PROJECTIONS_DETAIL_FACTORY_INIT_ENTRY(airy, airy_entry)

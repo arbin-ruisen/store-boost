@@ -13,14 +13,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#include <boost/config/warning_disable.hpp>
 //[mini_xml2_sr_includes
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/repository/include/qi_subrule.hpp>
-#include <boost/phoenix/core.hpp>
-#include <boost/phoenix/operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 //]
-#include <boost/phoenix/fusion.hpp>
-#include <boost/phoenix/stl.hpp>
+#include <boost/spirit/include/phoenix_fusion.hpp>
+#include <boost/spirit/include/phoenix_stl.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/variant/recursive_variant.hpp>
 #include <boost/foreach.hpp>
@@ -164,7 +165,7 @@ namespace client
 
               , end_tag %=
                         "</"
-                    >>  lit(_r1)
+                    >>  string(_r1)
                     >>  '>'
             );
         }
@@ -232,11 +233,11 @@ int main(int argc, char **argv)
     }
     else
     {
-        std::string::const_iterator some = iter + std::min(30, int(end - iter));
+        std::string::const_iterator some = iter+30;
         std::string context(iter, (some>end)?end:some);
         std::cout << "-------------------------\n";
         std::cout << "Parsing failed\n";
-        std::cout << "stopped at: \"" << context << "...\"\n";
+        std::cout << "stopped at: \": " << context << "...\"\n";
         std::cout << "-------------------------\n";
         return 1;
     }

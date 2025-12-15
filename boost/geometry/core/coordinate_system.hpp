@@ -3,11 +3,6 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2008-2012 Barend Gehrels, Amsterdam, the Netherlands.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
-// Copyright (c) 2024 Adam Wulkiewicz, Lodz, Poland.
-
-// This file was modified by Oracle on 2020.
-// Modifications copyright (c) 2020, Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
@@ -20,9 +15,10 @@
 #define BOOST_GEOMETRY_CORE_COORDINATE_SYSTEM_HPP
 
 
+#include <boost/mpl/assert.hpp>
+
 #include <boost/geometry/core/point_type.hpp>
-#include <boost/geometry/core/static_assert.hpp>
-#include <boost/geometry/util/type_traits_std.hpp>
+#include <boost/geometry/util/bare_type.hpp>
 
 
 namespace boost { namespace geometry
@@ -43,9 +39,10 @@ namespace traits
 template <typename Point, typename Enable = void>
 struct coordinate_system
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Point type.",
-        Point);
+    BOOST_MPL_ASSERT_MSG
+        (
+            false, NOT_IMPLEMENTED_FOR_THIS_POINT_TYPE, (types<Point>)
+        );
 };
 
 } // namespace traits
@@ -58,20 +55,20 @@ namespace core_dispatch
     template <typename GeometryTag, typename G>
     struct coordinate_system
     {
-        using P = typename point_type<GeometryTag, G>::type;
+        typedef typename point_type<GeometryTag, G>::type P;
 
         // Call its own specialization on point-tag
-        using type = typename coordinate_system<point_tag, P>::type;
+        typedef typename coordinate_system<point_tag, P>::type type;
     };
 
 
     template <typename Point>
     struct coordinate_system<point_tag, Point>
     {
-        using type = typename traits::coordinate_system
+        typedef typename traits::coordinate_system
             <
-                util::remove_cptrref_t<Point>
-            >::type;
+                typename geometry::util::bare_type<Point>::type
+            >::type type;
     };
 
 
@@ -89,32 +86,13 @@ namespace core_dispatch
 template <typename Geometry>
 struct coordinate_system
 {
-    using type = typename core_dispatch::coordinate_system
+    typedef typename core_dispatch::coordinate_system
         <
-            tag_t<Geometry>,
-            util::remove_cptrref_t<Geometry>
-        >::type;
+            typename tag<Geometry>::type,
+            typename geometry::util::bare_type<Geometry>::type
+        >::type type;
 };
 
-template <typename Geometry>
-using coordinate_system_t = typename coordinate_system<Geometry>::type;
-
-#ifndef DOXYGEN_NO_DETAIL
-namespace detail {
-
-// Short cut for coordinate system units
-template <typename Geometry>
-struct coordinate_system_units
-{
-    using type = typename coordinate_system<Geometry>::type::units;
-};
-
-
-template <typename Geometry>
-using coordinate_system_units_t = typename coordinate_system_units<Geometry>::type;
-
-} // namespace detail
-#endif // DOXYGEN_NO_DETAIL
 
 }} // namespace boost::geometry
 

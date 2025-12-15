@@ -1,6 +1,11 @@
 #ifndef BOOST_NUMERIC_SAFE_BASE_HPP
 #define BOOST_NUMERIC_SAFE_BASE_HPP
 
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 //  Copyright (c) 2012 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -8,8 +13,11 @@
 // http://www.boost.org/LICENSE_1_0.txt)
 
 #include <limits>
-#include <type_traits> // is_integral, enable_if, conditional is_convertible
-#include <boost/config.hpp> // BOOST_CLANG
+#include <type_traits> // is_integral, enable_if, conditional
+
+#include <boost/mpl/eval_if.hpp>
+#include <boost/mpl/identity.hpp>
+
 #include "concept/exception_policy.hpp"
 #include "concept/promotion_policy.hpp"
 
@@ -98,21 +106,9 @@ template<
 >
 class safe_literal_impl;
 
-// works for both GCC and clang
-#if BOOST_CLANG==1
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wmismatched-tags"
-#endif
-
 /////////////////////////////////////////////////////////////////
 // Main implementation
 
-// note in the current version of the library, it is a requirement than type
-// type "Stored" be a scalar type.  Problem is when violates this rule, the error message (on clang)
-// is "A non-type template parameter cannot have type ... " where ... is some non-scalar type
-// The example which triggered this investigation is safe<safe<int>> .  It was difficult to make
-// the trip from the error message to the source of the problem, hence we're including this
-// comment here.
 template<
     class Stored,
     Stored Min,
@@ -126,8 +122,24 @@ private:
     BOOST_CONCEPT_ASSERT((ExceptionPolicy<E>));
     Stored m_t;
 
+    template<
+        class StoredX,
+        StoredX MinX,
+        StoredX MaxX,
+        class PX, // promotion polic
+        class EX  // exception policy
+    >
+    friend class safe_base;
+
+    friend class std::numeric_limits<safe_base>;
+
     template<class T>
     constexpr Stored validated_cast(const T & t) const;
+
+    template<typename T, T N, class P1, class E1>
+    constexpr Stored validated_cast(
+        const safe_literal_impl<T, N, P1, E1> & t
+    ) const;
 
     // stream support
 
@@ -169,25 +181,27 @@ public:
     ////////////////////////////////////////////////////////////
     // constructors
 
-    constexpr safe_base();
-
     struct skip_validation{};
 
-    constexpr explicit safe_base(const Stored & rhs, skip_validation);
+    constexpr explicit safe_base(const Stored & rhs, skip_validation) :
+        m_t(rhs)
+    {}
 
-    // construct an instance of a safe type from an instance of a convertible underlying type.
-    template<
-        class T,
-        typename std::enable_if<
-            std::is_convertible<T, Stored>::value,
-            bool
-        >::type = 0
-    >
-    constexpr /*explicit*/ safe_base(const T & t);
-
-    // construct an instance of a safe type from a literal value
-    template<typename T, T N, class Px, class Ex>
-    constexpr /*explicit*/ safe_base(const safe_literal_impl<T, N, Px, Ex> & t);
+    // default constructor
+    /*
+    constexpr explicit safe_base() {
+        // this permits creating of invalid instances.  This is inline
+        // with C++ built-in but violates the premises of the whole library
+        // choice are:
+        // do nothing - violates premise of he library that all safe objects
+        // are valid
+        // initialize to valid value - violates C++ behavior of types.
+        // add "initialized" flag.  Preserves fixes the above, but doubles
+        // "overhead"
+        // still pending on this.
+    }
+    */
+    constexpr safe_base() = default;
 
     // note: Rule of Five. Supply all or none of the following
     // a) user-defined destructor
@@ -200,6 +214,31 @@ public:
     constexpr safe_base(safe_base &&) = default;
     // e) move assignment operator
     constexpr safe_base & operator=(safe_base &&) = default;
+
+    // construct an instance of a safe type
+    // from an instance of a convertible underlying type.
+
+    template<class T>
+    constexpr /*explicit*/ safe_base(
+        const T & t,
+        typename std::enable_if<
+            is_safe<T>::value,
+            bool
+        >::type = true
+    ) :
+        m_t(validated_cast(t))
+    {}
+
+    template<class T>
+    constexpr /*explicit*/ safe_base(
+        const T & t,
+        typename std::enable_if<
+            std::is_integral<T>::value,
+            bool
+        >::type = true
+    ) :
+        m_t(validated_cast(t))
+    {}
 
     /////////////////////////////////////////////////////////////////
     // casting operators for intrinsic integers
@@ -216,6 +255,8 @@ public:
     >
     constexpr /*explicit*/ operator R () const;
 
+    constexpr /*explicit*/ operator Stored () const;
+
     /////////////////////////////////////////////////////////////////
     // modification binary operators
     template<class T>
@@ -225,19 +266,26 @@ public:
         return *this;
     }
 
+    // required to passify VS2017
+    constexpr safe_base &
+    operator=(const Stored & rhs){
+        m_t = validated_cast(rhs);
+        return *this;
+    }
+
     // mutating unary operators
-    constexpr safe_base & operator++(){      // pre increment
+    safe_base & operator++(){      // pre increment
         return *this = *this + 1;
     }
-    constexpr safe_base & operator--(){      // pre decrement
+    safe_base & operator--(){      // pre decrement
         return *this = *this - 1;
     }
-    constexpr safe_base operator++(int){   // post increment
+    safe_base operator++(int){   // post increment
         safe_base old_t = *this;
         ++(*this);
         return old_t;
     }
-    constexpr safe_base operator--(int){ // post decrement
+    safe_base operator--(int){ // post decrement
         safe_base old_t = *this;
         --(*this);
         return old_t;
@@ -310,9 +358,5 @@ public:
 };
 
 } // std
-
-#if BOOST_CLANG==1
-#pragma GCC diagnostic pop
-#endif
 
 #endif // BOOST_NUMERIC_SAFE_BASE_HPP

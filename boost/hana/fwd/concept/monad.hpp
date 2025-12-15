@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::Monad`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -13,7 +13,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/config.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @ingroup group-concepts
     //! @defgroup group-Monad Monad
     //! The `Monad` concept represents `Applicative`s with the ability to
@@ -193,6 +193,6 @@ namespace boost { namespace hana {
     //! [2]: https://wiki.haskell.org/Typeclassopedia#Monad
     template <typename M>
     struct Monad;
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_CONCEPT_MONAD_HPP

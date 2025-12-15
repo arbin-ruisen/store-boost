@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2016-2019 Vinnie Falco (vinnie dot falco at gmail dot com)
+// Copyright (c) 2016-2017 Vinnie Falco (vinnie dot falco at gmail dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -30,17 +30,8 @@ enum class status : unsigned
     unknown = 0,
 
     continue_                           = 100,
-
-    /** Switching Protocols
-
-        This status indicates that a request to switch to a new
-        protocol was accepted and applied by the server. A successful
-        response to a WebSocket Upgrade HTTP request will have this
-        code.
-    */
     switching_protocols                 = 101,
     processing                          = 102,
-    early_hints                         = 103,
 
     ok                                  = 200,
     created                             = 201,
@@ -80,17 +71,17 @@ enum class status : unsigned
     unsupported_media_type              = 415,
     range_not_satisfiable               = 416,
     expectation_failed                  = 417,
-    i_am_a_teapot                       = 418,
     misdirected_request                 = 421,
     unprocessable_entity                = 422,
     locked                              = 423,
     failed_dependency                   = 424,
-    too_early                           = 425,
     upgrade_required                    = 426,
     precondition_required               = 428,
     too_many_requests                   = 429,
     request_header_fields_too_large     = 431,
+    connection_closed_without_response  = 444,
     unavailable_for_legal_reasons       = 451,
+    client_closed_request               = 499,
 
     internal_server_error               = 500,
     not_implemented                     = 501,
@@ -102,7 +93,8 @@ enum class status : unsigned
     insufficient_storage                = 507,
     loop_detected                       = 508,
     not_extended                        = 510,
-    network_authentication_required     = 511
+    network_authentication_required     = 511,
+    network_connect_timeout_error       = 599
 };
 
 /** Represents the class of a status-code.
@@ -133,7 +125,6 @@ enum class status_class : unsigned
     If the integer does not match a known status code,
     @ref status::unknown is returned.
 */
-BOOST_BEAST_DECL
 status
 int_to_status(unsigned v);
 
@@ -144,7 +135,6 @@ int_to_status(unsigned v);
     @return The status class. If the integer does not match
     a known status class, @ref status_class::unknown is returned.
 */
-BOOST_BEAST_DECL
 status_class
 to_status_class(unsigned v);
 
@@ -154,7 +144,6 @@ to_status_class(unsigned v);
 
     @return The status class.
 */
-BOOST_BEAST_DECL
 status_class
 to_status_class(status v);
 
@@ -162,12 +151,10 @@ to_status_class(status v);
 
     @param v The status code to use.
 */
-BOOST_BEAST_DECL
 string_view
 obsolete_reason(status v);
 
 /// Outputs the standard reason phrase of a status code to a stream.
-BOOST_BEAST_DECL
 std::ostream&
 operator<<(std::ostream&, status);
 
@@ -175,8 +162,6 @@ operator<<(std::ostream&, status);
 } // beast
 } // boost
 
-#ifdef BOOST_BEAST_HEADER_ONLY
 #include <boost/beast/http/impl/status.ipp>
-#endif
 
 #endif

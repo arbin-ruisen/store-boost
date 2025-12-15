@@ -2,7 +2,7 @@
 // detail/impl/winrt_timer_scheduler.ipp
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// Copyright (c) 2003-2025 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+// Copyright (c) 2003-2018 Christopher M. Kohlhoff (chris at kohlhoff dot com)
 //
 // Distributed under the Boost Software License, Version 1.0. (See accompanying
 // file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
@@ -28,17 +28,19 @@ namespace boost {
 namespace asio {
 namespace detail {
 
-winrt_timer_scheduler::winrt_timer_scheduler(execution_context& context)
-  : execution_context_service_base<winrt_timer_scheduler>(context),
-    scheduler_(use_service<scheduler_impl>(context)),
+winrt_timer_scheduler::winrt_timer_scheduler(
+    boost::asio::io_context& io_context)
+  : boost::asio::detail::service_base<winrt_timer_scheduler>(io_context),
+    io_context_(use_service<io_context_impl>(io_context)),
     mutex_(),
     event_(),
     timer_queues_(),
-    thread_(),
+    thread_(0),
     stop_thread_(false),
     shutdown_(false)
 {
-  thread_ = thread(bind_handler(&winrt_timer_scheduler::call_run_thread, this));
+  thread_ = new boost::asio::detail::thread(
+      bind_handler(&winrt_timer_scheduler::call_run_thread, this));
 }
 
 winrt_timer_scheduler::~winrt_timer_scheduler()
@@ -53,14 +55,20 @@ void winrt_timer_scheduler::shutdown()
   stop_thread_ = true;
   event_.signal(lock);
   lock.unlock();
-  thread_.join();
+
+  if (thread_)
+  {
+    thread_->join();
+    delete thread_;
+    thread_ = 0;
+  }
 
   op_queue<operation> ops;
   timer_queues_.get_all_timers(ops);
-  scheduler_.abandon_operations(ops);
+  io_context_.abandon_operations(ops);
 }
 
-void winrt_timer_scheduler::notify_fork(execution_context::fork_event)
+void winrt_timer_scheduler::notify_fork(boost::asio::io_context::fork_event)
 {
 }
 
@@ -82,7 +90,7 @@ void winrt_timer_scheduler::run_thread()
     if (!ops.empty())
     {
       lock.unlock();
-      scheduler_.post_deferred_completions(ops);
+      io_context_.post_deferred_completions(ops);
       lock.lock();
     }
   }

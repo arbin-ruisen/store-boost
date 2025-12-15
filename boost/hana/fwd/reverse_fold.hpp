@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::reverse_fold`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -13,7 +13,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/config.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! Equivalent to `reverse_fold` in Boost.Fusion and Boost.MPL.
     //! @ingroup group-Foldable
     //!
@@ -77,8 +77,8 @@ namespace boost { namespace hana {
         constexpr decltype(auto) operator()(Xs&& xs, F&& f) const;
     };
 
-    BOOST_HANA_INLINE_VARIABLE constexpr reverse_fold_t reverse_fold{};
+    constexpr reverse_fold_t reverse_fold{};
 #endif
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_REVERSE_FOLD_HPP

@@ -1,6 +1,11 @@
 #ifndef BOOST_NUMERIC_CHECKED_RESULT
 #define BOOST_NUMERIC_CHECKED_RESULT
 
+// MS compatible compilers support #pragma once
+#if defined(_MSC_VER) && (_MSC_VER >= 1020)
+# pragma once
+#endif
+
 //  Copyright (c) 2012 Robert Ramey
 //
 // Distributed under the Boost Software License, Version 1.0. (See
@@ -19,44 +24,37 @@ namespace safe_numerics {
 template<typename R>
 struct checked_result {
     const safe_numerics_error m_e;
-    union contents {
+    const union {
         R m_r;
-        char const * const m_msg;
-        // contstructors for different types
-        constexpr contents(const R & r) noexcept : m_r(r){}
-        constexpr contents(char const * msg) noexcept : m_msg(msg) {}
-        constexpr operator R () noexcept {
-            return m_r;
-        }
-        constexpr operator char const * () noexcept {
-            return m_msg;
-        }
+        char const * m_msg;
     };
-    contents m_contents;
-
+    
     // don't permit construction without initial value;
     checked_result() = delete;
-    checked_result(const checked_result & r) = default;
-    checked_result(checked_result && r) = default;
-    
-    constexpr /*explicit*/ checked_result(const R & r) noexcept :
-        m_e(safe_numerics_error::success),
-        m_contents{r}
-    {}
 
+    constexpr /*explicit*/ checked_result(const R & r) :
+        m_e(safe_numerics_error::success),
+        m_r(r)
+    {}
+    #if 0
+    template<typename T>
+    constexpr /*explicit*/ checked_result(const T & t) :
+        m_e(safe_numerics_error::success),
+        m_r(t)
+    {}
+    #endif
     constexpr /*explicit*/ checked_result(
-        const safe_numerics_error & e,
+        safe_numerics_error e,
         const char * msg = ""
-    )  noexcept :
+    ) :
         m_e(e),
-        m_contents{msg}
+        m_msg(msg)
     {
         assert(m_e != safe_numerics_error::success);
     }
-
     // permit construct from another checked result type
     template<typename T>
-    constexpr /*explicit*/ checked_result(const checked_result<T> & t) noexcept :
+    constexpr /*explicit*/ checked_result(const checked_result<T> & t) :
         m_e(t.m_e)
     {
         static_assert(
@@ -64,45 +62,33 @@ struct checked_result {
             "T must be convertible to R"
         );
         if(safe_numerics_error::success == t.m_e)
-            m_contents.m_r = t.m_r;
+            m_r = t.m_r;
         else
-            m_contents.m_msg = t.m_msg;
+            m_msg = t.m_msg;
     }
-
     constexpr bool exception() const {
         return m_e != safe_numerics_error::success;
     }
 
     // accesors
-    constexpr operator R() const noexcept{
+    constexpr operator R() const {
         // don't assert here.  Let the library catch these errors
-        // assert(! exception());
-        return m_contents.m_r;
+        assert(! exception());
+        return m_r;
     }
     
-    constexpr operator safe_numerics_error () const noexcept{
+    constexpr operator safe_numerics_error () const {
         // note that this is a legitimate operation even when
         // the operation was successful - it will return success
         return m_e;
     }
-    constexpr operator const char *() const noexcept{
+    constexpr operator const char *() const {
         assert(exception());
-        return m_contents.m_msg;
+        return m_msg;
     }
 
     // disallow assignment
     checked_result & operator=(const checked_result &) = delete;
-}; // checked_result
-
-template <class R>
-class make_checked_result {
-public:
-    template<safe_numerics_error E>
-    constexpr static checked_result<R> invoke(
-        char const * const & m
-    ) noexcept {
-        return checked_result<R>(E, m);
-    }
 };
 
 } // safe_numerics

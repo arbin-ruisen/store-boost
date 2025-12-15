@@ -14,16 +14,13 @@
 #ifndef __TOOLS_DEQUE_CNC_HPP
 #define __TOOLS_DEQUE_CNC_HPP
 
-#include <ciso646>
+#include <sort/tools/spinlock.hpp>
 #include <vector>
 #include <deque>
-#include <boost/sort/common/spinlock.hpp>
 
-namespace boost
-{
 namespace sort
 {
-namespace common
+namespace tools
 {
 
 //###########################################################################
@@ -64,7 +61,7 @@ protected:
     //                     VARIABLES
     //------------------------------------------------------------------------
     deque_t dq;
-    mutable spinlock_t spl;
+    mutable spinlock spl;
 
 public:
     //
@@ -97,7 +94,7 @@ public:
     //----------------------------------------------------------------------
     void clear(void)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.clear();
     };
     //
@@ -110,7 +107,7 @@ public:
     void swap(deque_cnc & A) noexcept
     {
         if (this == &A) return;
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.swap(A.dq);
     };
     //
@@ -126,7 +123,7 @@ public:
     //------------------------------------------------------------------------
     size_type size(void) const noexcept
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         return dq.size();
     };
     //
@@ -137,7 +134,7 @@ public:
     //------------------------------------------------------------------------
     size_type max_size(void) const noexcept
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         return (dq.max_size());
     };
     //
@@ -153,7 +150,7 @@ public:
     //------------------------------------------------------------------------
     void shrink_to_fit()
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.shrink_to_fit();
     };
     //
@@ -164,7 +161,7 @@ public:
     //------------------------------------------------------------------------
     bool empty(void) const noexcept
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         return (dq.empty());
     };
     //---------------------------------------------------------------------------
@@ -175,7 +172,7 @@ public:
     //---------------------------------------------------------------------------
     void push_back(const value_type & D)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.push_back(D);
     };
 
@@ -187,7 +184,7 @@ public:
     template<class ... Args>
     void emplace_back(Args && ... args)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.emplace_back(std::forward <Args>(args) ...);
     };
     //------------------------------------------------------------------------
@@ -200,7 +197,7 @@ public:
     template<class Allocator2>
     deque_cnc & push_back(const std::deque<value_type, Allocator2> & D)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         for (size_type i = 0; i < D.size(); ++i)
             dq.push_back(D[i]);
         return *this;
@@ -214,7 +211,7 @@ public:
     //------------------------------------------------------------------------
     deque_cnc & push_back(std::deque<value_type, Allocator> && D)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         for (size_type i = 0; i < D.size(); ++i)
             dq.emplace_back(std::move(D[i]));
         return *this;
@@ -226,7 +223,7 @@ public:
     //-----------------------------------------------------------------------
     void pop_back(void)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.pop_back();
     };
     //
@@ -240,7 +237,7 @@ public:
     //------------------------------------------------------------------------
     bool pop_copy_back(value_type & P)
     {   //-------------------------- begin -----------------------------
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         if (dq.size() == 0) return false;
         P = dq.back();
         dq.pop_back();
@@ -257,7 +254,7 @@ public:
     //------------------------------------------------------------------------
     bool pop_move_back(value_type & P)
     {   //-------------------------- begin -----------------------------
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         if (dq.size() == 0) return false;
         P = std::move(dq.back());
         dq.pop_back();
@@ -271,7 +268,7 @@ public:
     //------------------------------------------------------------------------
     void push_front(const value_type & D)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.push_front(D);
     };
 
@@ -283,7 +280,7 @@ public:
     template<class ... Args>
     void emplace_front(Args && ... args)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.emplace_front(std::forward <Args>(args) ...);
     };
     //------------------------------------------------------------------------
@@ -296,7 +293,7 @@ public:
     template<class Allocator2>
     deque_cnc & push_front(const std::deque<value_type, Allocator2> & V1)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         for (size_type i = 0; i < V1.size(); ++i)
             dq.push_front(V1[i]);
         return *this;
@@ -310,7 +307,7 @@ public:
     //-----------------------------------------------------------------------
     deque_cnc & push_front(std::deque<value_type, Allocator> && V1)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         for (size_type i = 0; i < V1.size(); ++i)
             dq.emplace_front(std::move(V1[i]));
         return *this;
@@ -322,7 +319,7 @@ public:
     //-----------------------------------------------------------------------
     void pop_front(void)
     {
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         dq.pop_front();
     };
     //
@@ -336,7 +333,7 @@ public:
     //-----------------------------------------------------------------------
     bool pop_copy_front(value_type & P)
     {   //-------------------------- begin -----------------------------
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         if (dq.size() == 0) return false;
         P = dq.front();
         dq.pop_front();
@@ -353,7 +350,7 @@ public:
     //------------------------------------------------------------------------
     bool pop_move_front(value_type & P)
     {   //-------------------------- begin -----------------------------
-        std::lock_guard < spinlock_t > S(spl);
+        std::lock_guard < spinlock > S(spl);
         if (dq.size() == 0) return false;
         P = std::move(dq.front());
         dq.pop_front();
@@ -363,8 +360,7 @@ public:
 // end class deque_cnc
 
 //***************************************************************************
-};// end namespace common
+};// end namespace tools
 };// end namespace sort
-};// end namespace boost
 //***************************************************************************
 #endif

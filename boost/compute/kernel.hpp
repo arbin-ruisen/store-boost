@@ -24,7 +24,6 @@
 #include <boost/compute/program.hpp>
 #include <boost/compute/platform.hpp>
 #include <boost/compute/type_traits/is_fundamental.hpp>
-#include <boost/compute/detail/diagnostic.hpp>
 #include <boost/compute/detail/get_object_info.hpp>
 #include <boost/compute/detail/assert_cl_success.hpp>
 
@@ -257,14 +256,12 @@ public:
             return boost::optional<T>();
         }
 
-        BOOST_COMPUTE_DISABLE_DEPRECATED_DECLARATIONS();
         clGetKernelSubGroupInfoKHR_fn clGetKernelSubGroupInfoKHR_fptr =
             reinterpret_cast<clGetKernelSubGroupInfoKHR_fn>(
                 reinterpret_cast<size_t>(
                     device.platform().get_extension_function_address("clGetKernelSubGroupInfoKHR")
                 )
             );
-        BOOST_COMPUTE_ENABLE_DEPRECATED_DECLARATIONS();
 
         return detail::get_object_info<T>(
             clGetKernelSubGroupInfoKHR_fptr, m_kernel, info, device.id(), input_size, input
@@ -302,14 +299,12 @@ public:
             return boost::optional<T>();
         }
 
-        BOOST_COMPUTE_DISABLE_DEPRECATED_DECLARATIONS();
         clGetKernelSubGroupInfoKHR_fn clGetKernelSubGroupInfoKHR_fptr =
             reinterpret_cast<clGetKernelSubGroupInfoKHR_fn>(
                 reinterpret_cast<size_t>(
                     device.platform().get_extension_function_address("clGetKernelSubGroupInfoKHR")
                 )
             );
-        BOOST_COMPUTE_ENABLE_DEPRECATED_DECLARATIONS();
 
         return detail::get_object_info<T>(
             clGetKernelSubGroupInfoKHR_fptr, m_kernel, info, device.id(), input_size, input
@@ -363,11 +358,6 @@ public:
     /// // set argument to a local buffer with storage for 32 float's
     /// kernel.set_arg(0, local_buffer<float>(32));
     /// \endcode
-    ///
-    /// For setting NULL to global and constant memory arguments (C++11):
-    /// \code
-    /// kernel.set_arg(0, nullptr);
-    /// \endcode
     template<class T>
     void set_arg(size_t index, const T &value)
     {
@@ -375,14 +365,6 @@ public:
         // attempted to set a kernel argument from an invalid type.
         detail::set_kernel_arg<T>()(*this, index, value);
     }
-
-    #ifndef BOOST_NO_CXX11_NULLPTR
-    /// \overload
-    void set_arg(size_t index, std::nullptr_t nul)
-    {
-        set_arg(index, sizeof(cl_mem), NULL);
-    }
-    #endif // BOOST_NO_CXX11_NULLPTR
 
     /// \internal_
     void set_arg(size_t index, const cl_mem mem)

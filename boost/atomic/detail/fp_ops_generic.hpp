@@ -3,7 +3,7 @@
  * (See accompanying file LICENSE_1_0.txt or copy at
  * http://www.boost.org/LICENSE_1_0.txt)
  *
- * Copyright (c) 2018-2025 Andrey Semashev
+ * Copyright (c) 2018 Andrey Semashev
  */
 /*!
  * \file   atomic/detail/fp_ops_generic.hpp
@@ -18,9 +18,8 @@
 #include <boost/memory_order.hpp>
 #include <boost/atomic/detail/config.hpp>
 #include <boost/atomic/detail/bitwise_fp_cast.hpp>
-#include <boost/atomic/detail/storage_traits.hpp>
+#include <boost/atomic/detail/storage_type.hpp>
 #include <boost/atomic/detail/fp_operations_fwd.hpp>
-#include <boost/atomic/detail/header.hpp>
 
 #ifdef BOOST_HAS_PRAGMA_ONCE
 #pragma once
@@ -32,14 +31,14 @@ namespace detail {
 
 //! Generic implementation of floating point operations
 template< typename Base, typename Value, std::size_t Size >
-struct fp_operations_generic :
+struct generic_fp_operations :
     public Base
 {
-    using base_type = Base;
-    using storage_type = typename base_type::storage_type;
-    using value_type = Value;
+    typedef Base base_type;
+    typedef typename base_type::storage_type storage_type;
+    typedef Value value_type;
 
-    static BOOST_FORCEINLINE value_type fetch_add(storage_type volatile& storage, value_type v, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type fetch_add(storage_type volatile& storage, value_type v, memory_order order) BOOST_NOEXCEPT
     {
         storage_type old_storage, new_storage;
         value_type old_val, new_val;
@@ -54,7 +53,7 @@ struct fp_operations_generic :
         return old_val;
     }
 
-    static BOOST_FORCEINLINE value_type fetch_sub(storage_type volatile& storage, value_type v, memory_order order) noexcept
+    static BOOST_FORCEINLINE value_type fetch_sub(storage_type volatile& storage, value_type v, memory_order order) BOOST_NOEXCEPT
     {
         storage_type old_storage, new_storage;
         value_type old_val, new_val;
@@ -73,14 +72,12 @@ struct fp_operations_generic :
 // Default fp_operations template definition will be used unless specialized for a specific platform
 template< typename Base, typename Value, std::size_t Size >
 struct fp_operations< Base, Value, Size, true > :
-    public fp_operations_generic< Base, Value, Size >
+    public generic_fp_operations< Base, Value, Size >
 {
 };
 
 } // namespace detail
 } // namespace atomics
 } // namespace boost
-
-#include <boost/atomic/detail/footer.hpp>
 
 #endif // BOOST_ATOMIC_DETAIL_FP_OPS_GENERIC_HPP_INCLUDED_

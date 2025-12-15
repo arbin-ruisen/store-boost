@@ -2,7 +2,7 @@
 @file
 Defines `boost::hana::is_empty`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -17,7 +17,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/core/dispatch.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @cond
     template <typename Xs>
     constexpr auto is_empty_t::operator()(Xs const& xs) const {
@@ -40,6 +40,6 @@ namespace boost { namespace hana {
         template <typename ...Args>
         static constexpr auto apply(Args&& ...) = delete;
     };
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_IS_EMPTY_HPP

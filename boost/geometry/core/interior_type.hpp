@@ -4,10 +4,6 @@
 // Copyright (c) 2008-2012 Bruno Lalande, Paris, France.
 // Copyright (c) 2009-2012 Mateusz Loskot, London, UK.
 
-// This file was modified by Oracle on 2020.
-// Modifications copyright (c) 2020, Oracle and/or its affiliates.
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
-
 // Parts of Boost.Geometry are redesigned from Geodan's Geographic Library
 // (geolib/GGL), copyright (c) 1995-2010 Geodan, Amsterdam, the Netherlands.
 
@@ -19,9 +15,13 @@
 #ifndef BOOST_GEOMETRY_CORE_INTERIOR_TYPE_HPP
 #define BOOST_GEOMETRY_CORE_INTERIOR_TYPE_HPP
 
-#include <type_traits>
 
-#include <boost/geometry/core/static_assert.hpp>
+#include <boost/mpl/assert.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/type_traits/is_const.hpp>
+#include <boost/type_traits/remove_const.hpp>
+#include <boost/type_traits/remove_reference.hpp>
+
 #include <boost/geometry/core/tag.hpp>
 #include <boost/geometry/core/tags.hpp>
 
@@ -39,23 +39,27 @@ namespace traits
 \par Geometries:
     - polygon
 \par Specializations should provide:
-    - using type = X ( e.g. std::vector&lt;myring&lt;P&gt;&gt; )
+    - typedef X type ( e.g. std::vector&lt;myring&lt;P&gt;&gt; )
 \tparam Geometry geometry
 */
 template <typename Geometry>
 struct interior_const_type
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Geometry type.",
-        Geometry);
+    BOOST_MPL_ASSERT_MSG
+        (
+            false, NOT_IMPLEMENTED_FOR_THIS_GEOMETRY_TYPE
+            , (types<Geometry>)
+        );
 };
 
 template <typename Geometry>
 struct interior_mutable_type
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Geometry type.",
-        Geometry);
+    BOOST_MPL_ASSERT_MSG
+        (
+            false, NOT_IMPLEMENTED_FOR_THIS_GEOMETRY_TYPE
+            , (types<Geometry>)
+        );
 };
 
 
@@ -72,23 +76,25 @@ namespace core_dispatch
 template <typename GeometryTag, typename Geometry>
 struct interior_return_type
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Geometry type.",
-        Geometry);
+    BOOST_MPL_ASSERT_MSG
+        (
+            false, NOT_IMPLEMENTED_FOR_THIS_GEOMETRY_TYPE
+            , (types<Geometry>)
+        );
 };
 
 
 template <typename Polygon>
 struct interior_return_type<polygon_tag, Polygon>
 {
-    using nc_polygon_type = std::remove_const_t<Polygon>;
+    typedef typename boost::remove_const<Polygon>::type nc_polygon_type;
 
-    using type = std::conditional_t
+    typedef typename boost::mpl::if_
         <
-            std::is_const<Polygon>::value,
+            boost::is_const<Polygon>,
             typename traits::interior_const_type<nc_polygon_type>::type,
             typename traits::interior_mutable_type<nc_polygon_type>::type
-        >;
+        >::type type;
 };
 
 
@@ -97,19 +103,21 @@ struct interior_return_type<polygon_tag, Polygon>
 template <typename GeometryTag, typename Geometry>
 struct interior_type
 {
-    BOOST_GEOMETRY_STATIC_ASSERT_FALSE(
-        "Not implemented for this Geometry type.",
-        Geometry);
+    BOOST_MPL_ASSERT_MSG
+        (
+            false, NOT_IMPLEMENTED_FOR_THIS_GEOMETRY_TYPE
+            , (types<Geometry>)
+        );
 };
 
 
 template <typename Polygon>
 struct interior_type<polygon_tag, Polygon>
 {
-    using type = std::remove_reference_t
+    typedef typename boost::remove_reference
         <
             typename interior_return_type<polygon_tag, Polygon>::type
-        >;
+        >::type type;
 };
 
 
@@ -132,30 +140,22 @@ struct interior_type<polygon_tag, Polygon>
 template <typename Geometry>
 struct interior_type
 {
-    using type = typename core_dispatch::interior_type
+    typedef typename core_dispatch::interior_type
         <
-            tag_t<Geometry>,
+            typename tag<Geometry>::type,
             Geometry
-        >::type;
+        >::type type;
 };
-
-template <typename Geometry>
-using interior_type_t = typename interior_type<Geometry>::type;
-
 
 template <typename Geometry>
 struct interior_return_type
 {
-    using type = typename core_dispatch::interior_return_type
+    typedef typename core_dispatch::interior_return_type
         <
-            tag_t<Geometry>,
+            typename tag<Geometry>::type,
             Geometry
-        >::type;
+        >::type type;
 };
-
-
-template <typename Geometry>
-using interior_return_type_t = typename interior_return_type<Geometry>::type;
 
 
 }} // namespace boost::geometry

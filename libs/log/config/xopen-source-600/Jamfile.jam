@@ -7,11 +7,10 @@
 
 import project ;
 
-project
+project /boost/log/xopen-source-600
     : source-location .
     : requirements
         <pch>off
     ;
 
 obj xopen_source_600 : xopen_source_600.cpp ;
-explicit xopen_source_600 ;

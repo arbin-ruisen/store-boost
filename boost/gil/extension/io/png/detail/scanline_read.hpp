@@ -35,10 +35,12 @@ class scanline_reader< Device
 {
 public:
 
-    using tag_t = png_tag;
-    using backend_t = reader_backend<Device, tag_t>;
-    using this_t = scanline_reader<Device, tag_t>;
-    using iterator_t = scanline_read_iterator<this_t>;
+    typedef png_tag tag_t;
+    typedef reader_backend < Device, tag_t > backend_t;
+    typedef scanline_reader< Device, tag_t > this_t;
+    typedef scanline_read_iterator< this_t > iterator_t;
+
+public:
 
     //
     // Constructor

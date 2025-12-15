@@ -12,7 +12,6 @@
 #include <boost/gil/extension/io/jpeg/detail/base.hpp>
 #include <boost/gil/extension/io/jpeg/detail/is_allowed.hpp>
 
-#include <boost/gil/io/detail/dynamic.hpp>
 #include <boost/gil/io/base.hpp>
 #include <boost/gil/io/conversion_policies.hpp>
 #include <boost/gil/io/device.hpp>
@@ -20,7 +19,6 @@
 #include <boost/gil/io/typedefs.hpp>
 
 #include <csetjmp>
-#include <type_traits>
 #include <vector>
 
 namespace boost { namespace gil {
@@ -50,12 +48,16 @@ class reader< Device
 {
 private:
 
-    using this_t = reader<Device, jpeg_tag, ConversionPolicy>;
-    using cc_t = typename ConversionPolicy::color_converter_type;
+    typedef reader< Device
+                  , jpeg_tag
+                  , ConversionPolicy
+                  > this_t;
+
+    typedef typename ConversionPolicy::color_converter_type cc_t;
 
 public:
 
-    using backend_t = reader_backend<Device, jpeg_tag>;
+    typedef reader_backend< Device, jpeg_tag > backend_t;
 
 public:
 
@@ -100,11 +102,9 @@ public:
 
         this->get()->dct_method = this->_settings._dct_method;
 
-        using is_read_and_convert_t = typename std::is_same
-            <
-                ConversionPolicy,
-                detail::read_and_no_convert
-            >::type;
+        typedef typename is_same< ConversionPolicy
+                                , detail::read_and_no_convert
+                                >::type is_read_and_convert_t;
 
         io_error_if( !detail::is_allowed< View >( this->_info
                                                 , is_read_and_convert_t()
@@ -161,7 +161,7 @@ private:
             >
     void read_rows( const View& view )
     {
-        using buffer_t = std::vector<ImagePixel>;
+        typedef std::vector<ImagePixel> buffer_t;
         buffer_t buffer( this->_info._width );
 
         // In case of an error we'll jump back to here and fire an exception.
@@ -264,7 +264,10 @@ class dynamic_image_reader< Device
                    , detail::read_and_no_convert
                    >
 {
-    using parent_t = reader<Device, jpeg_tag, detail::read_and_no_convert>;
+    typedef reader< Device
+                  , jpeg_tag
+                  , detail::read_and_no_convert
+                  > parent_t;
 
 public:
 
@@ -276,15 +279,15 @@ public:
               )
     {}
 
-    template< typename ...Images >
-    void apply( any_image< Images... >& images )
+    template< typename Images >
+    void apply( any_image< Images >& images )
     {
         detail::jpeg_type_format_checker format_checker( this->_info._color_space != JCS_YCbCr
                                                        ? this->_info._color_space
                                                        : JCS_RGB
                                                        );
 
-        if( !detail::construct_matched( images
+        if( !construct_matched( images
                               , format_checker
                               ))
         {
@@ -300,8 +303,8 @@ public:
                                     , parent_t
                                     > op( this );
 
-            variant2::visit( op
-                           , view( images )
+            apply_operation( view( images )
+                           , op
                            );
         }
     }

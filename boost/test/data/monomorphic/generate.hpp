@@ -48,7 +48,7 @@ class generated_by {
 public:
     typedef typename Generator::sample sample;
 
-    static const int arity = 1;
+    enum { arity = 1 };
 
     struct iterator {
         // Constructor

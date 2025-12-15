@@ -2,7 +2,7 @@
 @file
 Forward declares `boost::hana::Constant`.
 
-Copyright Louis Dionne 2013-2022
+@copyright Louis Dionne 2013-2017
 Distributed under the Boost Software License, Version 1.0.
 (See accompanying file LICENSE.md or copy at http://boost.org/LICENSE_1_0.txt)
  */
@@ -13,7 +13,7 @@ Distributed under the Boost Software License, Version 1.0.
 #include <boost/hana/config.hpp>
 
 
-namespace boost { namespace hana {
+BOOST_HANA_NAMESPACE_BEGIN
     //! @ingroup group-concepts
     //! @defgroup group-Constant Constant
     //! The `Constant` concept represents data that can be manipulated at
@@ -202,9 +202,9 @@ namespace boost { namespace hana {
     //! reasons as explained above, this common type is still provided.
     //!
     //!
-    //! [1]: http://en.cppreference.com/w/cpp/named_req/LiteralType
+    //! [1]: http://en.cppreference.com/w/cpp/concept/LiteralType
     template <typename C>
     struct Constant;
-}} // end namespace boost::hana
+BOOST_HANA_NAMESPACE_END
 
 #endif // !BOOST_HANA_FWD_CONCEPT_CONSTANT_HPP

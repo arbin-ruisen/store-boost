@@ -1,9 +1,8 @@
 // Boost.Geometry (aka GGL, Generic Geometry Library)
 
-// Copyright (c) 2014-2020, Oracle and/or its affiliates.
+// Copyright (c) 2014-2015, Oracle and/or its affiliates.
 
 // Contributed and/or modified by Menelaos Karavelas, on behalf of Oracle
-// Contributed and/or modified by Adam Wulkiewicz, on behalf of Oracle
 
 // Licensed under the Boost Software License version 1.0.
 // http://www.boost.org/users/license.html
@@ -16,9 +15,7 @@
 #include <iostream>
 #include <vector>
 
-#include <boost/range/begin.hpp>
-#include <boost/range/end.hpp>
-#include <boost/range/size.hpp>
+#include <boost/range.hpp>
 
 #include <boost/geometry/core/point_type.hpp>
 #include <boost/geometry/core/tag.hpp>
@@ -43,7 +40,7 @@ namespace detail { namespace is_simple
 
 
 #ifdef BOOST_GEOMETRY_TEST_DEBUG
-template <typename Linear, typename Tag = tag_t<Linear>>
+template <typename Linear, typename Tag = typename tag<Linear>::type>
 struct debug_boundary_points_printer
     : not_implemented<Linear>
 {};
@@ -65,8 +62,13 @@ struct debug_boundary_points_printer<MultiLinestring, multi_linestring_tag>
 {
     static inline void apply(MultiLinestring const& multilinestring)
     {
-        std::vector<point_type_t<MultiLinestring>> boundary_points;
-        for (auto it = boost::begin(multilinestring); it != boost::end(multilinestring); ++it)
+        typedef typename point_type<MultiLinestring>::type point_type;
+        typedef std::vector<point_type> point_vector;
+
+        point_vector boundary_points;
+        for (typename boost::range_iterator<MultiLinestring const>::type it
+                 = boost::begin(multilinestring);
+             it != boost::end(multilinestring); ++it)
         {
             if ( boost::size(*it) > 1
                  && !geometry::equals(range::front(*it), range::back(*it)) )
@@ -80,9 +82,11 @@ struct debug_boundary_points_printer<MultiLinestring, multi_linestring_tag>
                   geometry::less<point_type>());
 
         std::cout << "boundary points: ";
-        for (auto const& p : boundary_points)
+        for (typename point_vector::const_iterator
+                 pit = boundary_points.begin();
+             pit != boundary_points.end(); ++pit)
         {
-            std::cout << " " << geometry::dsv(p);
+            std::cout << " " << geometry::dsv(*pit);
         }
         std::cout << std::endl << std::endl;
     }

@@ -19,7 +19,7 @@
 #include <iostream>
 #include <cmath>
 
-#include <array>
+#include <boost/array.hpp>
 
 #include <boost/test/unit_test.hpp>
 

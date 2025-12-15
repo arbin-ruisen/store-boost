@@ -8,20 +8,20 @@
 #ifndef BOOST_GIL_EXTENSION_IO_PNG_DETAIL_IS_ALLOWED_HPP
 #define BOOST_GIL_EXTENSION_IO_PNG_DETAIL_IS_ALLOWED_HPP
 
-#include <boost/gil/extension/io/png/tags.hpp>
-
-#include <type_traits>
+#include <boost/mpl/bool_fwd.hpp>
+#include <boost/mpl/for_each.hpp>
 
 namespace boost { namespace gil { namespace detail {
 
 template< typename View >
 bool is_allowed( const image_read_info< png_tag >& info
-               , std::true_type   // is read_and_no_convert
+               , mpl::true_   // is read_and_no_convert
                )
 {
-    using pixel_t = typename get_pixel_type<View>::type;
+    typedef typename get_pixel_type< View >::type pixel_t;
 
-    using channel_t = typename channel_traits<typename element_type<pixel_t>::type>::value_type;
+    typedef typename channel_traits<
+                typename element_type< pixel_t >::type >::value_type channel_t;
 
     const png_num_channels::type dst_num_channels = num_channels< pixel_t >::value;
     const png_bitdepth::type     dst_bit_depth    = detail::unsigned_integral_num_bits< channel_t >::value;
@@ -32,7 +32,7 @@ bool is_allowed( const image_read_info< png_tag >& info
 
 template< typename View >
 bool is_allowed( const image_read_info< png_tag >& /* info */
-               , std::false_type  // is read_and_convert
+               , mpl::false_  // is read_and_convert
                )
 {
     return true;
